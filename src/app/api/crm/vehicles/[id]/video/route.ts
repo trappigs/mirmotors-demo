@@ -3,17 +3,19 @@ import { revalidatePath } from "next/cache";
 import { requireApiUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { handleApiError, jsonError } from "@/lib/api";
+import { mediaChangeBlock } from "@/lib/permissions";
 import { deleteStored, saveUpload } from "@/lib/storage";
 
 type Ctx = { params: Promise<{ id: string }> };
 
 export async function POST(req: Request, { params }: Ctx) {
   try {
-    await requireApiUser();
+    const user = await requireApiUser();
     const { id } = await params;
     const vehicle = await prisma.vehicle.findUnique({ where: { id } });
     if (!vehicle) return jsonError("Araç bulunamadı", 404);
-    if (vehicle.status === "SOLD") return jsonError("Satılmış araca video eklenemez", 409);
+    const blocked = mediaChangeBlock(vehicle, user);
+    if (blocked) return jsonError(blocked, 409);
     const file = (await req.formData()).get("file");
     if (!(file instanceof File)) return jsonError("Video seçilmedi");
     const rel = await saveUpload(file, "video", id);
@@ -28,11 +30,12 @@ export async function POST(req: Request, { params }: Ctx) {
 
 export async function DELETE(_req: Request, { params }: Ctx) {
   try {
-    await requireApiUser();
+    const user = await requireApiUser();
     const { id } = await params;
     const vehicle = await prisma.vehicle.findUnique({ where: { id } });
     if (!vehicle) return jsonError("Araç bulunamadı", 404);
-    if (vehicle.status === "SOLD") return jsonError("Satılmış aracın videosu korunur", 409);
+    const blocked = mediaChangeBlock(vehicle, user);
+    if (blocked) return jsonError(blocked, 409);
     await prisma.vehicle.update({ where: { id }, data: { videoPath: null } });
     if (vehicle.videoPath) await deleteStored(vehicle.videoPath);
     revalidatePath(`/araclar/${id}`);

@@ -3,17 +3,19 @@ import { revalidatePath } from "next/cache";
 import { requireApiUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { handleApiError, jsonError } from "@/lib/api";
+import { mediaChangeBlock } from "@/lib/permissions";
 import { saveUpload } from "@/lib/storage";
 
 const MAX_PHOTOS = 40;
 
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    await requireApiUser();
+    const user = await requireApiUser();
     const { id } = await params;
     const vehicle = await prisma.vehicle.findUnique({ where: { id }, include: { photos: true } });
     if (!vehicle) return jsonError("Araç bulunamadı", 404);
-    if (vehicle.status === "SOLD") return jsonError("Satılmış araca fotoğraf eklenemez", 409);
+    const blocked = mediaChangeBlock(vehicle, user);
+    if (blocked) return jsonError(blocked, 409);
 
     const form = await req.formData();
     const files = form.getAll("files").filter((f): f is File => f instanceof File);

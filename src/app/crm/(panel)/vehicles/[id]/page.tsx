@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import { PUBLIC_STATUSES, STATUS_LABELS, type VehicleStatus } from "@/lib/constants";
 import { formatDateTime, formatPrice, mediaUrl, parseEquipment } from "@/lib/format";
 import { ACTION_LABELS } from "@/lib/vehicle-status";
+import { canEditDetails, mediaChangeBlock } from "@/lib/permissions";
 import { MediaManager } from "@/components/crm/MediaManager";
 import { StatusActions } from "@/components/crm/StatusActions";
 import { VehicleForm, type VehicleFormValues } from "@/components/crm/VehicleForm";
@@ -27,7 +28,9 @@ export default async function CrmVehicleDetail({ params, searchParams }: { param
   });
   if (!v) notFound();
 
-  const locked = v.status === "SOLD" || v.status === "SALE_PENDING";
+  const actor = { id: user.id, role: user.role };
+  const locked = !canEditDetails(v, actor);
+  const mediaLocked = mediaChangeBlock(v, actor) !== null;
   const isPublic = PUBLIC_STATUSES.includes(v.status as VehicleStatus);
   const initial: VehicleFormValues = {
     brand: v.brand, model: v.model, packageName: s(v.packageName), year: s(v.year), km: s(v.km), price: s(v.price),
@@ -67,10 +70,10 @@ export default async function CrmVehicleDetail({ params, searchParams }: { param
             photos={v.photos.map((p) => ({ id: p.id, url: mediaUrl(p.path)!, isCover: p.isCover }))}
             videoUrl={mediaUrl(v.videoPath)}
             pdfUrl={v.expertisePdfPath ? `/api/crm/files/${v.expertisePdfPath}` : null}
-            locked={v.status === "SOLD"}
+            locked={mediaLocked}
           />
           <div>
-            <h2 className="mb-3 font-display text-lg font-semibold">Araç bilgileri {locked && <span className="text-sm font-normal text-zinc-500">(satış sürecinde düzenlenemez)</span>}</h2>
+            <h2 className="mb-3 font-display text-lg font-semibold">Araç bilgileri {locked && <span className="text-sm font-normal text-zinc-500">(bu durumda düzenleme yetkiniz yok)</span>}</h2>
             <VehicleForm mode="edit" vehicleId={v.id} initial={initial} readOnly={locked} />
           </div>
         </div>

@@ -150,6 +150,12 @@ const mOpt = await M(`/api/crm/vehicles/${id}/transition`, { method: "POST", jso
 check("11b. Mehmet opsiyonlayamaz (409)", mOpt.status === 409);
 const mRel = await M(`/api/crm/vehicles/${id}/transition`, { method: "POST", json: { action: "releaseOption" } });
 check("11c. Mehmet Ahmet'in opsiyonunu kaldıramaz", mRel.status === 409);
+const mEdit = await M(`/api/crm/vehicles/${id}`, { method: "PATCH", json: { brand: "BMW", model: "5 Serisi", year: 2023, km: 1, price: 1, fuel: "Benzin", transmission: "Otomatik", bodyType: "Sedan" } });
+check("11d. Mehmet opsiyonlu aracın bilgilerini değiştiremez", mEdit.status === 409, mEdit.status);
+const mPhoto = await M(`/api/crm/vehicles/${id}/photos`, { method: "POST", body: await fileForm("files", "tests/fixtures/car.jpg", "x.jpg", "image/jpeg") });
+check("11e. Mehmet opsiyonlu araca fotoğraf ekleyemez", mPhoto.status === 409, mPhoto.status);
+const aEdit = await A(`/api/crm/vehicles/${id}`, { method: "PATCH", json: { brand: "BMW", model: "5 Serisi", packageName: "520i M Sport E2E", year: 2023, km: 12000, price: 3_675_000, fuel: "Benzin", transmission: "Otomatik", bodyType: "Sedan" } });
+check("11f. Opsiyon sahibi Ahmet düzenleyebilir", aEdit.status === 200, aEdit.status);
 
 // 12. Satış süreci
 const start = await A(`/api/crm/vehicles/${id}/transition`, { method: "POST", json: { action: "startSale", agreedPrice: 3_600_000 } });

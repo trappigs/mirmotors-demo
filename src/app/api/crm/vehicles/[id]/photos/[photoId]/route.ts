@@ -4,6 +4,7 @@ import { requireApiUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { handleApiError, jsonError } from "@/lib/api";
 import { deleteStored } from "@/lib/storage";
+import { mediaChangeBlock } from "@/lib/permissions";
 import { PUBLIC_STATUSES, type VehicleStatus } from "@/lib/constants";
 
 type Ctx = { params: Promise<{ id: string; photoId: string }> };
@@ -11,10 +12,12 @@ type Ctx = { params: Promise<{ id: string; photoId: string }> };
 /** Kapak fotoğrafı seçer. */
 export async function PATCH(_req: Request, { params }: Ctx) {
   try {
-    await requireApiUser();
+    const user = await requireApiUser();
     const { id, photoId } = await params;
-    const photo = await prisma.vehiclePhoto.findFirst({ where: { id: photoId, vehicleId: id } });
+    const photo = await prisma.vehiclePhoto.findFirst({ where: { id: photoId, vehicleId: id }, include: { vehicle: true } });
     if (!photo) return jsonError("Fotoğraf bulunamadı", 404);
+    const blocked = mediaChangeBlock(photo.vehicle, user);
+    if (blocked) return jsonError(blocked, 409);
     await prisma.$transaction([
       prisma.vehiclePhoto.updateMany({ where: { vehicleId: id }, data: { isCover: false } }),
       prisma.vehiclePhoto.update({ where: { id: photoId }, data: { isCover: true } }),
@@ -28,14 +31,15 @@ export async function PATCH(_req: Request, { params }: Ctx) {
 
 export async function DELETE(_req: Request, { params }: Ctx) {
   try {
-    await requireApiUser();
+    const user = await requireApiUser();
     const { id, photoId } = await params;
     const result = await prisma.$transaction(async (tx) => {
       const vehicle = await tx.vehicle.findUnique({ where: { id }, include: { photos: true } });
       if (!vehicle) return { error: "Araç bulunamadı", status: 404 };
       const photo = vehicle.photos.find((p) => p.id === photoId);
       if (!photo) return { error: "Fotoğraf bulunamadı", status: 404 };
-      if (vehicle.status === "SOLD") return { error: "Satılmış aracın fotoğrafları korunur", status: 409 };
+      const blocked = mediaChangeBlock(vehicle, user);
+      if (blocked) return { error: blocked, status: 409 };
       if (PUBLIC_STATUSES.includes(vehicle.status as VehicleStatus) && vehicle.photos.length <= 1) {
         return { error: "Yayındaki ilanın son fotoğrafı silinemez", status: 409 };
       }

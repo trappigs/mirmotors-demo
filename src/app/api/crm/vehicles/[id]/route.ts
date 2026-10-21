@@ -17,13 +17,18 @@ export async function PATCH(req: Request, { params }: Ctx) {
     void _m; void _j;
 
     // Satılmış ve satış sürecindeki araçların bilgileri değiştirilemez (satış kaydı korunur).
+    // Opsiyonlu aracı yalnızca opsiyon sahibi veya yönetici düzenleyebilir (koşul aynı UPDATE içinde).
+    const editable =
+      user.role === "ADMIN"
+        ? { status: { in: ["DRAFT", "AVAILABLE", "OPTIONED"] } }
+        : { OR: [{ status: { in: ["DRAFT", "AVAILABLE"] } }, { status: "OPTIONED", optionedById: user.id }] };
     const r = await prisma.vehicle.updateMany({
-      where: { id, status: { in: ["DRAFT", "AVAILABLE", "OPTIONED"] } },
+      where: { id, ...editable },
       data,
     });
     if (r.count !== 1) {
       const exists = await prisma.vehicle.findUnique({ where: { id }, select: { status: true } });
-      return exists ? jsonError("Satış sürecindeki veya satılmış araç düzenlenemez", 409) : jsonError("Araç bulunamadı", 404);
+      return exists ? jsonError("Bu araç düzenlenemez: satış sürecinde, satılmış veya başka bir çalışanın opsiyonunda.", 409) : jsonError("Araç bulunamadı", 404);
     }
     const v = await prisma.vehicle.findUniqueOrThrow({ where: { id }, select: { status: true } });
     await prisma.statusHistory.create({
