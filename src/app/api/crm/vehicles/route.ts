@@ -1,6 +1,7 @@
 import { existsSync } from "fs";
 import path from "path";
 import { NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { requireApiUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { handleApiError, jsonError } from "@/lib/api";
@@ -34,6 +35,10 @@ export async function POST(req: Request) {
     });
     return NextResponse.json({ id: vehicle.id }, { status: 201 });
   } catch (e) {
+    // videoPath benzersizdir: aynı taslak videosu eşzamanlı iki kayda bağlanamaz.
+    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
+      return jsonError("Bu taslak videosu başka bir araca bağlanmış. Videoyu yeniden yükleyin.", 409);
+    }
     return handleApiError(e);
   }
 }

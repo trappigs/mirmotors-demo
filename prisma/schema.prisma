@@ -53,7 +53,7 @@ model Vehicle {
   expertiseSummary String?
   expertisePdfPath String? // yalnızca CRM içinde erişilir (storage/private)
 
-  videoPath String?
+  videoPath String? @unique // bir video dosyası yalnızca bir araca ait olabilir
 
   // Yasal alanlar: gerçek yayından önce doldurulacak (demo verilerinde boş bırakılır)
   legalListingNo         String?
