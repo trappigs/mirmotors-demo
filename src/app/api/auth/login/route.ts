@@ -23,13 +23,15 @@ function active(key: string, now: number) {
   return e;
 }
 
-function recordFail(key: string, now: number) {
+/** Denemeyi sayar; tablo doluysa (canlı sayaçlar silinmez) false döner ve istek reddedilir. */
+function recordAttempt(key: string, now: number): boolean {
   const e = active(key, now);
   if (!e && fails.size >= MAX_ENTRIES) {
     for (const [k, v] of fails) if (now - v.first >= WINDOW_MS) fails.delete(k);
-    if (fails.size >= MAX_ENTRIES) fails.delete(fails.keys().next().value!);
+    if (fails.size >= MAX_ENTRIES) return false;
   }
   fails.set(key, e ? { count: e.count + 1, first: e.first } : { count: 1, first: now });
+  return true;
 }
 
 export async function POST(req: Request) {
@@ -40,15 +42,14 @@ export async function POST(req: Request) {
   const key = `${ip}|${email}`;
   const emailKey = `*|${email}`;
   const now = Date.now();
-  if ((active(key, now)?.count ?? 0) >= MAX_FAILS || (active(emailKey, now)?.count ?? 0) >= MAX_FAILS_PER_EMAIL) {
-    return NextResponse.json({ error: "Çok fazla hatalı deneme. Lütfen 15 dakika sonra tekrar deneyin." }, { status: 429 });
-  }
+  const tooMany = () => NextResponse.json({ error: "Çok fazla hatalı deneme. Lütfen 15 dakika sonra tekrar deneyin." }, { status: 429 });
+  if ((active(key, now)?.count ?? 0) >= MAX_FAILS || (active(emailKey, now)?.count ?? 0) >= MAX_FAILS_PER_EMAIL) return tooMany();
+  // Deneme, beklemeli işlemlerden (DB, bcrypt) önce sayılır; eşzamanlı isteklerle sınır aşılamaz. Başarıda sıfırlanır.
+  if (!recordAttempt(key, now) || !recordAttempt(emailKey, now)) return tooMany();
 
   const user = email ? await prisma.user.findUnique({ where: { email } }) : null;
   const ok = await bcrypt.compare(password, user?.passwordHash ?? DUMMY_HASH);
   if (!user || !ok) {
-    recordFail(key, now);
-    recordFail(emailKey, now);
     return NextResponse.json({ error: "E-posta veya şifre hatalı" }, { status: 401 });
   }
   fails.delete(key);
