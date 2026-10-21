@@ -111,9 +111,9 @@ export function VehicleForm({ mode, vehicleId, initial, readOnly, ai }: Props) {
       <datalist id="brands">{Object.keys(BRAND_MODELS).map((b) => <option key={b} value={b} />)}</datalist>
       <datalist id="models">{models.map((m) => <option key={m} value={m} />)}</datalist>
 
-      <section className="card p-5">
-        <h2 className="mb-4 font-semibold">Temel bilgiler</h2>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <section className="card p-6">
+        <h2 className="mb-5 border-b border-zinc-100 pb-3 font-display font-semibold">Temel bilgiler</h2>
+        <div className="grid gap-x-5 gap-y-4 sm:grid-cols-2 lg:grid-cols-3">
           {text("brand", "Marka", { required: true, list: "brands" })}
           {text("model", "Model", { required: true, list: "models" })}
           {text("packageName", "Paket / Versiyon", { placeholder: "örn. 520i M Sport" })}
@@ -131,13 +131,14 @@ export function VehicleForm({ mode, vehicleId, initial, readOnly, ai }: Props) {
         <div className="mt-4">{area("description", "İlan açıklaması", 3)}</div>
       </section>
 
-      <section className="card p-5">
-        <h2 className="mb-4 font-semibold">Donanım{aiHint("equipment")}</h2>
+      <section className="card p-6">
+        <h2 className="mb-5 border-b border-zinc-100 pb-3 font-display font-semibold">Donanım{aiHint("equipment")}</h2>
         <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
           {Array.from(new Set([...EQUIPMENT_OPTIONS, ...v.equipment])).map((eq) => (
-            <label key={eq} className="flex items-center gap-2 text-sm">
+            <label key={eq} className="flex cursor-pointer items-center gap-2.5 rounded-lg border border-zinc-200 px-3 py-2 text-sm transition hover:border-zinc-400 has-[:checked]:border-accent has-[:checked]:bg-accent/10">
               <input
                 type="checkbox"
+                className="accent-[#9c7a45]"
                 checked={v.equipment.includes(eq)}
                 disabled={readOnly}
                 onChange={(e) => set("equipment", e.target.checked ? [...v.equipment, eq] : v.equipment.filter((x) => x !== eq))}
@@ -148,8 +149,8 @@ export function VehicleForm({ mode, vehicleId, initial, readOnly, ai }: Props) {
         </div>
       </section>
 
-      <section className="card p-5">
-        <h2 className="mb-4 font-semibold">Ekspertiz, boya ve hasar</h2>
+      <section className="card p-6">
+        <h2 className="mb-5 border-b border-zinc-100 pb-3 font-display font-semibold">Ekspertiz, boya ve hasar</h2>
         <div className="grid gap-4 sm:grid-cols-2">
           {area("paintedParts", "Boyalı parçalar")}
           {area("changedParts", "Değişen parçalar")}
@@ -159,7 +160,7 @@ export function VehicleForm({ mode, vehicleId, initial, readOnly, ai }: Props) {
         <div className="mt-4">{area("expertiseSummary", "Ekspertiz özeti (sitede gösterilir)", 3)}</div>
       </section>
 
-      <details className="card p-5">
+      <details className="card p-6">
         <summary className="cursor-pointer font-semibold">Yasal ilan alanları <span className="text-xs font-normal text-zinc-500">(gerçek yayından önce doldurulacak — demo için boş bırakın)</span></summary>
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
           {text("legalListingNo", "İlan numarası")}

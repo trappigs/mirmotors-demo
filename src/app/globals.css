@@ -3,42 +3,90 @@
 @theme inline {
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --font-display: var(--font-sora), var(--font-inter), ui-sans-serif, sans-serif;
-  --color-ink: #17181b;
-  --color-ink-2: #222429;
-  --color-ink-3: #2e3138;
-  --color-paper: #f6f5f2;
-  --color-accent: #c8a46a;
-  --color-accent-dark: #a5824a;
+  /* Koyu yüzeyler: antrasit → gece mavisi */
+  --color-ink: #0e1015;
+  --color-ink-2: #161a22;
+  --color-ink-3: #20252f;
+  --color-navy: #111a2b;
+  /* Açık yüzeyler */
+  --color-paper: #f5f3ef;
+  --color-mist: #ebe7e0;
+  /* Altın / bronz vurgu */
+  --color-accent: #c9a56b;
+  --color-accent-light: #e2c896;
+  --color-accent-dark: #9c7a45;
 }
 
 body {
   background: var(--color-paper);
   color: var(--color-ink);
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: var(--color-accent);
+  color: var(--color-ink);
 }
 
 @layer components {
-.input {
-  @apply w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 outline-none transition focus:border-zinc-900 focus:ring-2 focus:ring-zinc-900/10 disabled:bg-zinc-100;
-}
-.label {
-  @apply mb-1 block text-xs font-medium uppercase tracking-wide text-zinc-500;
-}
-.btn {
-  @apply inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50;
-}
-.btn-primary {
-  @apply inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 bg-zinc-900 text-white hover:bg-zinc-700;
-}
-.btn-accent {
-  @apply inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 bg-accent text-ink hover:bg-accent-dark hover:text-white;
-}
-.btn-outline {
-  @apply inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 border border-zinc-300 bg-white text-zinc-900 hover:border-zinc-900;
-}
-.btn-danger {
-  @apply inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 bg-red-600 text-white hover:bg-red-700;
-}
-.card {
-  @apply rounded-xl border border-zinc-200 bg-white;
-}
+  /* --- Form alanları --- */
+  .input {
+    @apply w-full rounded-lg border border-zinc-300 bg-white px-3.5 py-2.5 text-sm text-zinc-900 shadow-[inset_0_1px_2px_rgba(0,0,0,0.04)] outline-none transition placeholder:text-zinc-400 hover:border-zinc-400 focus:border-accent-dark focus:ring-4 focus:ring-accent/15 disabled:cursor-not-allowed disabled:bg-zinc-100 disabled:text-zinc-500;
+  }
+  .label {
+    @apply mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.12em] text-zinc-500;
+  }
+
+  /* --- Butonlar --- */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold tracking-wide transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-accent/30 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold tracking-wide transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-accent/30 disabled:cursor-not-allowed disabled:opacity-50 bg-ink text-white shadow-sm hover:bg-ink-3;
+  }
+  .btn-accent {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold tracking-wide transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-accent/30 disabled:cursor-not-allowed disabled:opacity-50 bg-gradient-to-b from-accent-light to-accent text-ink shadow-[0_8px_24px_-8px_rgba(201,165,107,0.6)] hover:from-accent hover:to-accent-dark hover:text-white;
+  }
+  .btn-outline {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold tracking-wide transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-accent/30 disabled:cursor-not-allowed disabled:opacity-50 border border-zinc-300 bg-white text-zinc-900 hover:border-ink hover:bg-zinc-50;
+  }
+  .btn-ghost-light {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold tracking-wide transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-accent/30 border border-white/25 bg-white/5 text-white backdrop-blur hover:border-white/60 hover:bg-white/10;
+  }
+  .btn-danger {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold tracking-wide transition duration-200 disabled:cursor-not-allowed disabled:opacity-50 bg-red-600 text-white hover:bg-red-700;
+  }
+
+  /* --- Yüzeyler --- */
+  .card {
+    @apply rounded-2xl border border-zinc-200/80 bg-white shadow-[0_1px_2px_rgba(16,24,40,0.04)];
+  }
+  .card-dark {
+    @apply rounded-2xl border border-white/10 bg-gradient-to-b from-ink-2 to-ink text-white shadow-2xl;
+  }
+
+  /* --- Tipografi --- */
+  .eyebrow {
+    @apply text-[11px] font-semibold uppercase tracking-[0.3em] text-accent-dark;
+  }
+  .eyebrow-light {
+    @apply text-[11px] font-semibold uppercase tracking-[0.3em] text-accent;
+  }
+  .section-title {
+    @apply font-display text-3xl font-bold tracking-tight md:text-4xl;
+  }
+
+  /* --- Rozetler --- */
+  .badge {
+    @apply inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em];
+  }
+  .badge-available {
+    @apply inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] bg-emerald-500/10 text-emerald-700 ring-1 ring-inset ring-emerald-600/20;
+  }
+  .badge-optioned {
+    @apply inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] bg-ink/85 text-accent-light ring-1 ring-inset ring-accent/50 backdrop-blur;
+  }
+  .chip {
+    @apply inline-flex items-center gap-1.5 rounded-full border border-zinc-300 bg-white px-3 py-1 text-xs font-medium text-zinc-700 transition hover:border-ink hover:text-ink;
+  }
 }

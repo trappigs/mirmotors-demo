@@ -2,6 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Gallery } from "@/components/site/Gallery";
+import { OptionedBadge } from "@/components/site/VehicleCard";
+import {
+  IconBolt, IconCalendar, IconCar, IconCheck, IconDoc, IconFuel, IconGauge, IconGear, IconPalette, IconShield, IconWhatsApp,
+} from "@/components/site/Icons";
 import { findPublicVehicle } from "@/lib/public-vehicles";
 import { formatKm, formatPrice, mediaUrl, parseEquipment } from "@/lib/format";
 
@@ -14,6 +18,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return { title: v ? `${v.brand} ${v.model} ${v.year}` : "İlan yayında değil" };
 }
 
+/** "Yok" gibi temiz kayıtları görsel olarak olumlu, diğerlerini dikkat çeken bloklarda gösterir. */
+const isClean = (t: string | null) => !!t && /^(yok|hayır|orijinal|hasar kaydı yok)/i.test(t.trim());
+
 export default async function VehicleDetailPage({ params }: Props) {
   const { id } = await params;
   const v = await findPublicVehicle(id);
@@ -23,8 +30,19 @@ export default async function VehicleDetailPage({ params }: Props) {
 
   const photos = v.photos.map((p) => mediaUrl(p.path)!);
   const equipment = parseEquipment(v.equipment);
+  const listingNo = v.id.slice(-6).toUpperCase();
   const wa = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER?.replace(/\D/g, "");
-  const waText = encodeURIComponent(`Merhaba, ${v.year} ${v.brand} ${v.model} ${v.packageName ?? ""} ilanı hakkında bilgi almak istiyorum. (İlan: ${v.id.slice(-6).toUpperCase()})`);
+  const waText = encodeURIComponent(`Merhaba, ${v.year} ${v.brand} ${v.model} ${v.packageName ?? ""} ilanı hakkında bilgi almak istiyorum. (İlan: ${listingNo})`);
+  const optioned = v.status === "OPTIONED";
+
+  const highlights = [
+    { icon: IconCalendar, label: "Model yılı", value: String(v.year) },
+    { icon: IconGauge, label: "Kilometre", value: formatKm(v.km) },
+    { icon: IconFuel, label: "Yakıt", value: v.fuel },
+    { icon: IconGear, label: "Vites", value: v.transmission },
+    { icon: IconCar, label: "Kasa tipi", value: v.bodyType },
+    { icon: IconBolt, label: "Motor gücü", value: v.enginePower ? `${v.enginePower} hp` : null },
+  ].filter((h) => h.value);
 
   const specs: [string, string | number | null][] = [
     ["Marka", v.brand],
@@ -41,105 +59,182 @@ export default async function VehicleDetailPage({ params }: Props) {
     ["Çekiş", v.drivetrain],
   ];
 
+  const condition = [
+    { title: "Boyalı parçalar", text: v.paintedParts },
+    { title: "Değişen parçalar", text: v.changedParts },
+    { title: "Hasar açıklaması", text: v.damageNote },
+  ];
+
+  const statusBadge = optioned ? (
+    <span data-testid="status-badge"><OptionedBadge /></span>
+  ) : (
+    <span className="badge-available" data-testid="status-badge"><span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />Satışta</span>
+  );
+
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
-      <nav className="text-sm text-zinc-500">
-        <Link href="/araclar" className="hover:text-ink">Araçlarımız</Link> / {v.brand} / {v.model}
+    <div className="mx-auto max-w-7xl px-4 pb-8 pt-6 sm:px-6">
+      <nav className="flex flex-wrap items-center gap-2 text-sm text-zinc-500">
+        <Link href="/araclar" className="transition hover:text-ink">Araçlarımız</Link>
+        <span className="text-zinc-300">/</span>
+        <Link href={`/araclar?marka=${encodeURIComponent(v.brand)}`} className="transition hover:text-ink">{v.brand}</Link>
+        <span className="text-zinc-300">/</span>
+        <span className="text-ink">{v.model}</span>
       </nav>
-      <div className="mt-6 grid gap-10 lg:grid-cols-[1fr_380px]">
+
+      {/* Başlık */}
+      <header className="mt-6 flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-3">
+            {statusBadge}
+            <span className="text-xs text-zinc-500">İlan no: {listingNo}</span>
+          </div>
+          <p className="eyebrow mt-4">{v.brand}</p>
+          <h1 className="mt-2 font-display text-3xl font-bold tracking-tight md:text-5xl">
+            {v.model} <span className="font-normal text-zinc-500">{v.packageName}</span>
+          </h1>
+        </div>
+        <p className="font-display text-3xl font-bold tracking-tight lg:hidden">{formatPrice(v.price)}</p>
+      </header>
+
+      <div className="mt-8 grid gap-10 lg:grid-cols-[1fr_380px]">
         <div className="min-w-0">
           <Gallery photos={photos} alt={`${v.brand} ${v.model}`} />
 
+          {/* Öne çıkan bilgiler */}
+          <section className="mt-10 grid grid-cols-2 gap-3 sm:grid-cols-3">
+            {highlights.map(({ icon: Icon, label, value }) => (
+              <div key={label} className="card flex items-center gap-3.5 p-4">
+                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-paper text-accent-dark">
+                  <Icon className="h-5 w-5" />
+                </span>
+                <div className="min-w-0">
+                  <p className="text-[11px] uppercase tracking-[0.12em] text-zinc-500">{label}</p>
+                  <p className="truncate font-semibold">{value}</p>
+                </div>
+              </div>
+            ))}
+          </section>
+
           {v.videoPath && (
-            <section className="mt-10">
-              <h2 className="font-display text-xl font-semibold">Video</h2>
-              <video src={mediaUrl(v.videoPath)!} controls preload="metadata" playsInline className="mt-4 w-full rounded-xl bg-black" data-testid="vehicle-video" />
+            <section className="mt-14">
+              <h2 className="font-display text-2xl font-bold tracking-tight">Tanıtım videosu</h2>
+              <video src={mediaUrl(v.videoPath)!} controls preload="metadata" playsInline className="mt-5 aspect-video w-full rounded-2xl bg-black shadow-xl" data-testid="vehicle-video" />
             </section>
           )}
 
-          <section className="mt-10">
-            <h2 className="font-display text-xl font-semibold">Teknik özellikler</h2>
-            <dl className="mt-4 grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-zinc-200 bg-zinc-200 sm:grid-cols-3">
+          <section className="mt-14">
+            <h2 className="font-display text-2xl font-bold tracking-tight">Teknik özellikler</h2>
+            <dl className="card mt-5 grid overflow-hidden sm:grid-cols-2">
               {specs.filter(([, val]) => val !== null && val !== "").map(([k, val]) => (
-                <div key={k} className="bg-white p-4">
-                  <dt className="text-xs uppercase tracking-wide text-zinc-500">{k}</dt>
-                  <dd className="mt-1 font-semibold">{val}</dd>
+                <div key={k} className="flex items-center justify-between gap-4 border-b border-zinc-100 px-5 py-3.5 text-sm sm:odd:border-r">
+                  <dt className="text-zinc-500">{k}</dt>
+                  <dd className="text-right font-semibold">{val}</dd>
                 </div>
               ))}
             </dl>
           </section>
 
           {equipment.length > 0 && (
-            <section className="mt-10">
-              <h2 className="font-display text-xl font-semibold">Donanım</h2>
-              <ul className="mt-4 grid gap-2 sm:grid-cols-2">
+            <section className="mt-14">
+              <h2 className="font-display text-2xl font-bold tracking-tight">Donanım</h2>
+              <ul className="mt-5 flex flex-wrap gap-2">
                 {equipment.map((e) => (
-                  <li key={e} className="flex items-center gap-2 text-zinc-700"><span className="text-accent-dark">✓</span>{e}</li>
+                  <li key={e} className="inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-white px-3.5 py-2 text-sm text-zinc-700">
+                    <IconCheck className="h-4 w-4 text-accent-dark" />{e}
+                  </li>
                 ))}
               </ul>
             </section>
           )}
 
-          <section className="mt-10">
-            <h2 className="font-display text-xl font-semibold">Boya, değişen ve hasar</h2>
-            <div className="mt-4 grid gap-4 sm:grid-cols-3">
-              <Info title="Boyalı parçalar" text={v.paintedParts} />
-              <Info title="Değişen parçalar" text={v.changedParts} />
-              <Info title="Hasar açıklaması" text={v.damageNote} />
+          <section className="mt-14">
+            <div className="flex flex-wrap items-end justify-between gap-3">
+              <h2 className="font-display text-2xl font-bold tracking-tight">Boya, değişen ve hasar</h2>
+              {v.tramerAmount !== null && (
+                <span className="rounded-full bg-ink px-3.5 py-1.5 text-xs font-semibold text-white">
+                  Tramer: {v.tramerAmount === 0 ? "Kayıt yok" : formatPrice(v.tramerAmount)}
+                </span>
+              )}
             </div>
-            {v.tramerAmount !== null && (
-              <p className="mt-3 text-sm text-zinc-600">Tramer kaydı: {v.tramerAmount === 0 ? "Yok" : formatPrice(v.tramerAmount)}</p>
-            )}
+            <div className="mt-5 grid gap-4 sm:grid-cols-3">
+              {condition.map((c) => {
+                const clean = isClean(c.text);
+                return (
+                  <div key={c.title} className={`card border-l-4 p-5 ${clean ? "border-l-emerald-500" : c.text ? "border-l-accent" : "border-l-zinc-300"}`}>
+                    <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-zinc-500">
+                      <IconPalette className="h-4 w-4" />{c.title}
+                    </p>
+                    <p className="mt-2 text-sm font-semibold text-ink">{c.text || "Belirtilmedi"}</p>
+                  </div>
+                );
+              })}
+            </div>
           </section>
 
-          <section className="mt-10">
-            <h2 className="font-display text-xl font-semibold">Ekspertiz özeti</h2>
-            <p className="card mt-4 p-5 text-zinc-700">{v.expertiseSummary || "Ekspertiz özeti için danışmanınızla iletişime geçin."}</p>
-            <p className="mt-2 text-xs text-zinc-500">Ekspertiz raporunun tamamı galeride incelenebilir.</p>
+          <section className="mt-14">
+            <h2 className="font-display text-2xl font-bold tracking-tight">Ekspertiz özeti</h2>
+            <div className="card mt-5 flex gap-4 p-6">
+              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-emerald-500/10 text-emerald-700">
+                <IconShield className="h-5 w-5" />
+              </span>
+              <div>
+                <p className="leading-relaxed text-zinc-700">{v.expertiseSummary || "Ekspertiz özeti için danışmanınızla iletişime geçin."}</p>
+                <p className="mt-3 flex items-center gap-1.5 text-xs text-zinc-500">
+                  <IconDoc className="h-4 w-4" /> Ekspertiz raporunun tamamı showroomda incelenebilir.
+                </p>
+              </div>
+            </div>
           </section>
 
           {v.description && (
-            <section className="mt-10">
-              <h2 className="font-display text-xl font-semibold">Açıklama</h2>
-              <p className="mt-4 whitespace-pre-line text-zinc-700">{v.description}</p>
+            <section className="mt-14">
+              <h2 className="font-display text-2xl font-bold tracking-tight">Açıklama</h2>
+              <p className="mt-5 whitespace-pre-line leading-relaxed text-zinc-700">{v.description}</p>
             </section>
           )}
         </div>
 
-        <aside className="order-first lg:order-none lg:sticky lg:top-24 lg:self-start">
-          <div className="card p-6">
-            {v.status === "OPTIONED" ? (
-              <span className="inline-block rounded-full bg-amber-400 px-3 py-1 text-xs font-bold uppercase tracking-wider text-ink" data-testid="status-badge">Opsiyonlu</span>
-            ) : (
-              <span className="inline-block rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold uppercase tracking-wider text-emerald-800" data-testid="status-badge">Satışta</span>
-            )}
-            <p className="mt-4 text-xs font-semibold uppercase tracking-[0.15em] text-zinc-500">{v.brand}</p>
-            <h1 className="mt-1 font-display text-2xl font-bold">{v.model} <span className="font-normal text-zinc-500">{v.packageName}</span></h1>
-            <p className="mt-2 text-sm text-zinc-600">{v.year} · {formatKm(v.km)} · {v.fuel} · {v.transmission}</p>
-            <p className="mt-6 font-display text-3xl font-bold">{formatPrice(v.price)}</p>
-            {v.status === "OPTIONED" && (
-              <p className="mt-3 rounded-md bg-amber-50 p-3 text-sm text-amber-900">Bu araç şu anda başka bir müşteri için opsiyonludur. Benzer araçlar için bize ulaşın.</p>
-            )}
-            {wa && (
-              <a href={`https://wa.me/${wa}?text=${waText}`} target="_blank" rel="noopener noreferrer" className="btn mt-6 w-full bg-[#25D366] py-3 text-white hover:bg-[#1da851]">
-                WhatsApp ile bilgi al
-              </a>
-            )}
-            <p className="mt-4 text-xs leading-relaxed text-zinc-500">
-              Demo ilan. Site üzerinden ödeme, kapora veya sözleşme işlemi yapılmaz. İlan no: {v.id.slice(-6).toUpperCase()}
-            </p>
+        {/* Fiyat ve iletişim kartı */}
+        <aside className="lg:sticky lg:top-24 lg:self-start">
+          <div className="card-dark relative overflow-hidden p-7">
+            <div className="pointer-events-none absolute -right-20 -top-20 h-56 w-56 rounded-full bg-accent/20 blur-3xl" />
+            <div className="relative">
+              <div className="flex items-center justify-between">
+                <p className="eyebrow-light">Satış fiyatı</p>
+                {optioned ? <OptionedBadge /> : <span className="badge bg-emerald-400/10 text-emerald-300 ring-1 ring-inset ring-emerald-400/30">Satışta</span>}
+              </div>
+              <p className="mt-3 font-display text-4xl font-bold tracking-tight text-white">{formatPrice(v.price)}</p>
+              <p className="mt-1 text-sm text-zinc-400">{v.brand} {v.model} {v.packageName}</p>
+
+              <dl className="mt-6 grid grid-cols-2 gap-px overflow-hidden rounded-xl bg-white/10 text-sm">
+                {[["Yıl", v.year], ["Km", formatKm(v.km)], ["Yakıt", v.fuel], ["Vites", v.transmission]].map(([k, val]) => (
+                  <div key={String(k)} className="bg-ink-2 px-4 py-3">
+                    <dt className="text-[11px] uppercase tracking-[0.12em] text-zinc-500">{k}</dt>
+                    <dd className="mt-0.5 font-semibold text-white">{val}</dd>
+                  </div>
+                ))}
+              </dl>
+
+              {optioned && (
+                <p className="mt-5 rounded-xl border border-accent/30 bg-accent/10 p-3.5 text-sm text-accent-light">
+                  Bu araç şu anda başka bir müşteri için opsiyonludur. Benzer araçlar için bize ulaşın.
+                </p>
+              )}
+
+              {wa && (
+                <a href={`https://wa.me/${wa}?text=${waText}`} target="_blank" rel="noopener noreferrer" className="btn mt-6 w-full bg-[#25D366] py-3.5 text-[15px] text-white shadow-[0_10px_30px_-10px_rgba(37,211,102,0.7)] hover:bg-[#1fb857]">
+                  <IconWhatsApp /> WhatsApp ile bilgi al
+                </a>
+              )}
+              <Link href="/iletisim" className="btn-ghost-light mt-3 w-full py-3">Showroom ziyareti planla</Link>
+
+              <p className="mt-6 border-t border-white/10 pt-4 text-xs leading-relaxed text-zinc-500">
+                Demo ilan. Site üzerinden ödeme, kapora veya sözleşme işlemi yapılmaz. Satış ve noter devri showroomda tamamlanır.
+              </p>
+            </div>
           </div>
         </aside>
       </div>
-    </div>
-  );
-}
-
-function Info({ title, text }: { title: string; text: string | null }) {
-  return (
-    <div className="card p-4">
-      <p className="text-xs uppercase tracking-wide text-zinc-500">{title}</p>
-      <p className="mt-1 text-sm font-medium">{text || "Belirtilmedi"}</p>
     </div>
   );
 }

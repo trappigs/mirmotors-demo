@@ -8,17 +8,17 @@ export const dynamic = "force-dynamic";
 export default async function PanelLayout({ children }: { children: React.ReactNode }) {
   const user = await requireUser();
   return (
-    <div className="min-h-screen bg-zinc-100">
+    <div className="min-h-screen bg-[#f3f3f1]">
       <header className="bg-ink text-white">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6">
           <div className="flex items-center gap-6">
             <Link href="/crm" className="font-display font-bold tracking-[0.2em]">
               MIR <span className="font-light text-accent">CRM</span>
             </Link>
-            <nav className="flex gap-4 text-sm">
+            <nav className="flex flex-wrap items-center gap-4 text-sm">
               <Link href="/crm" className="text-zinc-300 hover:text-white">Özet</Link>
               <Link href="/crm/vehicles" className="text-zinc-300 hover:text-white">Araçlar</Link>
-              <Link href="/crm/vehicles/new" className="text-zinc-300 hover:text-white">+ Araç ekle</Link>
+              <Link href="/crm/vehicles/new" className="rounded-md bg-accent/15 px-2.5 py-1 font-semibold text-accent hover:bg-accent hover:text-ink">+ Araç ekle</Link>
               <a href="/araclar" target="_blank" className="text-zinc-300 hover:text-white">Siteyi aç ↗</a>
             </nav>
           </div>

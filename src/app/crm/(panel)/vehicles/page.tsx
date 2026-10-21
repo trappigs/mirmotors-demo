@@ -29,13 +29,13 @@ export default async function CrmVehiclesPage({ searchParams }: { searchParams: 
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <h1 className="font-display text-2xl font-bold">Araçlar</h1>
+        <h1 className="font-display text-2xl font-bold tracking-tight">Araçlar</h1>
         <div className="flex gap-2">
           <form className="flex gap-2">
             {validStatus && <input type="hidden" name="status" value={validStatus} />}
             <input name="q" defaultValue={q} placeholder="Marka / model ara" className="input w-48" />
           </form>
-          <Link href="/crm/vehicles/new" className="btn-primary">+ Araç ekle</Link>
+          <Link href="/crm/vehicles/new" className="btn-accent">+ Yeni araç ekle</Link>
         </div>
       </div>
       <div className="flex flex-wrap gap-2">
@@ -44,22 +44,22 @@ export default async function CrmVehiclesPage({ searchParams }: { searchParams: 
       </div>
       <div className="card overflow-x-auto">
         <table className="w-full min-w-[720px] text-sm">
-          <thead className="bg-zinc-50 text-left text-xs uppercase tracking-wide text-zinc-500">
+          <thead className="border-b border-zinc-200 bg-zinc-50/80 text-left text-[11px] uppercase tracking-[0.12em] text-zinc-500">
             <tr>
-              <th className="p-3">Araç</th>
-              <th className="p-3">Yıl / Km</th>
-              <th className="p-3">Fiyat</th>
-              <th className="p-3">Durum</th>
-              <th className="p-3">Opsiyon</th>
-              <th className="p-3">Foto</th>
+              <th className="px-4 py-3.5">Araç</th>
+              <th className="px-4 py-3.5">Yıl / Km</th>
+              <th className="px-4 py-3.5">Fiyat</th>
+              <th className="px-4 py-3.5">Durum</th>
+              <th className="px-4 py-3.5">Opsiyon</th>
+              <th className="px-4 py-3.5">Foto</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-zinc-100">
             {vehicles.map((v) => (
-              <tr key={v.id} className="hover:bg-zinc-50">
-                <td className="p-3">
+              <tr key={v.id} className="transition hover:bg-amber-50/40">
+                <td className="px-4 py-3.5">
                   <Link href={`/crm/vehicles/${v.id}`} className="flex items-center gap-3 font-medium hover:underline">
-                    <span className="h-10 w-16 shrink-0 overflow-hidden rounded bg-zinc-200">
+                    <span className="h-11 w-[70px] shrink-0 overflow-hidden rounded-md bg-zinc-200">
                       {v.photos[0] && (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={mediaUrl(v.photos[0].path)!} alt="" className="h-full w-full object-cover" />
@@ -68,11 +68,11 @@ export default async function CrmVehiclesPage({ searchParams }: { searchParams: 
                     <span>{v.brand} {v.model} <span className="text-zinc-500">{v.packageName}</span></span>
                   </Link>
                 </td>
-                <td className="p-3">{v.year} · {formatKm(v.km)}</td>
-                <td className="p-3">{formatPrice(v.price)}</td>
-                <td className="p-3"><StatusBadge status={v.status} /></td>
-                <td className="p-3">{v.optionedBy?.name ?? "—"}</td>
-                <td className="p-3">{v._count.photos}</td>
+                <td className="px-4 py-3.5">{v.year} · {formatKm(v.km)}</td>
+                <td className="px-4 py-3.5">{formatPrice(v.price)}</td>
+                <td className="px-4 py-3.5"><StatusBadge status={v.status} /></td>
+                <td className="px-4 py-3.5">{v.optionedBy?.name ?? "—"}</td>
+                <td className="px-4 py-3.5">{v._count.photos}</td>
               </tr>
             ))}
             {vehicles.length === 0 && (
