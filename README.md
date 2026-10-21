@@ -1,36 +1,98 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Mir Motors — Galeri Sitesi + CRM (DEMO)
 
-## Getting Started
+Mir Motors için kurumsal araç satış web sitesi ve galeri CRM'i demosu. Müşteri sitesi ile personel paneli aynı uygulamadadır;
+araç ekleme → yayımlama → opsiyon → satış → ilanın kaldırılması zinciri veritabanı üzerinde gerçekten çalışır.
 
-First, run the development server:
+> Bu bir demo sürümüdür. Araçlar, fiyatlar ve görseller temsilidir. Üretim ortamı güvenlik sertifikası veya hukuki uyumluluk garantisi verilmez.
+
+## Gereksinimler
+
+- Node.js 20+ (24 ile test edildi), npm
+- İsteğe bağlı: `ffmpeg` (canlı AI modunda videodan kare çıkarmak için)
+
+## Kurulum ve çalıştırma
+
+Tek komut (kurulum + örnek veri + üretim derlemesi + sunucu):
+
+```bash
+npm install
+```
+
+```bash
+npm run demo
+```
+
+Site: http://localhost:3000 · CRM: http://localhost:3000/crm
+
+Geliştirme modunda çalıştırmak için:
+
+```bash
+npm run setup
+```
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+| Komut | Açıklama |
+|---|---|
+| `npm run setup` | `.env` yoksa oluşturur, Prisma istemcisini üretir, SQLite şemasını kurar, örnek veriyi yükler |
+| `npm run db:reset` | Demo verisini ve yüklenen dosyaları sıfırlar (sunum öncesi) |
+| `npm run demo` | setup + build + start |
+| `npm test` | Durum makinesi birim testleri (eşzamanlılık testleri dahil) |
+| `npm run e2e` | Çalışan sunucuya karşı 14 adımlık demo senaryosu testi (`node tests/e2e-demo.mjs http://localhost:3000`) |
+| `npm run lint` / `npm run build` | Lint ve üretim derlemesi |
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+> `npm run e2e` veritabanına test aracı ekler; sunumdan önce `npm run db:reset` çalıştırın.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Ortam değişkenleri
 
-## Learn More
+`.env.example` dosyasına bakın. Özet:
 
-To learn more about Next.js, take a look at the following resources:
+| Değişken | Zorunlu | Açıklama |
+|---|---|---|
+| `DATABASE_URL` | Evet | SQLite dosyası (`file:./dev.db` → `prisma/dev.db`) |
+| `SESSION_SECRET` | Evet | Oturum çerezi imzalama anahtarı (setup otomatik üretir) |
+| `ANTHROPIC_API_KEY` | Hayır | Canlı AI taslağı. Yoksa AI ekranı **Simülasyon Modu**'nda çalışır |
+| `OPENAI_API_KEY` | Hayır | Ses → metin (Whisper). Yoksa transkript elle yapıştırılır |
+| `NEXT_PUBLIC_WHATSAPP_NUMBER` | Hayır | İlan sayfasındaki WhatsApp bağlantısı (demo numarası gerçek değildir) |
+| `STORAGE_DIR` | Hayır | Yüklemelerin klasörü (varsayılan `./storage`) |
+| `COOKIE_SECURE` | Hayır | HTTPS arkasında `1` |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Demo kullanıcı hesapları
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Tüm hesapların şifresi: `MirDemo2026!` (yalnızca yerel demo içindir)
 
-## Deploy on Vercel
+| Kullanıcı | E-posta | Rol |
+|---|---|---|
+| Yönetici (Demo) | yonetici@mirmotors.demo | Yönetici |
+| Ahmet | ahmet@mirmotors.demo | Satış personeli |
+| Mehmet | mehmet@mirmotors.demo | Satış personeli |
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Kullanılan teknolojiler
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **Next.js 15** (App Router, TypeScript) — site, CRM ve API rotaları tek uygulamada
+- **Tailwind CSS 4** — arayüz
+- **Prisma 6 + SQLite** — yerel veritabanı (dosya: `prisma/dev.db`)
+- **jose** (HS256 imzalı, httpOnly oturum çerezi) + **bcryptjs** (şifre özeti)
+- **zod** — sunucu tarafı doğrulama ve AI çıktı şeması
+- **@anthropic-ai/sdk** — AI taslak servisi (`claude-opus-5-5`, yapılandırılmış JSON çıktı)
+- **Vitest** — birim testleri
+
+## Proje yapısı
+
+```
+prisma/schema.prisma        Veri modeli (Vehicle, VehiclePhoto, StatusHistory, Sale, User)
+prisma/seed.ts              Örnek veri (11 temsili araç, 3 kullanıcı)
+src/lib/vehicle-status.ts   Durum makinesi — koşullu/atomik geçişler
+src/lib/storage.ts          Dosya yükleme (tür, boyut, dosya imzası kontrolü)
+src/lib/ai/                 AI taslak servisi, simülasyon verisi, kare çıkarma
+src/middleware.ts           /crm ve /api/crm için oturum kontrolü
+src/app/(site)/             Müşteri sitesi
+src/app/crm/                CRM paneli
+src/app/api/crm/            CRM API (her rota ayrıca sunucu tarafı yetki kontrolü yapar)
+storage/public              Fotoğraf ve videolar (/media/... ile servis edilir)
+storage/private             Ekspertiz PDF'leri (yalnızca oturumlu /api/crm/files/...)
+```
+
+Diğer belgeler: [DEMO_SCRIPT.md](DEMO_SCRIPT.md) · [STATUS.md](STATUS.md) · [DECISIONS.md](DECISIONS.md)

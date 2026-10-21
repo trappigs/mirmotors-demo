@@ -1,0 +1,133 @@
+// Mir Motors demo veri modeli (SQLite).
+// Durum alanları SQLite uyumluluğu için String olarak tutulur; geçerli değerler src/lib/constants.ts içindedir.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         String // ADMIN | SALES
+  createdAt    DateTime @default(now())
+
+  createdVehicles Vehicle[]       @relation("VehicleCreatedBy")
+  optionedVehicles Vehicle[]      @relation("VehicleOptionedBy")
+  statusChanges   StatusHistory[]
+  salesStarted    Sale[]          @relation("SaleStartedBy")
+  salesCompleted  Sale[]          @relation("SaleCompletedBy")
+}
+
+model Vehicle {
+  id        String @id @default(cuid())
+  status    String @default("DRAFT") // DRAFT | AVAILABLE | OPTIONED | SALE_PENDING | SOLD
+
+  brand        String
+  model        String
+  packageName  String?
+  year         Int
+  km           Int
+  price        Int // TL
+  fuel         String
+  transmission String
+  bodyType     String
+  color        String?
+  enginePower  Int? // HP
+  engineCc     Int?
+  drivetrain   String?
+  description  String?
+  equipment    String  @default("[]") // JSON string[]
+
+  // Boya / değişen / hasar / ekspertiz
+  paintedParts     String?
+  changedParts     String?
+  damageNote       String?
+  tramerAmount     Int?
+  expertiseSummary String?
+  expertisePdfPath String? // yalnızca CRM içinde erişilir (storage/private)
+
+  videoPath String?
+
+  // Yasal alanlar: gerçek yayından önce doldurulacak (demo verilerinde boş bırakılır)
+  legalListingNo         String?
+  legalAuthorizationNo   String?
+  legalPlate             String?
+  legalVin               String?
+  legalOwnerConsent      Boolean @default(false)
+
+  // AI taslak izi
+  aiDraftMode String? // LIVE | SIMULATION | null (manuel)
+  aiDraftJson String?
+
+  optionedById String?
+  optionedBy   User?     @relation("VehicleOptionedBy", fields: [optionedById], references: [id])
+  optionedAt   DateTime?
+
+  createdById String
+  createdBy   User      @relation("VehicleCreatedBy", fields: [createdById], references: [id])
+  publishedAt DateTime?
+  soldAt      DateTime?
+  isDemoSeed  Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  photos  VehiclePhoto[]
+  history StatusHistory[]
+  sales   Sale[]
+
+  @@index([status])
+  @@index([brand, model])
+}
+
+model VehiclePhoto {
+  id        String   @id @default(cuid())
+  vehicleId String
+  vehicle   Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  path      String // storage/public altındaki göreli yol
+  isCover   Boolean  @default(false)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([vehicleId])
+}
+
+model StatusHistory {
+  id         String   @id @default(cuid())
+  vehicleId  String
+  vehicle    Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  fromStatus String?
+  toStatus   String
+  action     String
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  note       String?
+  createdAt  DateTime @default(now())
+
+  @@index([vehicleId])
+}
+
+model Sale {
+  id                String    @id @default(cuid())
+  vehicleId         String
+  vehicle           Vehicle   @relation(fields: [vehicleId], references: [id])
+  startedById       String
+  startedBy         User      @relation("SaleStartedBy", fields: [startedById], references: [id])
+  startedAt         DateTime  @default(now())
+  agreedPrice       Int?
+  note              String?
+  notaryCompleted   Boolean   @default(false)
+  notaryDate        DateTime?
+  completedById     String?
+  completedBy       User?     @relation("SaleCompletedBy", fields: [completedById], references: [id])
+  completedAt       DateTime?
+  cancelledAt       DateTime?
+
+  @@index([vehicleId])
+}
