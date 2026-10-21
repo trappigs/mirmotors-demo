@@ -23,23 +23,24 @@ function active(key: string, now: number) {
   return e;
 }
 
+const limitFor = (key: string) => (key.startsWith("*|") ? MAX_FAILS_PER_EMAIL : MAX_FAILS);
+
 /**
- * Denemeyi sayar. Tablo doluysa önce süresi dolanlar, sonra sınıra ulaşmamış (engellenmemiş) en eski kayıt silinir;
- * engellenmiş ve e-posta bazlı sayaçlar asla silinmez. Yalnızca tablonun tamamı engellenmiş kayıtlardan oluşuyorsa false döner.
+ * Denemeyi sayar. Tablo doluysa önce süresi dolanlar, sonra kendi sınırına ulaşmamış en eski kayıt silinir;
+ * engellenmiş sayaçlar asla silinmez. Tablo yalnızca engellenmiş kayıtlarla doluysa deneme kaydedilmeden
+ * geçirilir (fail-open): mevcut engeller uygulanmaya devam eder, ama dolu tablo kimsenin girişini kilitlemez.
  */
-function recordAttempt(key: string, now: number): boolean {
+function recordAttempt(key: string, now: number) {
   const e = active(key, now);
   if (!e && fails.size >= MAX_ENTRIES) {
     for (const [k, v] of fails) if (now - v.first >= WINDOW_MS) fails.delete(k);
     if (fails.size >= MAX_ENTRIES) {
-      // E-posta bazlı ("*|") sayaçlar asla silinmez; yalnızca engellenmemiş IP+e-posta kayıtları.
-      const victim = [...fails].find(([k, v]) => !k.startsWith("*|") && v.count < MAX_FAILS)?.[0];
-      if (!victim) return false;
+      const victim = [...fails].find(([k, v]) => v.count < limitFor(k))?.[0];
+      if (!victim) return;
       fails.delete(victim);
     }
   }
   fails.set(key, e ? { count: e.count + 1, first: e.first } : { count: 1, first: now });
-  return true;
 }
 
 export async function POST(req: Request) {
@@ -53,7 +54,8 @@ export async function POST(req: Request) {
   const tooMany = () => NextResponse.json({ error: "Çok fazla hatalı deneme. Lütfen 15 dakika sonra tekrar deneyin." }, { status: 429 });
   if ((active(key, now)?.count ?? 0) >= MAX_FAILS || (active(emailKey, now)?.count ?? 0) >= MAX_FAILS_PER_EMAIL) return tooMany();
   // Deneme, beklemeli işlemlerden (DB, bcrypt) önce sayılır; eşzamanlı isteklerle sınır aşılamaz. Başarıda sıfırlanır.
-  if (!recordAttempt(key, now) || !recordAttempt(emailKey, now)) return tooMany();
+  recordAttempt(key, now);
+  recordAttempt(emailKey, now);
 
   const user = email ? await prisma.user.findUnique({ where: { email } }) : null;
   const ok = await bcrypt.compare(password, user?.passwordHash ?? DUMMY_HASH);

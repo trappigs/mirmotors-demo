@@ -41,7 +41,7 @@ Durum makinesi: `src/lib/vehicle-status.ts`. Her geçiş tek bir veritabanı iş
 ## Giriş güvenliği (demo düzeyi)
 
 - Şifreler bcrypt; kullanıcı yoksa da sahte özetle karşılaştırma yapılır (zamanlamadan e-posta tahmini önlenir).
-- Bellek içi deneme sınırı: IP+e-posta başına 10, e-posta başına 30 hatalı deneme / 15 dk. Deneme, beklemeli işlemlerden önce sayılır. Tablo dolarsa yalnızca engellenmemiş eski kayıtlar silinir.
+- Bellek içi deneme sınırı: IP+e-posta başına 10, e-posta başına 30 hatalı deneme / 15 dk. Deneme, beklemeli işlemlerden önce sayılır. Tablo dolarsa kendi sınırına ulaşmamış eski kayıtlar silinir; hepsi engelliyse deneme kaydedilmeden geçirilir (dolu tablo kimseyi kilitlemez, mevcut engeller sürer).
 - Kabul edilen sınırlamalar: X-Forwarded-For doğrulanmaz (demo doğrudan çalışır, vekil sunucu yok); e-posta başına kilit kötü niyetli birinin bir hesabı 15 dk kilitlemesine izin verir; sayaçlar sunucu yeniden başlatılınca sıfırlanır. Üretimde: güvenilir vekil yapılandırması, Redis gibi paylaşımlı TTL deposu, kademeli gecikme/CAPTCHA.
 - Seed kullanıcılarının kimlikleri sabittir (`demo-yonetici` vb.); `npm run db:reset` açık oturumları düşürmez.
 
