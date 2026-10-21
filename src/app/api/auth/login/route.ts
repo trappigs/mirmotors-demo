@@ -6,64 +6,34 @@ import { SESSION_COOKIE, sessionCookieOptions, signSession } from "@/lib/session
 // Kullanıcı yoksa da bcrypt karşılaştırması yapılır; yanıt süresi e-postanın varlığını ele vermez.
 const DUMMY_HASH = bcrypt.hashSync("dummy-password-for-timing", 10);
 
-// Basit bellek içi deneme sınırı (tek sunuculu demo için): 15 dakikada IP+e-posta başına 10, e-posta başına
-// (IP'den bağımsız; X-Forwarded-For sahteciliğine karşı) 30 hatalı deneme. Süresi dolan kayıtlar temizlenir.
+// Hesap bazlı deneme sınırı (tek sunuculu demo için): bir hesaba 15 dakikada en fazla 10 hatalı deneme.
+// Sayaçlar yalnızca var olan kullanıcılar için tutulur; tablo personel sayısıyla sınırlıdır, hiçbir kayıt
+// tahliye edilmez ve uydurma e-postalarla doldurulamaz. İstemcinin gönderdiği IP başlıklarına güvenilmez.
 const WINDOW_MS = 15 * 60 * 1000;
 const MAX_FAILS = 10;
-const MAX_FAILS_PER_EMAIL = 30;
-const MAX_ENTRIES = 10_000;
-const fails = new Map<string, { count: number; first: number }>();
-
-function active(key: string, now: number) {
-  const e = fails.get(key);
-  if (e && now - e.first >= WINDOW_MS) {
-    fails.delete(key);
-    return undefined;
-  }
-  return e;
-}
-
-const limitFor = (key: string) => (key.startsWith("*|") ? MAX_FAILS_PER_EMAIL : MAX_FAILS);
-
-/**
- * Denemeyi sayar. Tablo doluysa önce süresi dolanlar, sonra kendi sınırına ulaşmamış en eski kayıt silinir;
- * engellenmiş sayaçlar asla silinmez. Tablo yalnızca engellenmiş kayıtlarla doluysa deneme kaydedilmeden
- * geçirilir (fail-open): mevcut engeller uygulanmaya devam eder, ama dolu tablo kimsenin girişini kilitlemez.
- */
-function recordAttempt(key: string, now: number) {
-  const e = active(key, now);
-  if (!e && fails.size >= MAX_ENTRIES) {
-    for (const [k, v] of fails) if (now - v.first >= WINDOW_MS) fails.delete(k);
-    if (fails.size >= MAX_ENTRIES) {
-      const victim = [...fails].find(([k, v]) => v.count < limitFor(k))?.[0];
-      if (!victim) return;
-      fails.delete(victim);
-    }
-  }
-  fails.set(key, e ? { count: e.count + 1, first: e.first } : { count: 1, first: now });
-}
+const attempts = new Map<string, { count: number; first: number }>();
 
 export async function POST(req: Request) {
   const body = await req.json().catch(() => ({}));
   const email = String(body.email ?? "").trim().toLowerCase();
   const password = String(body.password ?? "");
-  const ip = req.headers.get("x-forwarded-for")?.split(",")[0].trim() || "local";
-  const key = `${ip}|${email}`;
-  const emailKey = `*|${email}`;
-  const now = Date.now();
-  const tooMany = () => NextResponse.json({ error: "Çok fazla hatalı deneme. Lütfen 15 dakika sonra tekrar deneyin." }, { status: 429 });
-  if ((active(key, now)?.count ?? 0) >= MAX_FAILS || (active(emailKey, now)?.count ?? 0) >= MAX_FAILS_PER_EMAIL) return tooMany();
-  // Deneme, beklemeli işlemlerden (DB, bcrypt) önce sayılır; eşzamanlı isteklerle sınır aşılamaz. Başarıda sıfırlanır.
-  recordAttempt(key, now);
-  recordAttempt(emailKey, now);
 
   const user = email ? await prisma.user.findUnique({ where: { email } }) : null;
-  const ok = await bcrypt.compare(password, user?.passwordHash ?? DUMMY_HASH);
-  if (!user || !ok) {
-    return NextResponse.json({ error: "E-posta veya şifre hatalı" }, { status: 401 });
+
+  if (user) {
+    // Kontrol ve sayım aynı senkron adımda, beklemeli bcrypt'ten önce: eşzamanlı isteklerle sınır aşılamaz.
+    const now = Date.now();
+    const cur = attempts.get(user.id);
+    const entry = cur && now - cur.first < WINDOW_MS ? cur : { count: 0, first: now };
+    if (entry.count >= MAX_FAILS) {
+      return NextResponse.json({ error: "Çok fazla hatalı deneme. Lütfen 15 dakika sonra tekrar deneyin." }, { status: 429 });
+    }
+    attempts.set(user.id, { count: entry.count + 1, first: entry.first });
   }
-  fails.delete(key);
-  fails.delete(emailKey);
+
+  const ok = await bcrypt.compare(password, user?.passwordHash ?? DUMMY_HASH);
+  if (!user || !ok) return NextResponse.json({ error: "E-posta veya şifre hatalı" }, { status: 401 });
+  attempts.delete(user.id);
 
   const token = await signSession({ uid: user.id, name: user.name, role: user.role as "ADMIN" | "SALES" });
   const res = NextResponse.json({ ok: true });

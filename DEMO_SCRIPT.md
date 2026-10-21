@@ -40,7 +40,7 @@ npm start
 | Mehmet | http://localhost:3000/crm/login | mehmet@mirmotors.demo | MirDemo2026! |
 | Müşteri | http://localhost:3000/araclar | — | — |
 
-> Aynı e-posta ile 10 kez yanlış şifre girilirse giriş 15 dakika kilitlenir. Olursa sunucuyu `npm start` ile yeniden başlatmak kilidi kaldırır (veriler korunur).
+> Bir hesapla 10 kez yanlış şifre girilirse giriş 15 dakika kilitlenir. Olursa sunucuyu `npm start` ile yeniden başlatmak kilidi kaldırır (veriler korunur).
 
 7. Örnek stok hazır: 11 temsili araç (8 satışta, 1 opsiyonlu Porsche Macan, 1 satış bekleyen Evoque, 1 satılmış Audi A5, 1 taslak Mini).
 

@@ -4,7 +4,7 @@
 
 **CRM**
 - Personel girişi (Yönetici / Satış personeli), imzalı httpOnly çerez; `/crm` ve `/api/crm` sunucu tarafında korumalı
-- Giriş denemesi sınırı (IP+e-posta başına 10, e-posta başına 30 hatalı deneme / 15 dk), sabit süreli şifre karşılaştırma
+- Giriş denemesi sınırı (hesap başına 15 dakikada 10 hatalı deneme), sabit süreli şifre karşılaştırma
 - Özet ekranı: toplam stok, satışta, opsiyonlu, satış bekleyen, satılan kartları; son işlemler; son satışlar
 - Araç listesi (durum sekmeleri, arama), manuel araç ekleme (taslak), düzenleme
 - Fotoğraf yükleme (çoklu), silme, kapak seçme; video yükleme/silme; ekspertiz PDF yükleme (yalnızca CRM'de)
