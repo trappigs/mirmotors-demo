@@ -34,6 +34,16 @@ Durum makinesi: `src/lib/vehicle-status.ts`. Her geçiş tek bir veritabanı iş
 - Her durum değişikliği `StatusHistory` tablosuna personel, tarih, önceki ve sonraki durumla yazılır; düzenlemeler de "Düzenlendi" olarak loglanır.
 - Butonlar yol göstericidir; Mehmet'e "Satış sürecini başlat" butonu bilerek gösterilir ve sunucunun reddi ekranda açıklanır.
 - Yayındaki bir ilanın son fotoğrafı silinemez (yayında fotoğrafsız ilan oluşmasın).
+- Opsiyonlu / satış bekleyen araçta bilgi düzenleme ve medya değişikliği yalnızca opsiyon sahibi veya yönetici (`src/lib/permissions.ts`). Bilgi düzenleme koşulu UPDATE sorgusunun içindedir.
+- Bilinen sınırlama: medya yüklemede yetki kontrolü ile kayıt ayrı adımlardır; araç durumu tam o anda değişirse (ör. satış tamamlanırken eşzamanlı fotoğraf yükleme) fotoğraf yine de eklenebilir. Durum geçişleri etkilenmez. Üretimde kayıt işlemi koşullu tek işleme alınmalı.
+- Bir video dosyası yalnızca bir araca ait olabilir (`Vehicle.videoPath` benzersiz).
+
+## Giriş güvenliği (demo düzeyi)
+
+- Şifreler bcrypt; kullanıcı yoksa da sahte özetle karşılaştırma yapılır (zamanlamadan e-posta tahmini önlenir).
+- Bellek içi deneme sınırı: IP+e-posta başına 10, e-posta başına 30 hatalı deneme / 15 dk. Deneme, beklemeli işlemlerden önce sayılır. Tablo dolarsa yalnızca engellenmemiş eski kayıtlar silinir.
+- Kabul edilen sınırlamalar: X-Forwarded-For doğrulanmaz (demo doğrudan çalışır, vekil sunucu yok); e-posta başına kilit kötü niyetli birinin bir hesabı 15 dk kilitlemesine izin verir; sayaçlar sunucu yeniden başlatılınca sıfırlanır. Üretimde: güvenilir vekil yapılandırması, Redis gibi paylaşımlı TTL deposu, kademeli gecikme/CAPTCHA.
+- Seed kullanıcılarının kimlikleri sabittir (`demo-yonetici` vb.); `npm run db:reset` açık oturumları düşürmez.
 
 ## AI destekli araç girişi
 

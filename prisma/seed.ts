@@ -41,10 +41,11 @@ async function main() {
   await prisma.vehicle.deleteMany();
   await prisma.user.deleteMany();
 
+  // Sabit kimlikler: `npm run db:reset` sonrasında tarayıcılardaki açık oturumlar geçerli kalır.
   const passwordHash = await bcrypt.hash(DEMO_PASSWORD, 10);
-  const admin = await prisma.user.create({ data: { name: "Yönetici (Demo)", email: "yonetici@mirmotors.demo", passwordHash, role: "ADMIN" } });
-  const ahmet = await prisma.user.create({ data: { name: "Ahmet", email: "ahmet@mirmotors.demo", passwordHash, role: "SALES" } });
-  const mehmet = await prisma.user.create({ data: { name: "Mehmet", email: "mehmet@mirmotors.demo", passwordHash, role: "SALES" } });
+  const admin = await prisma.user.create({ data: { id: "demo-yonetici", name: "Yönetici (Demo)", email: "yonetici@mirmotors.demo", passwordHash, role: "ADMIN" } });
+  const ahmet = await prisma.user.create({ data: { id: "demo-ahmet", name: "Ahmet", email: "ahmet@mirmotors.demo", passwordHash, role: "SALES" } });
+  const mehmet = await prisma.user.create({ data: { id: "demo-mehmet", name: "Mehmet", email: "mehmet@mirmotors.demo", passwordHash, role: "SALES" } });
 
   for (const v of VEHICLES) {
     const createdAt = new Date(Date.now() - v.daysAgo * 86_400_000);

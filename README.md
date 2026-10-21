@@ -24,6 +24,9 @@ npm run demo
 
 Site: http://localhost:3000 · CRM: http://localhost:3000/crm
 
+> **Dikkat:** `npm run demo` her çalıştırmada örnek veriyi baştan yükler; eklenen araçlar ve yüklenen dosyalar silinir.
+> Verileri koruyarak yeniden başlatmak için (derleme yapılmışsa) yalnızca `npm start` kullanın.
+
 Geliştirme modunda çalıştırmak için:
 
 ```bash
@@ -38,7 +41,8 @@ npm run dev
 |---|---|
 | `npm run setup` | `.env` yoksa oluşturur, Prisma istemcisini üretir, SQLite şemasını kurar, örnek veriyi yükler |
 | `npm run db:reset` | Demo verisini ve yüklenen dosyaları sıfırlar (sunum öncesi) |
-| `npm run demo` | setup + build + start |
+| `npm run demo` | setup + build + start (**verileri sıfırlar**) |
+| `npm start` | Derlenmiş uygulamayı başlatır (**veriler korunur**) |
 | `npm test` | Durum makinesi birim testleri (eşzamanlılık testleri dahil) |
 | `npm run e2e` | Çalışan sunucuya karşı 14 adımlık demo senaryosu testi (`node tests/e2e-demo.mjs http://localhost:3000`) |
 | `npm run lint` / `npm run build` | Lint ve üretim derlemesi |

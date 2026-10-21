@@ -23,12 +23,19 @@ function active(key: string, now: number) {
   return e;
 }
 
-/** Denemeyi sayar; tablo doluysa (canlı sayaçlar silinmez) false döner ve istek reddedilir. */
+/**
+ * Denemeyi sayar. Tablo doluysa önce süresi dolanlar, sonra sınıra ulaşmamış (engellenmemiş) en eski kayıt silinir;
+ * engellenmiş sayaçlar asla silinmez. Yalnızca tablonun tamamı engellenmiş kayıtlardan oluşuyorsa false döner.
+ */
 function recordAttempt(key: string, now: number): boolean {
   const e = active(key, now);
   if (!e && fails.size >= MAX_ENTRIES) {
     for (const [k, v] of fails) if (now - v.first >= WINDOW_MS) fails.delete(k);
-    if (fails.size >= MAX_ENTRIES) return false;
+    if (fails.size >= MAX_ENTRIES) {
+      const victim = [...fails].find(([, v]) => v.count < MAX_FAILS)?.[0];
+      if (!victim) return false;
+      fails.delete(victim);
+    }
   }
   fails.set(key, e ? { count: e.count + 1, first: e.first } : { count: 1, first: now });
   return true;
