@@ -14,7 +14,7 @@ export function SortSelect({ options, value, params }: { options: { key: string;
           next.set("sirala", e.target.value);
           router.push(`/araclar?${next.toString()}`);
         }}
-        className="h-11 min-w-[200px] appearance-none rounded-xl border border-zinc-200 bg-white pl-4 pr-10 text-sm font-medium text-ink shadow-sm outline-none transition hover:border-zinc-400 focus:border-accent-dark focus:ring-4 focus:ring-accent/15"
+        className="h-11 min-w-[200px] appearance-none rounded-xl border border-line bg-white pl-4 pr-10 text-sm font-medium text-ink shadow-sm outline-none transition hover:border-zinc-400 focus:border-brand focus:ring-4 focus:ring-brand/10"
       >
         {options.map((o) => (
           <option key={o.key} value={o.key}>{o.label}</option>

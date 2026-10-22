@@ -12,7 +12,7 @@ export function NavLinks({ items }: { items: { href: string; label: string }[] }
           <Link
             key={n.href}
             href={n.href}
-            className={`rounded-lg px-3.5 py-2 text-[15px] font-medium transition ${active ? "bg-zinc-100 text-ink" : "text-zinc-600 hover:bg-zinc-50 hover:text-ink"}`}
+            className={`relative rounded-lg px-3 py-2 text-[15px] font-semibold transition ${active ? "text-brand" : "text-ink hover:text-brand"}`}
           >
             {n.label}
           </Link>

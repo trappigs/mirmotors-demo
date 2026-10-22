@@ -77,3 +77,11 @@ Gerçek WhatsApp API, Instagram DM, otomatik müşteri cevaplama, EİDS entegras
 - AI: maliyet limiti, zaman aşımı/yeniden deneme, kişisel veri içeren videoların üçüncü taraf AI servislerine gönderilmesi için hukuki değerlendirme (KVKK yurt dışı aktarım).
 - Otomatik opsiyon süresi sona erdirme (zamanlanmış iş).
 - Erişilebilirlik ve SEO (yayına geçince noindex kaldırılmalı).
+
+## Görsel tasarım sistemi (müşteri sitesi)
+
+- Referans: Borz Motor `/tum-araclar` yerleşimi ve kırmızı-beyaz-siyah ilan platformu hissi (kullanıcı talebiyle). Borz logosu, metinleri, fotoğrafları ve peşinat/kredi/konsinye/nakit alım özellikleri kopyalanmadı.
+- Renk token'ları `src/app/globals.css` `@theme` bloğunda: `brand #BA1020`, `brand-dark #990C19` (hover), `ink #17191D`, `paper #F4F4F6`, `muted #646B76`, `line #E3E5E9`. Eski `accent` token'ı geriye dönük uyumluluk için `brand` ile aynı kırmızıya eşlendi; CRM bu sayede kırmızıya uyarlandı, bileşenleri değişmedi.
+- Kırmızı: birincil CTA, kart fiyat bantları, aktif filtre etiketleri, bölüm vurgu çizgileri, bağlantı hover'ları, arama butonu, detay sayfası fiyat ve iletişim alanı.
+- "Opsiyonlu" durumu metin + kilit ikonu ile gösterilir (yalnızca renge bağlı değil).
+- Logo: Mir Motors'a özgü kelime markası (kırmızı eğik blok içinde "M" + MIR siyah / MOTORS kırmızı, tek satır).

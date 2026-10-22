@@ -18,7 +18,7 @@ export default async function PanelLayout({ children }: { children: React.ReactN
             <nav className="flex flex-wrap items-center gap-4 text-sm">
               <Link href="/crm" className="text-zinc-300 hover:text-white">Özet</Link>
               <Link href="/crm/vehicles" className="text-zinc-300 hover:text-white">Araçlar</Link>
-              <Link href="/crm/vehicles/new" className="rounded-md bg-accent/15 px-2.5 py-1 font-semibold text-accent hover:bg-accent hover:text-ink">+ Araç ekle</Link>
+              <Link href="/crm/vehicles/new" className="rounded-md bg-accent/15 px-2.5 py-1 font-semibold text-accent hover:bg-accent hover:text-white">+ Araç ekle</Link>
               <a href="/araclar" target="_blank" className="text-zinc-300 hover:text-white">Siteyi aç ↗</a>
             </nav>
           </div>
@@ -30,7 +30,7 @@ export default async function PanelLayout({ children }: { children: React.ReactN
           </div>
         </div>
       </header>
-      <div className="bg-accent/90 px-4 py-1 text-center text-xs font-semibold text-ink">DEMO ORTAMI — örnek veriler</div>
+      <div className="bg-brand px-4 py-1 text-center text-xs font-semibold text-white">DEMO ORTAMI — örnek veriler</div>
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6">{children}</main>
     </div>
   );

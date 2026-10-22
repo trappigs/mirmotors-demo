@@ -56,10 +56,10 @@ export function FilterPanel({ brandModels, values, sort }: { brandModels: Record
 
   return (
     <>
-      <button type="button" onClick={() => setOpen(true)} className="btn-outline h-11 rounded-xl px-4" aria-expanded={open} data-testid="open-filters">
+      <button type="button" onClick={() => setOpen(true)} className="btn-outline h-11 rounded-xl bg-white px-4 font-bold" aria-expanded={open} data-testid="open-filters">
         <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4" /></svg>
         Detaylı Filtreler
-        {activeCount > 0 && <span className="rounded-full bg-accent px-2 py-0.5 text-[11px] text-ink">{activeCount}</span>}
+        {activeCount > 0 && <span className="rounded-full bg-brand px-2 py-0.5 text-[11px] text-white">{activeCount}</span>}
       </button>
 
       {/* Panel her zaman DOM'da kalır (form değerleri korunur); kapalıyken görünmez */}
@@ -117,7 +117,7 @@ export function FilterPanel({ brandModels, values, sort }: { brandModels: Record
                 {[["", "Tümü"], ["AVAILABLE", "Satışta"], ["OPTIONED", "Opsiyonlu"]].map(([val, label]) => (
                   <label key={label} className="cursor-pointer">
                     <input type="radio" name="durum" value={val} defaultChecked={(values.durum ?? "") === val} className="peer sr-only" />
-                    <span className="block rounded-lg px-2 py-2 text-center text-zinc-500 transition peer-checked:bg-white peer-checked:text-ink peer-checked:shadow-sm peer-focus-visible:ring-2 peer-focus-visible:ring-accent">
+                    <span className="block rounded-lg px-2 py-2 text-center text-zinc-500 transition peer-checked:bg-brand peer-checked:text-white peer-checked:shadow-sm peer-focus-visible:ring-2 peer-focus-visible:ring-brand">
                       {label}
                     </span>
                   </label>
@@ -128,7 +128,7 @@ export function FilterPanel({ brandModels, values, sort }: { brandModels: Record
 
           <div className="flex gap-3 border-t border-zinc-200 px-6 py-4">
             <Link href="/araclar" className="btn-outline flex-1 rounded-xl py-3">Temizle</Link>
-            <button className="btn-primary flex-[2] rounded-xl py-3">Filtrele</button>
+            <button className="btn-primary flex-[2] rounded-xl py-3 font-bold">Filtrele</button>
           </div>
         </form>
       </div>

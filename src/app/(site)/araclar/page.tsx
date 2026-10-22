@@ -59,18 +59,18 @@ function Chip({ href, active, children }: { href: string; active: boolean; child
     <Link
       href={href}
       aria-pressed={active}
-      className={`inline-flex items-center gap-1.5 rounded-full border px-4 py-2 text-[13px] font-semibold transition ${
-        active ? "border-ink bg-ink text-white" : "border-zinc-200 bg-white text-ink hover:border-zinc-400"
+      className={`inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-[12.5px] font-bold transition ${
+        active ? "border-brand bg-brand text-white shadow-[0_4px_10px_-4px_rgba(186,16,32,0.6)]" : "border-line bg-white text-ink hover:border-brand hover:text-brand"
       }`}
     >
       {children}
-      {active && <span aria-hidden className="text-white/60">×</span>}
+      {active && <span aria-hidden className="text-white/80">×</span>}
     </Link>
   );
 }
 
 function GroupLabel({ children }: { children: React.ReactNode }) {
-  return <p className="mb-2.5 border-l-[3px] border-accent pl-2.5 text-sm font-bold text-ink">{children}</p>;
+  return <p className="section-mark mb-2 text-[13px] font-bold text-ink">{children}</p>;
 }
 
 export default async function VehiclesPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
@@ -87,18 +87,18 @@ export default async function VehiclesPage({ searchParams }: { searchParams: Pro
   const keep = Object.entries(values).filter(([k, v]) => v && !searchOwn.includes(k));
 
   return (
-    <div className="mx-auto max-w-7xl px-4 pb-10 pt-8 sm:px-6 md:pt-10">
+    <div className="mx-auto max-w-7xl px-4 pb-10 pt-7 sm:px-6 md:pt-8">
       {/* Başlık + görünüm + sıralama */}
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <h1 className="font-display text-3xl font-bold tracking-tight text-ink md:text-4xl">Tüm Araçlarımız</h1>
+        <h1 className="font-display text-2xl font-extrabold tracking-tight text-brand md:text-[28px]">Tüm Araçlarımız</h1>
         <div className="flex items-center gap-2">
-          <div className="flex rounded-xl border border-zinc-200 bg-white p-1 shadow-sm" role="group" aria-label="Görünüm">
+          <div className="flex rounded-xl border border-line bg-white p-1 shadow-sm" role="group" aria-label="Görünüm">
             <Link href={hrefWith(values, { gorunum: "liste" })} aria-label="Liste görünümü" aria-pressed={isList}
-              className={`grid h-9 w-9 place-items-center rounded-lg transition ${isList ? "bg-ink text-white" : "text-zinc-500 hover:text-ink"}`}>
+              className={`grid h-9 w-9 place-items-center rounded-lg transition ${isList ? "bg-ink text-white" : "text-muted hover:text-brand"}`}>
               <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01" /></svg>
             </Link>
             <Link href={hrefWith(values, { gorunum: undefined })} aria-label="Izgara görünümü" aria-pressed={!isList}
-              className={`grid h-9 w-9 place-items-center rounded-lg transition ${!isList ? "bg-ink text-white" : "text-zinc-500 hover:text-ink"}`}>
+              className={`grid h-9 w-9 place-items-center rounded-lg transition ${!isList ? "bg-ink text-white" : "text-muted hover:text-brand"}`}>
               <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor" aria-hidden="true"><rect x="4" y="4" width="7" height="7" rx="1.5" /><rect x="13" y="4" width="7" height="7" rx="1.5" /><rect x="4" y="13" width="7" height="7" rx="1.5" /><rect x="13" y="13" width="7" height="7" rx="1.5" /></svg>
             </Link>
           </div>
@@ -111,31 +111,31 @@ export default async function VehiclesPage({ searchParams }: { searchParams: Pro
       </div>
 
       {/* Geniş arama alanı */}
-      <section className="mt-6 rounded-2xl border border-zinc-200 bg-white p-5 shadow-[0_8px_30px_-12px_rgba(16,24,40,0.15)] md:p-6">
+      <section className="mt-5 rounded-2xl bg-white p-5 shadow-[0_6px_24px_-10px_rgba(16,24,40,0.18)] ring-1 ring-black/[0.04] md:px-6 md:py-5">
         <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
           <div className="shrink-0">
             <p className="font-display text-xl font-bold text-ink">Araçlar</p>
-            <p className="mt-0.5 text-sm text-zinc-500" data-testid="result-count">
+            <p className="mt-0.5 text-[13px] text-muted" data-testid="result-count">
               {vehicles.length} ilan listeleniyor · {vehicles.length - optionedCount} satışta, {optionedCount} opsiyonlu
             </p>
           </div>
-          <form action="/araclar" className="grid flex-1 gap-2.5 sm:grid-cols-[1fr_auto] lg:max-w-3xl lg:grid-cols-[1.6fr_1fr_0.9fr_auto]">
+          <form action="/araclar" className="grid flex-1 grid-cols-2 gap-2.5 lg:max-w-3xl lg:grid-cols-[1.6fr_1fr_0.9fr_auto]">
             {keep.map(([k, v]) => <input key={k} type="hidden" name={k} value={v} />)}
-            <input name="q" defaultValue={values.q ?? ""} placeholder="Marka, model veya paket ara" aria-label="Marka, model veya paket ara" className="input h-12 rounded-xl sm:col-span-2 lg:col-span-1" />
-            <input name="maxFiyat" defaultValue={values.maxFiyat ?? ""} inputMode="numeric" placeholder="Maksimum fiyat (TL)" aria-label="Maksimum fiyat" className="input h-12 rounded-xl" />
+            <input name="q" defaultValue={values.q ?? ""} placeholder="Marka, model veya paket ara" aria-label="Marka, model veya paket ara" className="input h-12 rounded-xl bg-white col-span-2 lg:col-span-1" />
+            <input name="maxFiyat" defaultValue={values.maxFiyat ?? ""} inputMode="numeric" placeholder="Maks. fiyat (TL)" aria-label="Maksimum fiyat" className="input h-12 rounded-xl" />
             <select name="durum" defaultValue={values.durum ?? ""} aria-label="Durum" className="input h-12 rounded-xl">
               <option value="">Tüm durumlar</option>
               <option value="AVAILABLE">Satışta</option>
               <option value="OPTIONED">Opsiyonlu</option>
             </select>
-            <button className="btn-primary h-12 rounded-xl px-8 text-[15px] sm:col-span-2 lg:col-span-1" data-testid="search-submit">Ara</button>
+            <button className="btn-primary col-span-2 h-12 rounded-xl px-9 text-[15px] font-bold lg:col-span-1" data-testid="search-submit">Ara</button>
           </form>
         </div>
       </section>
 
       {/* Yatay hızlı filtreler */}
-      <section className="mt-6 grid gap-5 lg:grid-cols-[1fr_auto] lg:items-end">
-        <div className="space-y-4">
+      <section className="mt-5 grid gap-4 lg:grid-cols-[1fr_auto] lg:items-end">
+        <div className="min-w-0 space-y-3">
           <div>
             <GroupLabel>Fiyat aralığı</GroupLabel>
             <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 [&::-webkit-scrollbar]:hidden [&>*]:shrink-0">
@@ -152,7 +152,7 @@ export default async function VehiclesPage({ searchParams }: { searchParams: Pro
                 const c = quick(values, { kasa: k });
                 return <Chip key={k} {...c}>{k}</Chip>;
               })}
-              <span className="mx-1 hidden w-px self-stretch bg-zinc-200 sm:block" />
+              <span className="mx-1 hidden w-px self-stretch bg-line sm:block" />
               {[["AVAILABLE", "Satışta"], ["OPTIONED", "Opsiyonlu"]].map(([val, label]) => {
                 const c = quick(values, { durum: val });
                 return <Chip key={val} {...c}>{label}</Chip>;
@@ -166,30 +166,30 @@ export default async function VehiclesPage({ searchParams }: { searchParams: Pro
       </section>
 
       {chips.length > 0 && (
-        <div className="mt-5 flex flex-wrap items-center gap-2 rounded-xl bg-white/70 px-4 py-3 ring-1 ring-zinc-200" aria-label="Seçili filtreler">
-          <span className="mr-1 text-xs font-semibold uppercase tracking-[0.12em] text-zinc-500">Seçili:</span>
+        <div className="mt-4 flex flex-wrap items-center gap-2 rounded-xl bg-white px-4 py-2.5 ring-1 ring-line" aria-label="Seçili filtreler">
+          <span className="mr-1 text-xs font-bold uppercase tracking-[0.1em] text-muted">Seçili:</span>
           {chips.map((c) => (
-            <Link key={c.text} href={c.href} className="chip border-accent/50 bg-accent/10 text-ink" title="Filtreyi kaldır">
-              {c.text} <span aria-hidden className="text-zinc-500">×</span>
+            <Link key={c.text} href={c.href} className="chip border-brand/30 bg-brand-soft font-semibold text-brand" title="Filtreyi kaldır">
+              {c.text} <span aria-hidden>×</span>
             </Link>
           ))}
-          <Link href="/araclar" className="ml-1 text-xs font-semibold text-zinc-500 underline-offset-4 hover:text-ink hover:underline">Tümünü temizle</Link>
+          <Link href="/araclar" className="ml-1 text-xs font-semibold text-muted underline-offset-4 hover:text-brand hover:underline">Tümünü temizle</Link>
         </div>
       )}
 
       {/* Sonuçlar */}
       {vehicles.length === 0 ? (
-        <div className="mt-8 rounded-2xl border border-zinc-200 bg-white px-6 py-16 text-center">
+        <div className="mt-6 rounded-2xl bg-white px-6 py-16 text-center ring-1 ring-line">
           <p className="font-display text-lg font-semibold">Bu kriterlere uygun araç bulunamadı.</p>
-          <p className="mt-2 text-sm text-zinc-500">Filtreleri genişletmeyi deneyin veya danışmanımıza yazın.</p>
+          <p className="mt-2 text-sm text-muted">Filtreleri genişletmeyi deneyin veya danışmanımıza yazın.</p>
           <Link href="/araclar" className="btn-outline mt-6">Filtreleri temizle</Link>
         </div>
       ) : isList ? (
-        <div className="mt-8 space-y-4">
+        <div className="mt-6 space-y-4">
           {vehicles.map((v) => <VehicleRow key={v.id} vehicle={v} />)}
         </div>
       ) : (
-        <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="mt-6 grid gap-3.5 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3 xl:grid-cols-4">
           {vehicles.map((v) => <VehicleCard key={v.id} vehicle={v} />)}
         </div>
       )}

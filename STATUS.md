@@ -18,7 +18,7 @@
 
 **Müşteri sitesi**
 - Ana sayfa, Araçlarımız, Araç detayı, Hakkımızda, İletişim; mobil uyumlu; her sayfada "DEMO · Örnek Araçlar" bandı
-- Araç listeleme (Borz Motor düzenine uyarlanmış): geniş arama alanı (marka/model/paket metin araması, maksimum fiyat, durum), yatay hızlı filtre etiketleri (fiyat aralığı, kasa tipi, durum), "Detaylı Filtreler" paneli (marka → model, fiyat, yıl, km, yakıt, vites, kasa, durum), ızgara/liste görünümü, masaüstünde 4 sütun
+- Kırmızı-beyaz-siyah tasarım sistemi (Borz Motor referansı). Araç listeleme (Borz Motor düzenine uyarlanmış): geniş arama alanı (marka/model/paket metin araması, maksimum fiyat, durum), yatay hızlı filtre etiketleri (fiyat aralığı, kasa tipi, durum), "Detaylı Filtreler" paneli (marka → model, fiyat, yıl, km, yakıt, vites, kasa, durum), ızgara/liste görünümü, masaüstünde 4 sütun
 - Sıralama: yeni eklenen, fiyat artan/azalan, km artan, yıl azalan
 - Detay: galeri, video oynatıcı (Range destekli), özellikler, donanım, boya/değişen/hasar, ekspertiz özeti, durum, WhatsApp bağlantısı (wa.me)
 - Opsiyonlu etiketi; satış bekleyen/satılmış/taslak araç listede yok, eski bağlantı HTTP 404 "Bu ilan artık yayında değil"

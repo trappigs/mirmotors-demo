@@ -15,7 +15,7 @@ const SHAPES: Record<string, Shape> = {
 const STUDIOS = [
   ["#15181f", "#232833", "#0d0f14", "#ffffff", "#e8e8e8"],
   ["#e8e4dc", "#d3cdc2", "#bfb8ab", "#ffffff", "#2a2c31"],
-  ["#111a2b", "#1d2a42", "#0b111c", "#c9a56b", "#e8e8e8"],
+  ["#1d2026", "#2c3038", "#121418", "#ffffff", "#e8e8e8"],
 ];
 
 export function carSvg(opts: { color: string; bodyType: string; title: string; variant: number }) {

@@ -73,12 +73,12 @@ export default async function VehicleDetailPage({ params }: Props) {
 
   return (
     <div className="mx-auto max-w-7xl px-4 pb-8 pt-6 sm:px-6">
-      <nav className="flex flex-wrap items-center gap-2 text-sm text-zinc-500">
-        <Link href="/araclar" className="transition hover:text-ink">Araçlarımız</Link>
+      <nav className="flex flex-wrap items-center gap-2 text-sm text-muted">
+        <Link href="/araclar" className="transition hover:text-brand">Araçlarımız</Link>
         <span className="text-zinc-300">/</span>
-        <Link href={`/araclar?marka=${encodeURIComponent(v.brand)}`} className="transition hover:text-ink">{v.brand}</Link>
+        <Link href={`/araclar?marka=${encodeURIComponent(v.brand)}`} className="transition hover:text-brand">{v.brand}</Link>
         <span className="text-zinc-300">/</span>
-        <span className="text-ink">{v.model}</span>
+        <span className="font-semibold text-ink">{v.model}</span>
       </nav>
 
       {/* Başlık */}
@@ -86,14 +86,14 @@ export default async function VehicleDetailPage({ params }: Props) {
         <div>
           <div className="flex items-center gap-3">
             {statusBadge}
-            <span className="text-xs text-zinc-500">İlan no: {listingNo}</span>
+            <span className="text-xs text-muted">İlan no: {listingNo}</span>
           </div>
           <p className="eyebrow mt-4">{v.brand}</p>
-          <h1 className="mt-2 font-display text-3xl font-bold tracking-tight md:text-5xl">
-            {v.model} <span className="font-normal text-zinc-500">{v.packageName}</span>
+          <h1 className="mt-1.5 font-display text-3xl font-extrabold tracking-tight md:text-[42px]">
+            {v.model} <span className="font-semibold text-muted">{v.packageName}</span>
           </h1>
         </div>
-        <p className="font-display text-3xl font-bold tracking-tight lg:hidden">{formatPrice(v.price)}</p>
+        <p className="rounded-lg bg-brand px-4 py-2 font-display text-2xl font-extrabold tracking-tight text-white lg:hidden">{formatPrice(v.price)}</p>
       </header>
 
       <div className="mt-8 grid gap-10 lg:grid-cols-[1fr_380px]">
@@ -104,30 +104,30 @@ export default async function VehicleDetailPage({ params }: Props) {
           <section className="mt-10 grid grid-cols-2 gap-3 sm:grid-cols-3">
             {highlights.map(({ icon: Icon, label, value }) => (
               <div key={label} className="card flex items-center gap-3.5 p-4">
-                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-paper text-accent-dark">
+                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-brand-soft text-brand">
                   <Icon className="h-5 w-5" />
                 </span>
                 <div className="min-w-0">
-                  <p className="text-[11px] uppercase tracking-[0.12em] text-zinc-500">{label}</p>
-                  <p className="truncate font-semibold">{value}</p>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">{label}</p>
+                  <p className="truncate font-bold">{value}</p>
                 </div>
               </div>
             ))}
           </section>
 
           {v.videoPath && (
-            <section className="mt-14">
-              <h2 className="font-display text-2xl font-bold tracking-tight">Tanıtım videosu</h2>
+            <section className="mt-12">
+              <h2 className="section-mark font-display text-2xl font-extrabold tracking-tight">Tanıtım videosu</h2>
               <video src={mediaUrl(v.videoPath)!} controls preload="metadata" playsInline className="mt-5 aspect-video w-full rounded-2xl bg-black shadow-xl" data-testid="vehicle-video" />
             </section>
           )}
 
-          <section className="mt-14">
-            <h2 className="font-display text-2xl font-bold tracking-tight">Teknik özellikler</h2>
+          <section className="mt-12">
+            <h2 className="section-mark font-display text-2xl font-extrabold tracking-tight">Teknik özellikler</h2>
             <dl className="card mt-5 grid overflow-hidden sm:grid-cols-2">
               {specs.filter(([, val]) => val !== null && val !== "").map(([k, val]) => (
-                <div key={k} className="flex items-center justify-between gap-4 border-b border-zinc-100 px-5 py-3.5 text-sm sm:odd:border-r">
-                  <dt className="text-zinc-500">{k}</dt>
+                <div key={k} className="flex items-center justify-between gap-4 border-b border-line px-5 py-3.5 text-sm sm:odd:border-r">
+                  <dt className="text-muted">{k}</dt>
                   <dd className="text-right font-semibold">{val}</dd>
                 </div>
               ))}
@@ -135,23 +135,23 @@ export default async function VehicleDetailPage({ params }: Props) {
           </section>
 
           {equipment.length > 0 && (
-            <section className="mt-14">
-              <h2 className="font-display text-2xl font-bold tracking-tight">Donanım</h2>
+            <section className="mt-12">
+              <h2 className="section-mark font-display text-2xl font-extrabold tracking-tight">Donanım</h2>
               <ul className="mt-5 flex flex-wrap gap-2">
                 {equipment.map((e) => (
-                  <li key={e} className="inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-white px-3.5 py-2 text-sm text-zinc-700">
-                    <IconCheck className="h-4 w-4 text-accent-dark" />{e}
+                  <li key={e} className="inline-flex items-center gap-2 rounded-full border border-line bg-white px-3.5 py-2 text-sm font-medium text-ink">
+                    <IconCheck className="h-4 w-4 text-brand" />{e}
                   </li>
                 ))}
               </ul>
             </section>
           )}
 
-          <section className="mt-14">
+          <section className="mt-12">
             <div className="flex flex-wrap items-end justify-between gap-3">
-              <h2 className="font-display text-2xl font-bold tracking-tight">Boya, değişen ve hasar</h2>
+              <h2 className="section-mark font-display text-2xl font-extrabold tracking-tight">Boya, değişen ve hasar</h2>
               {v.tramerAmount !== null && (
-                <span className="rounded-full bg-ink px-3.5 py-1.5 text-xs font-semibold text-white">
+                <span className="rounded-md bg-ink px-3 py-1.5 text-xs font-bold text-white">
                   Tramer: {v.tramerAmount === 0 ? "Kayıt yok" : formatPrice(v.tramerAmount)}
                 </span>
               )}
@@ -160,8 +160,8 @@ export default async function VehicleDetailPage({ params }: Props) {
               {condition.map((c) => {
                 const clean = isClean(c.text);
                 return (
-                  <div key={c.title} className={`card border-l-4 p-5 ${clean ? "border-l-emerald-500" : c.text ? "border-l-accent" : "border-l-zinc-300"}`}>
-                    <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-zinc-500">
+                  <div key={c.title} className={`card border-l-4 p-5 ${clean ? "border-l-emerald-500" : c.text ? "border-l-brand" : "border-l-zinc-300"}`}>
+                    <p className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.08em] text-muted">
                       <IconPalette className="h-4 w-4" />{c.title}
                     </p>
                     <p className="mt-2 text-sm font-semibold text-ink">{c.text || "Belirtilmedi"}</p>
@@ -171,15 +171,15 @@ export default async function VehicleDetailPage({ params }: Props) {
             </div>
           </section>
 
-          <section className="mt-14">
-            <h2 className="font-display text-2xl font-bold tracking-tight">Ekspertiz özeti</h2>
+          <section className="mt-12">
+            <h2 className="section-mark font-display text-2xl font-extrabold tracking-tight">Ekspertiz özeti</h2>
             <div className="card mt-5 flex gap-4 p-6">
               <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-emerald-500/10 text-emerald-700">
                 <IconShield className="h-5 w-5" />
               </span>
               <div>
-                <p className="leading-relaxed text-zinc-700">{v.expertiseSummary || "Ekspertiz özeti için danışmanınızla iletişime geçin."}</p>
-                <p className="mt-3 flex items-center gap-1.5 text-xs text-zinc-500">
+                <p className="leading-relaxed text-ink">{v.expertiseSummary || "Ekspertiz özeti için danışmanınızla iletişime geçin."}</p>
+                <p className="mt-3 flex items-center gap-1.5 text-xs text-muted">
                   <IconDoc className="h-4 w-4" /> Ekspertiz raporunun tamamı showroomda incelenebilir.
                 </p>
               </div>
@@ -187,48 +187,48 @@ export default async function VehicleDetailPage({ params }: Props) {
           </section>
 
           {v.description && (
-            <section className="mt-14">
-              <h2 className="font-display text-2xl font-bold tracking-tight">Açıklama</h2>
-              <p className="mt-5 whitespace-pre-line leading-relaxed text-zinc-700">{v.description}</p>
+            <section className="mt-12">
+              <h2 className="section-mark font-display text-2xl font-extrabold tracking-tight">Açıklama</h2>
+              <p className="mt-5 whitespace-pre-line leading-relaxed text-ink">{v.description}</p>
             </section>
           )}
         </div>
 
         {/* Fiyat ve iletişim kartı */}
         <aside className="lg:sticky lg:top-24 lg:self-start">
-          <div className="card-dark relative overflow-hidden p-7">
-            <div className="pointer-events-none absolute -right-20 -top-20 h-56 w-56 rounded-full bg-accent/20 blur-3xl" />
-            <div className="relative">
-              <div className="flex items-center justify-between">
-                <p className="eyebrow-light">Satış fiyatı</p>
-                {optioned ? <OptionedBadge /> : <span className="badge bg-emerald-400/10 text-emerald-300 ring-1 ring-inset ring-emerald-400/30">Satışta</span>}
+          <div className="overflow-hidden rounded-2xl bg-white shadow-[0_10px_30px_-14px_rgba(16,24,40,0.3)] ring-1 ring-line">
+            <div className="bg-brand px-6 py-5 text-white">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-xs font-bold uppercase tracking-[0.12em] text-white/85">Satış fiyatı</p>
+                {optioned ? <OptionedBadge /> : <span className="badge bg-white text-emerald-700">Satışta</span>}
               </div>
-              <p className="mt-3 font-display text-4xl font-bold tracking-tight text-white">{formatPrice(v.price)}</p>
-              <p className="mt-1 text-sm text-zinc-400">{v.brand} {v.model} {v.packageName}</p>
-
-              <dl className="mt-6 grid grid-cols-2 gap-px overflow-hidden rounded-xl bg-white/10 text-sm">
+              <p className="mt-1.5 font-display text-[34px] font-extrabold tracking-tight">{formatPrice(v.price)}</p>
+            </div>
+            <div className="p-6">
+              <p className="text-sm font-bold uppercase tracking-wide text-ink">{v.year} {v.brand} {v.model} {v.packageName}</p>
+              <dl className="mt-4 grid grid-cols-2 gap-2 text-sm">
                 {[["Yıl", v.year], ["Km", formatKm(v.km)], ["Yakıt", v.fuel], ["Vites", v.transmission]].map(([k, val]) => (
-                  <div key={String(k)} className="bg-ink-2 px-4 py-3">
-                    <dt className="text-[11px] uppercase tracking-[0.12em] text-zinc-500">{k}</dt>
-                    <dd className="mt-0.5 font-semibold text-white">{val}</dd>
+                  <div key={String(k)} className="rounded-lg bg-paper px-3.5 py-2.5">
+                    <dt className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">{k}</dt>
+                    <dd className="mt-0.5 font-bold text-ink">{val}</dd>
                   </div>
                 ))}
               </dl>
 
               {optioned && (
-                <p className="mt-5 rounded-xl border border-accent/30 bg-accent/10 p-3.5 text-sm text-accent-light">
-                  Bu araç şu anda başka bir müşteri için opsiyonludur. Benzer araçlar için bize ulaşın.
+                <p className="mt-4 flex gap-2 rounded-lg border border-ink/10 bg-ink px-3.5 py-3 text-sm font-medium text-white">
+                  <svg viewBox="0 0 24 24" className="mt-0.5 h-4 w-4 shrink-0" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2" /><path d="M8 11V8a4 4 0 0 1 8 0v3" /></svg> Bu araç şu anda başka bir müşteri için opsiyonludur. Benzer araçlar için bize ulaşın.
                 </p>
               )}
 
               {wa && (
-                <a href={`https://wa.me/${wa}?text=${waText}`} target="_blank" rel="noopener noreferrer" className="btn mt-6 w-full bg-[#25D366] py-3.5 text-[15px] text-white shadow-[0_10px_30px_-10px_rgba(37,211,102,0.7)] hover:bg-[#1fb857]">
+                <a href={`https://wa.me/${wa}?text=${waText}`} target="_blank" rel="noopener noreferrer" className="btn-primary mt-5 w-full rounded-xl py-3.5 text-[15px] font-bold">
                   <IconWhatsApp /> WhatsApp ile bilgi al
                 </a>
               )}
-              <Link href="/iletisim" className="btn-ghost-light mt-3 w-full py-3">Showroom ziyareti planla</Link>
+              <Link href="/iletisim" className="btn-outline mt-2.5 w-full rounded-xl py-3">Showroom ziyareti planla</Link>
 
-              <p className="mt-6 border-t border-white/10 pt-4 text-xs leading-relaxed text-zinc-500">
+              <p className="mt-5 border-t border-line pt-4 text-xs leading-relaxed text-muted">
                 Demo ilan. Site üzerinden ödeme, kapora veya sözleşme işlemi yapılmaz. Satış ve noter devri showroomda tamamlanır.
               </p>
             </div>

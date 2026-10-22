@@ -26,32 +26,35 @@ export default async function HomePage() {
 
   return (
     <>
-      {/* Kompakt hero + arama */}
+      {/* Kompakt, açık zeminli hero */}
       <section className="mx-auto max-w-7xl px-4 pt-6 sm:px-6">
-        <div className="relative overflow-hidden rounded-3xl bg-ink text-white">
-          {heroImage && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={heroImage} alt="" className="absolute inset-y-0 right-0 hidden h-full w-[58%] object-cover md:block" />
-          )}
-          <div className="absolute inset-0 hidden bg-gradient-to-r from-ink via-ink/95 to-ink/10 md:block" />
-          <div className="relative px-6 pb-28 pt-10 md:max-w-[55%] md:px-12 md:pb-32 md:pt-14">
-            <p className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1 text-xs font-semibold text-zinc-200">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" /> {vehicles.length} araç stokta
+        <div className="grid overflow-hidden rounded-2xl bg-white shadow-[0_6px_24px_-12px_rgba(16,24,40,0.2)] ring-1 ring-black/[0.04] md:grid-cols-[1.05fr_1fr]">
+          <div className="flex flex-col justify-center px-6 py-8 md:px-10 md:py-10">
+            <p className="inline-flex w-fit items-center gap-2 rounded-md bg-brand-soft px-2.5 py-1 text-xs font-bold text-brand">
+              <span className="h-1.5 w-1.5 rounded-full bg-brand" /> {vehicles.length} araç stokta · satışa hazır
             </p>
-            <h1 className="mt-5 font-display text-4xl font-bold leading-[1.05] tracking-tight md:text-5xl">
-              Seçkin ikinci el, <span className="text-accent">şeffaf geçmiş.</span>
+            <h1 className="mt-4 font-display text-3xl font-extrabold leading-[1.1] tracking-tight text-ink md:text-[42px]">
+              Aradığınız ikinci el aracı <span className="text-brand">güvenle bulun.</span>
             </h1>
-            <p className="mt-4 max-w-md text-[15px] leading-relaxed text-zinc-300">
-              Ekspertiz özetli, gerçek fotoğraflı premium araçlar. Beğendiğiniz aracı danışmanınızla birlikte inceleyin.
+            <p className="mt-3 max-w-md text-[15px] leading-relaxed text-muted">
+              Ekspertiz özetli, gerçek fotoğraflı araçlar. Beğendiğiniz aracı danışmanınızla birlikte inceleyin.
             </p>
             <div className="mt-6 flex flex-wrap gap-3">
-              <Link href="/araclar" className="btn-accent rounded-xl px-5 py-3">Araçları Gör <IconArrowRight className="h-4 w-4" /></Link>
-              <Link href="/iletisim" className="btn-ghost-light rounded-xl px-5 py-3">Bizimle İletişime Geç</Link>
+              <Link href="/araclar" className="btn-primary rounded-xl px-6 py-3 text-[15px] font-bold">Araçları Gör <IconArrowRight className="h-4 w-4" /></Link>
+              <Link href="/iletisim" className="btn-outline rounded-xl px-6 py-3 text-[15px]">Bizimle İletişime Geç</Link>
             </div>
+          </div>
+          <div className="relative hidden min-h-[300px] bg-ink md:block">
+            {heroImage && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={heroImage} alt="" className="absolute inset-0 h-full w-full object-cover" />
+            )}
+            <span className="absolute bottom-4 left-4 rounded-md bg-brand px-2.5 py-1 text-xs font-bold text-white">Stoktan · {vehicles[0]?.brand} {vehicles[0]?.model}</span>
           </div>
         </div>
 
-        <form action="/araclar" className="relative z-10 mx-auto -mt-16 grid max-w-5xl gap-3 rounded-2xl border border-zinc-200 bg-white p-4 shadow-[0_20px_50px_-20px_rgba(16,24,40,0.35)] sm:grid-cols-2 md:-mt-14 md:grid-cols-[1.3fr_1fr_1fr_auto] md:p-5">
+        {/* Stok arama */}
+        <form action="/araclar" className="mt-4 grid gap-3 rounded-2xl bg-white p-4 shadow-[0_6px_24px_-12px_rgba(16,24,40,0.2)] ring-1 ring-black/[0.04] sm:grid-cols-2 md:grid-cols-[1.4fr_1fr_1fr_auto] md:p-5">
           <div>
             <label className="label" htmlFor="hero-q">Arama</label>
             <input id="hero-q" name="q" placeholder="Marka, model veya paket" className="input h-11 rounded-xl" />
@@ -69,75 +72,74 @@ export default async function HomePage() {
             <label className="label" htmlFor="hero-fiyat">Maksimum fiyat</label>
             <input id="hero-fiyat" name="maxFiyat" inputMode="numeric" placeholder="TL" className="input h-11 rounded-xl" />
           </div>
-          <button className="btn-primary h-11 self-end rounded-xl px-7">Araç Ara</button>
+          <button className="btn-primary h-11 self-end rounded-xl px-8 font-bold">Araç Ara</button>
         </form>
       </section>
 
+      {/* Stoktaki araçlar — sayfanın merkezi */}
+      <section className="mx-auto max-w-7xl px-4 pt-12 sm:px-6">
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <p className="eyebrow">Stoktaki araçlar</p>
+            <h2 className="mt-1.5 font-display text-3xl font-extrabold tracking-tight text-ink md:text-[34px]">{vehicles.length} araç stokta, satışa hazır.</h2>
+          </div>
+          <Link href="/araclar" className="inline-flex items-center gap-1.5 text-sm font-bold text-ink hover:text-brand">
+            Tüm araçlar <IconArrowRight className="h-4 w-4" />
+          </Link>
+        </div>
+        <div className="mt-5 flex flex-wrap gap-2">
+          <Link href="/araclar" className="rounded-full border border-brand bg-brand px-3.5 py-1.5 text-[12.5px] font-bold text-white">Tümü</Link>
+          {PRICE_PRESETS.map((p) => {
+            const qs = new URLSearchParams();
+            if (p.min) qs.set("minFiyat", String(p.min));
+            if (p.max) qs.set("maxFiyat", String(p.max));
+            return (
+              <Link key={p.label} href={`/araclar?${qs}`} className="rounded-full border border-line bg-white px-3.5 py-1.5 text-[12.5px] font-bold text-ink transition hover:border-brand hover:text-brand">
+                {p.label}
+              </Link>
+            );
+          })}
+        </div>
+        <div className="mt-6 grid gap-3.5 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3 xl:grid-cols-4">
+          {featured.map((v) => (
+            <VehicleCard key={v.id} vehicle={v} />
+          ))}
+        </div>
+        <div className="mt-8 text-center">
+          <Link href="/araclar" className="btn-primary rounded-xl px-7 py-3 font-bold">Tüm stoğu görüntüle ({vehicles.length}) <IconArrowRight className="h-4 w-4" /></Link>
+        </div>
+      </section>
+
       {/* Süreç şeridi */}
-      <section className="mx-auto mt-10 max-w-7xl px-4 sm:px-6">
-        <ol className="grid divide-y divide-zinc-200 rounded-2xl border border-zinc-200 bg-white md:grid-cols-3 md:divide-x md:divide-y-0">
+      <section className="mx-auto mt-14 max-w-7xl px-4 sm:px-6">
+        <ol className="grid divide-y divide-line rounded-2xl bg-white ring-1 ring-line md:grid-cols-3 md:divide-x md:divide-y-0">
           {STEPS.map((s) => (
             <li key={s.no} className="flex gap-4 p-6">
-              <span className="font-display text-3xl font-bold italic text-accent">{s.no}</span>
+              <span className="font-display text-3xl font-extrabold italic text-brand">{s.no}</span>
               <div>
-                <h2 className="font-display font-semibold text-ink">{s.title}</h2>
-                <p className="mt-1 text-sm leading-relaxed text-zinc-500">{s.text}</p>
+                <h2 className="font-display font-bold text-ink">{s.title}</h2>
+                <p className="mt-1 text-sm leading-relaxed text-muted">{s.text}</p>
               </div>
             </li>
           ))}
         </ol>
       </section>
 
-      {/* Stoktaki araçlar — sayfanın merkezi */}
-      <section className="mx-auto max-w-7xl px-4 pt-16 sm:px-6">
-        <div className="flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <p className="eyebrow">Stoktaki araçlar</p>
-            <h2 className="mt-2 font-display text-3xl font-bold tracking-tight text-ink md:text-4xl">{vehicles.length} araç stokta, satışa hazır.</h2>
-            <p className="mt-1 text-zinc-500">Fiyat aralığını seçin, size uygun aracı hemen görün.</p>
-          </div>
-          <Link href="/araclar" className="inline-flex items-center gap-1.5 text-sm font-semibold text-ink hover:text-accent-dark">
-            Tüm araçlar <IconArrowRight className="h-4 w-4" />
-          </Link>
-        </div>
-        <div className="mt-6 flex flex-wrap gap-2">
-          <Link href="/araclar" className="rounded-full border border-ink bg-ink px-4 py-2 text-[13px] font-semibold text-white">Tümü</Link>
-          {PRICE_PRESETS.map((p) => {
-            const qs = new URLSearchParams();
-            if (p.min) qs.set("minFiyat", String(p.min));
-            if (p.max) qs.set("maxFiyat", String(p.max));
-            return (
-              <Link key={p.label} href={`/araclar?${qs}`} className="rounded-full border border-zinc-200 bg-white px-4 py-2 text-[13px] font-semibold text-ink transition hover:border-zinc-400">
-                {p.label}
-              </Link>
-            );
-          })}
-        </div>
-        <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {featured.map((v) => (
-            <VehicleCard key={v.id} vehicle={v} />
-          ))}
-        </div>
-        <div className="mt-10 text-center">
-          <Link href="/araclar" className="btn-outline rounded-xl px-6 py-3">Tüm stoğu görüntüle ({vehicles.length}) <IconArrowRight className="h-4 w-4" /></Link>
-        </div>
-      </section>
-
       {/* Güven bölümü */}
-      <section className="mx-auto max-w-7xl px-4 pt-20 sm:px-6">
-        <div className="grid gap-10 rounded-3xl bg-white p-8 ring-1 ring-zinc-200 md:p-12 lg:grid-cols-[1fr_2fr]">
+      <section className="mx-auto max-w-7xl px-4 pt-6 sm:px-6">
+        <div className="grid gap-8 rounded-2xl bg-white p-8 ring-1 ring-line md:p-10 lg:grid-cols-[1fr_2fr]">
           <div>
             <p className="eyebrow">Neden Mir Motors?</p>
-            <h2 className="mt-2 font-display text-2xl font-bold tracking-tight text-ink md:text-3xl">Güven, açık bilgiyle başlar.</h2>
-            <p className="mt-3 text-zinc-500">Araç alımını tahmine değil, doğrulanmış bilgiye dayandırıyoruz. Online ödeme veya kapora yok; satış showroomda tamamlanır.</p>
+            <h2 className="mt-1.5 font-display text-2xl font-extrabold tracking-tight text-ink md:text-3xl">Güven, açık bilgiyle başlar.</h2>
+            <p className="mt-3 text-muted">Online ödeme veya kapora yok; satış showroomda, noter devriyle tamamlanır.</p>
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             {REASONS.map(({ icon: Icon, title, text }) => (
-              <div key={title} className="flex gap-3.5 rounded-2xl bg-paper p-5">
-                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-white text-accent-dark ring-1 ring-zinc-200"><Icon className="h-5 w-5" /></span>
+              <div key={title} className="flex gap-3.5 rounded-xl bg-paper p-5">
+                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-brand text-white"><Icon className="h-5 w-5" /></span>
                 <div>
-                  <h3 className="font-semibold text-ink">{title}</h3>
-                  <p className="mt-1 text-sm leading-relaxed text-zinc-500">{text}</p>
+                  <h3 className="font-bold text-ink">{title}</h3>
+                  <p className="mt-1 text-sm leading-relaxed text-muted">{text}</p>
                 </div>
               </div>
             ))}
