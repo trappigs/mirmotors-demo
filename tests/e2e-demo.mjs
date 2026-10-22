@@ -89,10 +89,13 @@ const publicHtml = async (path) => {
 
 // --- Güvenlik ---
 if (ACCESS) {
-  const gate = await fetch(`${BASE}/`, { noAccess: true });
-  check("Demo erişim kapısı: şifresiz istek reddedilir (401)", gate.status === 401, gate.status);
+  // Varsayılan kapsam: müşteri sitesi açık, CRM erişim şifresi ister (DEMO_ACCESS_SCOPE=all ise site de korunur).
+  const site = await fetch(`${BASE}/araclar`, { noAccess: true });
+  check("Müşteri sitesi erişim şifresi olmadan açılır", site.status === 200 || (process.env.E2E_SCOPE === "all" && site.status === 401), site.status);
   const gateCrm = await fetch(`${BASE}/crm/login`, { noAccess: true });
-  check("Demo erişim kapısı CRM'i de korur", gateCrm.status === 401, gateCrm.status);
+  check("Demo erişim kapısı: CRM şifresiz açılmaz (401)", gateCrm.status === 401, gateCrm.status);
+  const gateApi = await fetch(`${BASE}/api/auth/login`, { method: "POST", noAccess: true, headers: { "Content-Type": "application/json" }, body: "{}" });
+  check("Demo erişim kapısı: giriş API'si şifresiz kapalı (401)", gateApi.status === 401, gateApi.status);
 }
 {
   const r = await fetch(`${BASE}/api/crm/vehicles`, { method: "POST", body: "{}" });

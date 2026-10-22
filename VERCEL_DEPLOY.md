@@ -81,3 +81,14 @@ Tüm komutlar bu dalın klasöründe (`mirmotors-demo-vercel`) çalıştırılı
 - Önizleme (preview) deploy'ları da aynı veritabanını kullanır (Neon entegrasyonunda önizleme dalları ayrıca açılabilir).
 - Fotoğraf/video Blob'dan uygulama üzerinden akıtılır (CDN önbellekli); yüksek trafikte bant genişliği kotası dolabilir — demo için yeterli.
 - Neon Free uyku modundan ilk uyanışta kısa gecikme olabilir.
+
+## Canlı dağıtım (2026-10-22)
+
+- Adres: **https://mirmotors-demo.vercel.app** (Vercel Hobby, proje `mirmotors-demo`, bölge fra1)
+- Veritabanı: Neon Free (`mirmotors-db`, fra1) · Dosyalar: Vercel Blob özel mağaza (`mirmotors-media`, fra1)
+- Gizli değerler (erişim ve personel şifreleri): `.env.vercel-secrets.local` (git dışında)
+- Canlı testler: HTTP E2E 66/67 geçti (tek hata testin kendisindeydi: ana sayfanın da kilitli olmasını bekliyordu; düzeltildi,
+  site açık / CRM 401 ayrıca doğrulandı). Gerçek tarayıcıyla tam demo akışı: Blob'a 3 fotoğraf yükleme, yayın, story ve arama,
+  filtre, opsiyon, Mehmet engeli, noter onaylı satış, listeden/story'den kalkma, eski bağlantı 404, mobilde taşma yok, konsol hatası yok.
+- Testlerden kalan kayıtlar: "520i M Sport E2E" ve bir "BMW 5 Serisi 520i M Sport" — ikisi de **satıldı** durumunda;
+  müşteri sitesinde görünmez, CRM satış geçmişinde durur.
