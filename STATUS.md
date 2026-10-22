@@ -29,7 +29,7 @@
 - **AI ile video üzerinden giriş:** `ANTHROPIC_API_KEY` tanımlı olmadığı için **Simülasyon Modu**. Video gerçekten yüklenir ve araca bağlanır; taslak alanları sabit örnek transkript/çıktıdan gelir. Ekranda "canlı AI analizi değildir" yazar.
 - Canlı AI kodu (Claude yapılandırılmış çıktı, Whisper, ffmpeg kare çıkarma) yazıldı ve derleniyor; **gerçek API anahtarıyla test edilmedi.**
 - WhatsApp: yalnızca `wa.me` bağlantısı; demo numarası (905000000000) gerçek değildir.
-- Seed araç görselleri SVG illüstrasyondur ("TEMSİLİ GÖRSEL"). Kullanım hakkı olan gerçek araç fotoğrafı bulunmadığı için üçüncü taraf fotoğraf kullanılmadı; CRM'den yüklenen gerçek fotoğraflar kartlara ve detay sayfasına otomatik yansır.
+- Demo araç fotoğrafları Unsplash License kapsamındaki gerçek fotoğraflardır (`public/demo-cars/`, kaynaklar `CREDITS.md`), "TEMSİLİ GÖRSEL · DEMO" etiketli ve plakaları bulanıklaştırılmıştır; Mir Motors stoğundaki araçlar değildir. Demo ilan bilgileri (yıl/paket/renk) fotoğraftaki modelle uyumlu seçildi. CRM'den yüklenen fotoğraflar kartlara ve detay sayfasına otomatik yansır.
 
 ## Eksik özellikler
 

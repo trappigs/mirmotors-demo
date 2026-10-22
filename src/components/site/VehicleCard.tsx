@@ -24,7 +24,7 @@ function Photo({ v, className }: { v: Vehicle; className: string }) {
     <div className={`relative overflow-hidden bg-zinc-200 ${className}`}>
       {cover ? (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={cover} alt={`${v.year} ${v.brand} ${v.model}`} className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.04]" />
+        <img src={cover} alt={`${v.year} ${v.brand} ${v.model}`} decoding="async" className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.04]" />
       ) : (
         <div className="grid h-full place-items-center text-xs text-muted">Fotoğraf yok</div>
       )}

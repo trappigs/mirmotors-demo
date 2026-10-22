@@ -85,3 +85,11 @@ Gerçek WhatsApp API, Instagram DM, otomatik müşteri cevaplama, EİDS entegras
 - Kırmızı: birincil CTA, kart fiyat bantları, aktif filtre etiketleri, bölüm vurgu çizgileri, bağlantı hover'ları, arama butonu, detay sayfası fiyat ve iletişim alanı.
 - "Opsiyonlu" durumu metin + kilit ikonu ile gösterilir (yalnızca renge bağlı değil).
 - Logo: Mir Motors'a özgü kelime markası (kırmızı eğik blok içinde "M" + MIR siyah / MOTORS kırmızı, tek satır).
+
+## Demo araç fotoğrafları
+
+- Kaynak: Unsplash (Unsplash License: ücretsiz ticari kullanım, izin/atıf zorunlu değil; Unsplash+ kullanılmadı). Dosya başına fotoğrafçı ve kaynak bağlantısı `public/demo-cars/CREDITS.md` içinde.
+- Fotoğraflar projeye indirildi (`public/demo-cars/`); dış bağlantıya bağımlılık yok. Seed, fotoğrafları `storage/public/seed/` altına kopyalayıp normal araç fotoğrafı olarak kaydeder (CRM'de silme/kapak seçme çalışır).
+- İşleme: 4:3 kırpma (kartlarla aynı oran), 1280×960, ~160 KB JPEG; görünür plakalar ve başka bir galerinin plaka logosu bulanıklaştırıldı; köşede "TEMSİLİ GÖRSEL · DEMO" etiketi (kart, galeri ve hero kırpmalarında görünür kalacak konumda).
+- Model eşleşmesi: her araç için aynı marka/modelin fotoğrafı seçildi. Fotoğraftaki nesil/donanım farklıysa fotoğraf değil demo verisi uyarlandı (C Serisi 2020/W205, Evoque 2018/1. nesil, Golf GTI, XC60 2021 R-Design, renkler). Mini Cooper taslak olduğu için fotoğrafsızdır (fotoğrafsız yayın engelini göstermek için).
+- Gerçek yayında yalnızca galerinin kendi çektiği fotoğraflar kullanılmalıdır.

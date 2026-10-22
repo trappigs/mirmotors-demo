@@ -25,7 +25,7 @@ npm start
    "Ready" yazısını bekleyin. Port 3000 doluysa PowerShell'de önce `$env:PORT=3001` yazın ve adresleri buna göre kullanın.
 2. **Örnek araç:** BMW 5 Serisi · 520i M Sport · 2023 · 12.000 km · 3.675.000 TL · Benzin / Otomatik / Sedan · Karbon Siyahı · 170 hp · Arkadan İtiş.
 3. **Fotoğraflar:** Kendi çektiğiniz/kullanım hakkına sahip olduğunuz 3–5 BMW fotoğrafını masaüstüne koyun (JPG/PNG/WEBP, 10 MB altı).
-   Hazır yedek: `demo-assets/ornek-bmw-temsili-1.jpg`, `-2.jpg`, `-3.jpg` ("TEMSİLİ GÖRSEL · DEMO" yazılı illüstrasyonlar).
+   Hazır yedek: `demo-assets/ornek-bmw-5-serisi-1.jpg`, `-2.jpg`, `-3.jpg` (Unsplash lisanslı gerçek BMW 5 Serisi fotoğrafları, "TEMSİLİ GÖRSEL · DEMO" etiketli; kaynak: `public/demo-cars/CREDITS.md`).
 4. İsteğe bağlı video: kısa MP4 (H.264, 200 MB altı). `.mov` (iPhone HEVC) Chrome'da oynamayabilir — MP4 kullanın.
 5. **Ayrı tarayıcı profilleri** (aynı profilde tek oturum olur; bir hesapla giriş diğerini kapatır):
    - Chrome'da sağ üst profil simgesi → **Ekle** → "Demo-Yönetici", "Demo-Ahmet", "Demo-Mehmet" profilleri (misafir profili de olur).

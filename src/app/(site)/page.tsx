@@ -22,7 +22,9 @@ const REASONS = [
 export default async function HomePage() {
   const [vehicles, brandModels] = await Promise.all([findPublicVehicles(parseFilters({})), publicBrandModels()]);
   const featured = vehicles.slice(0, 8);
-  const heroImage = mediaUrl(vehicles[0]?.photos[0]?.path);
+  // Hero: stoktaki en yeni aracın kapak fotoğrafı; yoksa temsili showroom fotoğrafı.
+  const stockHero = mediaUrl(vehicles[0]?.photos[0]?.path);
+  const heroImage = stockHero ?? "/demo-cars/hero-showroom.jpg";
 
   return (
     <>
@@ -49,7 +51,9 @@ export default async function HomePage() {
               // eslint-disable-next-line @next/next/no-img-element
               <img src={heroImage} alt="" className="absolute inset-0 h-full w-full object-cover" />
             )}
-            <span className="absolute bottom-4 left-4 rounded-md bg-brand px-2.5 py-1 text-xs font-bold text-white">Stoktan · {vehicles[0]?.brand} {vehicles[0]?.model}</span>
+            {stockHero && (
+              <span className="absolute bottom-4 left-4 rounded-md bg-brand px-2.5 py-1 text-xs font-bold text-white">Stoktan · {vehicles[0]?.brand} {vehicles[0]?.model}</span>
+            )}
           </div>
         </div>
 
