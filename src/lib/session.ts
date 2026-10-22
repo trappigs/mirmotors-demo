@@ -34,7 +34,8 @@ export async function verifySession(token: string | undefined): Promise<SessionP
 export const sessionCookieOptions = {
   httpOnly: true,
   sameSite: "lax" as const,
-  secure: process.env.COOKIE_SECURE === "1",
+  // Vercel'de (HTTPS) her zaman Secure; yerelde HTTP için COOKIE_SECURE ile açılır.
+  secure: process.env.COOKIE_SECURE === "1" || process.env.VERCEL === "1",
   path: "/",
   maxAge: SESSION_TTL_SECONDS,
 };

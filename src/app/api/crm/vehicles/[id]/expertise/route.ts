@@ -3,7 +3,7 @@ import { requireApiUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { handleApiError, jsonError } from "@/lib/api";
 import { mediaChangeBlock } from "@/lib/permissions";
-import { deleteStored, saveUpload } from "@/lib/storage";
+import { deleteStored, receiveUpload } from "@/lib/storage";
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -16,9 +16,7 @@ export async function POST(req: Request, { params }: Ctx) {
     if (!vehicle) return jsonError("Araç bulunamadı", 404);
     const blocked = mediaChangeBlock(vehicle, user);
     if (blocked) return jsonError(blocked, 409);
-    const file = (await req.formData()).get("file");
-    if (!(file instanceof File)) return jsonError("PDF seçilmedi");
-    const rel = await saveUpload(file, "pdf", id);
+    const rel = await receiveUpload(req, "pdf", id, "PDF seçilmedi");
     await prisma.vehicle.update({ where: { id }, data: { expertisePdfPath: rel } });
     if (vehicle.expertisePdfPath) await deleteStored(vehicle.expertisePdfPath, true);
     return NextResponse.json({ ok: true }, { status: 201 });

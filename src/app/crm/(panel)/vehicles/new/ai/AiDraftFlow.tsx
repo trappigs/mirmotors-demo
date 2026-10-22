@@ -1,6 +1,7 @@
 "use client";
 import { useRef, useState } from "react";
 import { VehicleForm, emptyVehicleForm, type VehicleFormValues } from "@/components/crm/VehicleForm";
+import { directUpload } from "@/lib/direct-upload";
 
 type Draft = Record<string, unknown> & { equipment: string[]; evidence: { field: string; quote: string }[]; warnings: string[] };
 type Result = {
@@ -26,7 +27,7 @@ function toFormValues(d: Draft): { values: Partial<VehicleFormValues>; fields: s
   return { values, fields };
 }
 
-export function AiDraftFlow({ live, transcription }: { live: boolean; transcription: boolean }) {
+export function AiDraftFlow({ live, transcription, direct }: { live: boolean; transcription: boolean; direct: boolean }) {
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [transcript, setTranscript] = useState("");
@@ -40,10 +41,12 @@ export function AiDraftFlow({ live, transcription }: { live: boolean; transcript
     setBusy(true);
     setError("");
     const fd = new FormData();
-    fd.append("video", file);
     fd.append("transcript", transcript);
     if (simulation) fd.append("simulation", "1");
     try {
+      // Vercel Blob ortamında video önce doğrudan yüklenir; sunucuya yalnızca yolu gönderilir.
+      if (direct) fd.append("videoPath", await directUpload(file, "drafts", { target: "aiDraft" }));
+      else fd.append("video", file);
       const res = await fetch("/api/crm/ai-draft", { method: "POST", body: fd });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Taslak oluşturulamadı");

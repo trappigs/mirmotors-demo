@@ -60,9 +60,13 @@ export async function findPublicVehicles(f: Filters) {
     fuel: f.fuel,
     transmission: f.transmission,
     bodyType: f.bodyType,
-    // Metin araması: her kelime marka, model veya pakette geçmeli.
+    // Metin araması: her kelime marka, model veya pakette geçmeli (büyük/küçük harf duyarsız).
     AND: (f.q ?? "").split(/\s+/).filter(Boolean).slice(0, 6).map((w) => ({
-      OR: [{ brand: { contains: w } }, { model: { contains: w } }, { packageName: { contains: w } }],
+      OR: [
+        { brand: { contains: w, mode: "insensitive" as const } },
+        { model: { contains: w, mode: "insensitive" as const } },
+        { packageName: { contains: w, mode: "insensitive" as const } },
+      ],
     })),
   };
   return prisma.vehicle.findMany({

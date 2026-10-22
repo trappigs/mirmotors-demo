@@ -1,11 +1,9 @@
-import { existsSync } from "fs";
-import path from "path";
 import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { requireApiUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { handleApiError, jsonError } from "@/lib/api";
-import { PUBLIC_DIR } from "@/lib/storage";
+import { storedFileExists } from "@/lib/storage";
 import { checkAiVerification, toVehicleData, vehicleInputSchema } from "@/lib/vehicle-schema";
 
 // Yeni araç her zaman TASLAK olarak oluşturulur; yayımlama ayrı bir adımdır.
@@ -20,7 +18,7 @@ export async function POST(req: Request) {
     if (input.draftVideoPath) {
       const used = await prisma.vehicle.findFirst({ where: { videoPath: input.draftVideoPath }, select: { id: true } });
       if (used) return jsonError("Bu taslak videosu başka bir araca bağlanmış. Videoyu yeniden yükleyin.", 409);
-      if (!existsSync(path.join(PUBLIC_DIR, input.draftVideoPath))) return jsonError("Taslak videosu bulunamadı", 422);
+      if (!(await storedFileExists(input.draftVideoPath))) return jsonError("Taslak videosu bulunamadı", 422);
     }
 
     const vehicle = await prisma.$transaction(async (tx) => {

@@ -2,6 +2,7 @@
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { apiCall } from "@/lib/client-api";
+import { directUpload } from "@/lib/direct-upload";
 
 type Props = {
   vehicleId: string;
@@ -9,9 +10,11 @@ type Props = {
   videoUrl: string | null;
   pdfUrl: string | null;
   locked: boolean;
+  /** Vercel Blob: dosyalar tarayıcıdan doğrudan yüklenir (sunucu istek gövdesi sınırı). */
+  direct: boolean;
 };
 
-export function MediaManager({ vehicleId, photos, videoUrl, pdfUrl, locked }: Props) {
+export function MediaManager({ vehicleId, photos, videoUrl, pdfUrl, locked, direct }: Props) {
   const router = useRouter();
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState("");
@@ -32,13 +35,22 @@ export function MediaManager({ vehicleId, photos, videoUrl, pdfUrl, locked }: Pr
     }
   }
 
-  const upload = (url: string, field: string, files: FileList | null, label: string, input: HTMLInputElement | null) => {
+  const upload = (url: string, field: string, files: FileList | null, label: "photo" | "video" | "pdf", input: HTMLInputElement | null) => {
     if (!files || files.length === 0) return;
-    const fd = new FormData();
-    Array.from(files).forEach((f) => fd.append(field, f));
+    const list = Array.from(files);
     run(label, async () => {
-      await apiCall(url, { method: "POST", body: fd });
-      if (input) input.value = "";
+      try {
+        if (direct) {
+          const paths = await Promise.all(list.map((f) => directUpload(f, vehicleId, { target: "vehicle", kind: label, vehicleId })));
+          await apiCall(url, { method: "POST", json: field === "files" ? { paths } : { path: paths[0] } });
+        } else {
+          const fd = new FormData();
+          list.forEach((f) => fd.append(field, f));
+          await apiCall(url, { method: "POST", body: fd });
+        }
+      } finally {
+        if (input) input.value = "";
+      }
     });
   };
 
@@ -106,7 +118,7 @@ export function MediaManager({ vehicleId, photos, videoUrl, pdfUrl, locked }: Pr
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 className="font-semibold">Video</h2>
-            <p className="text-xs text-zinc-500">MP4, WEBM veya MOV · en fazla 200 MB · müşteri sitesinde gösterilir</p>
+            <p className="text-xs text-zinc-500">MP4, WEBM veya MOV · en fazla {direct ? 50 : 200} MB · müşteri sitesinde gösterilir</p>
           </div>
           {!locked && (
             <div className="flex gap-2">

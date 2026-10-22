@@ -66,7 +66,8 @@ export const EQUIPMENT_OPTIONS = [
 
 export const UPLOAD_LIMITS = {
   photo: { maxBytes: 10 * 1024 * 1024, mimes: ["image/jpeg", "image/png", "image/webp"], exts: [".jpg", ".jpeg", ".png", ".webp"] },
-  video: { maxBytes: 200 * 1024 * 1024, mimes: ["video/mp4", "video/webm", "video/quicktime"], exts: [".mp4", ".webm", ".mov"] },
+  // Vercel'de (Blob ücretsiz kotası) videolar 50 MB ile sınırlıdır; yerelde 200 MB.
+  video: { maxBytes: (process.env.BLOB_READ_WRITE_TOKEN ? 50 : 200) * 1024 * 1024, mimes: ["video/mp4", "video/webm", "video/quicktime"], exts: [".mp4", ".webm", ".mov"] },
   pdf: { maxBytes: 15 * 1024 * 1024, mimes: ["application/pdf"], exts: [".pdf"] },
 } as const;
 

@@ -8,9 +8,11 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
-    "setup": "node scripts/ensure-env.mjs && prisma generate && prisma db push && tsx prisma/seed.ts",
-    "db:reset": "prisma db push && tsx prisma/seed.ts",
+    "setup": "node scripts/ensure-env.mjs && node scripts/guard-local-db.mjs && prisma generate && prisma migrate deploy && tsx prisma/seed.ts",
+    "db:reset": "node scripts/guard-local-db.mjs && prisma migrate deploy && tsx prisma/seed.ts",
+    "db:seed:cloud": "prisma migrate deploy && tsx prisma/seed.ts --cloud",
     "demo": "npm run setup && next build && next start",
+    "vercel-build": "prisma generate && prisma migrate deploy && next build",
     "e2e": "node tests/e2e-demo.mjs"
   },
   "dependencies": {

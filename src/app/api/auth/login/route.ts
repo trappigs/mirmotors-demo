@@ -6,12 +6,24 @@ import { SESSION_COOKIE, sessionCookieOptions, signSession } from "@/lib/session
 // Kullanıcı yoksa da bcrypt karşılaştırması yapılır; yanıt süresi e-postanın varlığını ele vermez.
 const DUMMY_HASH = bcrypt.hashSync("dummy-password-for-timing", 10);
 
-// Hesap bazlı deneme sınırı (tek sunuculu demo için): bir hesaba 15 dakikada en fazla 10 hatalı deneme.
-// Sayaçlar yalnızca var olan kullanıcılar için tutulur; tablo personel sayısıyla sınırlıdır, hiçbir kayıt
-// tahliye edilmez ve uydurma e-postalarla doldurulamaz. İstemcinin gönderdiği IP başlıklarına güvenilmez.
+// Hesap bazlı deneme sınırı: bir hesaba 15 dakikada en fazla 10 hatalı deneme.
+// Sayaç veritabanında (User tablosu) tutulur; sunucusuz ortamda tüm örnekler aynı sayacı görür.
+// Yalnızca var olan kullanıcılar için sayılır, uydurma e-postalarla doldurulamaz. İstemcinin IP başlıklarına güvenilmez.
 const WINDOW_MS = 15 * 60 * 1000;
 const MAX_FAILS = 10;
-const attempts = new Map<string, { count: number; first: number }>();
+
+/** Denemeyi bcrypt'ten ÖNCE tek bir atomik UPDATE ile sayar; eşzamanlı isteklerle sınır aşılamaz. */
+async function countAttempt(userId: string): Promise<number> {
+  const now = new Date();
+  const cutoff = new Date(now.getTime() - WINDOW_MS);
+  const rows = await prisma.$queryRaw<{ failedLogins: number }[]>`
+    UPDATE "User" SET
+      "failedLogins" = CASE WHEN "failWindowStart" IS NULL OR "failWindowStart" < ${cutoff} THEN 1 ELSE "failedLogins" + 1 END,
+      "failWindowStart" = CASE WHEN "failWindowStart" IS NULL OR "failWindowStart" < ${cutoff} THEN ${now} ELSE "failWindowStart" END
+    WHERE "id" = ${userId}
+    RETURNING "failedLogins"`;
+  return rows[0]?.failedLogins ?? 0;
+}
 
 export async function POST(req: Request) {
   const body = await req.json().catch(() => ({}));
@@ -20,20 +32,13 @@ export async function POST(req: Request) {
 
   const user = email ? await prisma.user.findUnique({ where: { email } }) : null;
 
-  if (user) {
-    // Kontrol ve sayım aynı senkron adımda, beklemeli bcrypt'ten önce: eşzamanlı isteklerle sınır aşılamaz.
-    const now = Date.now();
-    const cur = attempts.get(user.id);
-    const entry = cur && now - cur.first < WINDOW_MS ? cur : { count: 0, first: now };
-    if (entry.count >= MAX_FAILS) {
-      return NextResponse.json({ error: "Çok fazla hatalı deneme. Lütfen 15 dakika sonra tekrar deneyin." }, { status: 429 });
-    }
-    attempts.set(user.id, { count: entry.count + 1, first: entry.first });
+  if (user && (await countAttempt(user.id)) > MAX_FAILS) {
+    return NextResponse.json({ error: "Çok fazla hatalı deneme. Lütfen 15 dakika sonra tekrar deneyin." }, { status: 429 });
   }
 
   const ok = await bcrypt.compare(password, user?.passwordHash ?? DUMMY_HASH);
   if (!user || !ok) return NextResponse.json({ error: "E-posta veya şifre hatalı" }, { status: 401 });
-  attempts.delete(user.id);
+  await prisma.user.update({ where: { id: user.id }, data: { failedLogins: 0, failWindowStart: null } });
 
   const token = await signSession({ uid: user.id, name: user.name, role: user.role as "ADMIN" | "SALES" });
   const res = NextResponse.json({ ok: true });

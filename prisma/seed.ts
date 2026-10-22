@@ -1,15 +1,25 @@
-// Demo verisini sıfırlar ve yeniden oluşturur. Tüm araçlar temsilidir.
-// Fotoğraflar public/demo-cars/ altındadır (Unsplash License, bkz. public/demo-cars/CREDITS.md);
-// araç bilgileri (yıl, paket, renk) fotoğraftaki modelle uyumlu olacak şekilde seçilmiştir.
+// Demo verisini oluşturur. Tüm araçlar temsilidir.
+// Fotoğraflar public/demo-cars/ altındadır (Unsplash License, bkz. public/demo-cars/CREDITS.md) ve statik dosya
+// olarak servis edilir; araç bilgileri (yıl, paket, renk) fotoğraftaki modelle uyumlu olacak şekilde seçilmiştir.
+//
+// İki kip:
+// - `tsx prisma/seed.ts`          : YEREL sıfırlama. Tüm verileri siler; yalnızca localhost veritabanında çalışır.
+// - `tsx prisma/seed.ts --cloud`  : BULUT ilk yükleme. Hiçbir şey silmez; veritabanında kullanıcı varsa hiçbir şey yapmaz.
+//                                   Personel şifresi DEMO_STAFF_PASSWORD ortam değişkeninden alınır (sabit şifre kullanılmaz).
+import { existsSync } from "fs";
+import { rm } from "fs/promises";
+import path from "path";
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
-import { copyFile, mkdir, rm } from "fs/promises";
-import path from "path";
+import { isLocalDatabaseUrl } from "../scripts/db-url.mjs";
+
+if (existsSync(".env")) process.loadEnvFile(".env");
 
 const prisma = new PrismaClient();
 const STORAGE = path.resolve(process.env.STORAGE_DIR || path.join(process.cwd(), "storage"));
-const DEMO_CARS = path.join(process.cwd(), "public", "demo-cars");
-export const DEMO_PASSWORD = "MirDemo2026!";
+/** Yalnızca yerel demo için; bulutta kullanılmaz. */
+export const LOCAL_DEMO_PASSWORD = "MirDemo2026!";
+const CLOUD = process.argv.includes("--cloud");
 
 type SeedVehicle = {
   brand: string; model: string; packageName: string; year: number; km: number; price: number;
@@ -34,17 +44,37 @@ const VEHICLES: SeedVehicle[] = [
   { brand: "Mini", model: "Cooper", packageName: "S 3 Kapı", year: 2022, km: 18000, price: 1_550_000, fuel: "Benzin", transmission: "Otomatik", bodyType: "Hatchback", color: "Chili Kırmızı", photos: [], enginePower: 178, engineCc: 1998, drivetrain: "Önden Çekiş", equipment: ["Apple CarPlay / Android Auto", "LED / Lazer far"], paintedParts: "", changedParts: "", damageNote: "", tramerAmount: 0, expertiseSummary: "", description: "Taslak örneği: fotoğraf ve ekspertiz bekleniyor.", status: "DRAFT", daysAgo: 0 },
 ];
 
+function staffPassword(): string {
+  if (!CLOUD) return LOCAL_DEMO_PASSWORD;
+  const p = process.env.DEMO_STAFF_PASSWORD ?? "";
+  if (p.length < 12 || p === LOCAL_DEMO_PASSWORD) {
+    throw new Error("DEMO_STAFF_PASSWORD en az 12 karakter olmalı ve yerel demo şifresinden farklı olmalı.");
+  }
+  return p;
+}
+
 async function main() {
-  await rm(path.join(STORAGE, "public"), { recursive: true, force: true });
-  await rm(path.join(STORAGE, "private"), { recursive: true, force: true });
-  await prisma.statusHistory.deleteMany();
-  await prisma.sale.deleteMany();
-  await prisma.vehiclePhoto.deleteMany();
-  await prisma.vehicle.deleteMany();
-  await prisma.user.deleteMany();
+  const password = staffPassword();
+  if (CLOUD) {
+    if ((await prisma.user.count()) > 0) {
+      console.log("Veritabanında zaten veri var; bulut seed hiçbir şey değiştirmedi.");
+      return;
+    }
+  } else {
+    if (!isLocalDatabaseUrl(process.env.DATABASE_URL)) {
+      throw new Error("Yerel sıfırlama yalnızca localhost veritabanında çalışır. Bulut için: npm run db:seed:cloud");
+    }
+    await rm(path.join(STORAGE, "public"), { recursive: true, force: true });
+    await rm(path.join(STORAGE, "private"), { recursive: true, force: true });
+    await prisma.statusHistory.deleteMany();
+    await prisma.sale.deleteMany();
+    await prisma.vehiclePhoto.deleteMany();
+    await prisma.vehicle.deleteMany();
+    await prisma.user.deleteMany();
+  }
 
   // Sabit kimlikler: `npm run db:reset` sonrasında tarayıcılardaki açık oturumlar geçerli kalır.
-  const passwordHash = await bcrypt.hash(DEMO_PASSWORD, 10);
+  const passwordHash = await bcrypt.hash(password, 10);
   const admin = await prisma.user.create({ data: { id: "demo-yonetici", name: "Yönetici (Demo)", email: "yonetici@mirmotors.demo", passwordHash, role: "ADMIN" } });
   const ahmet = await prisma.user.create({ data: { id: "demo-ahmet", name: "Ahmet", email: "ahmet@mirmotors.demo", passwordHash, role: "SALES" } });
   const mehmet = await prisma.user.create({ data: { id: "demo-mehmet", name: "Mehmet", email: "mehmet@mirmotors.demo", passwordHash, role: "SALES" } });
@@ -68,13 +98,9 @@ async function main() {
       },
     });
 
-    // Demo fotoğrafları storage'a kopyalanır; böylece CRM'den silme/kapak seçme normal fotoğraflar gibi çalışır.
-    const dir = path.join(STORAGE, "public", "seed");
-    await mkdir(dir, { recursive: true });
+    // Demo fotoğrafları statik dosyalardır (/demo-cars/...); CRM'den kaldırılınca yalnızca kayıt silinir.
     for (const [i, file] of photos.entries()) {
-      const name = `${vehicle.id}-${i}${path.extname(file)}`;
-      await copyFile(path.join(DEMO_CARS, file), path.join(dir, name));
-      await prisma.vehiclePhoto.create({ data: { vehicleId: vehicle.id, path: `seed/${name}`, isCover: i === 0, sortOrder: i } });
+      await prisma.vehiclePhoto.create({ data: { vehicleId: vehicle.id, path: `/demo-cars/${file}`, isCover: i === 0, sortOrder: i } });
     }
 
     const h = (from: string | null, to: string, action: string, userId: string) =>
@@ -95,7 +121,7 @@ async function main() {
       });
     }
   }
-  console.log(`Seed tamam: 3 kullanıcı, ${VEHICLES.length} araç. Demo şifresi: ${DEMO_PASSWORD}`);
+  console.log(`Seed tamam: 3 kullanıcı, ${VEHICLES.length} araç.${CLOUD ? " Şifre: DEMO_STAFF_PASSWORD" : ` Demo şifresi: ${LOCAL_DEMO_PASSWORD}`}`);
 }
 
 main()

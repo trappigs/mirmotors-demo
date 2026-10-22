@@ -7,6 +7,7 @@ import { formatDateTime, formatPrice, mediaUrl, parseEquipment } from "@/lib/for
 import { ACTION_LABELS } from "@/lib/vehicle-status";
 import { canEditDetails, mediaChangeBlock } from "@/lib/permissions";
 import { MediaManager } from "@/components/crm/MediaManager";
+import { storageDriver } from "@/lib/storage";
 import { StatusActions } from "@/components/crm/StatusActions";
 import { VehicleForm, type VehicleFormValues } from "@/components/crm/VehicleForm";
 
@@ -66,6 +67,7 @@ export default async function CrmVehicleDetail({ params, searchParams }: { param
       <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
         <div className="min-w-0 space-y-6">
           <MediaManager
+            direct={storageDriver() === "blob"}
             vehicleId={v.id}
             photos={v.photos.map((p) => ({ id: p.id, url: mediaUrl(p.path)!, isCover: p.isCover }))}
             videoUrl={mediaUrl(v.videoPath)}

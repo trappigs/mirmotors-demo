@@ -1,10 +1,24 @@
 // Demo senaryosunun (14 adım) çalışan sunucuya karşı HTTP üzerinden uçtan uca testi.
 // Kullanım: önce `npm run db:reset` ve sunucuyu başlatın, sonra: node tests/e2e-demo.mjs [http://localhost:3000]
+// Canlı (Vercel) adres için ortam değişkenleri:
+//   E2E_PASSWORD   personel şifresi (DEMO_STAFF_PASSWORD)
+//   E2E_ACCESS     "kullanıcı:şifre" — demo erişim kapısı (DEMO_ACCESS_USER:DEMO_ACCESS_PASSWORD)
+//   E2E_DIRECT=1   dosyaları Vercel Blob'a doğrudan yükle (sunucu Blob sürücüsündeyse)
 import { readFile } from "fs/promises";
+import { upload } from "@vercel/blob/client";
 
-const BASE = process.argv[2] || process.env.BASE_URL || "http://localhost:3000";
-const PASSWORD = "MirDemo2026!";
+const BASE = (process.argv[2] || process.env.BASE_URL || "http://localhost:3000").replace(/\/$/, "");
+const PASSWORD = process.env.E2E_PASSWORD || "MirDemo2026!";
+const ACCESS = process.env.E2E_ACCESS ? `Basic ${Buffer.from(process.env.E2E_ACCESS).toString("base64")}` : null;
+const DIRECT = process.env.E2E_DIRECT === "1";
 let failures = 0;
+
+// Erişim kapısı varsa yalnızca demo adresine giden isteklere Basic yetkilendirme eklenir.
+const rawFetch = globalThis.fetch;
+globalThis.fetch = (url, init = {}) => {
+  if (ACCESS && String(url).startsWith(BASE) && !init.noAccess) init = { ...init, headers: { authorization: ACCESS, ...(init.headers || {}) } };
+  return rawFetch(url, init);
+};
 
 function check(name, cond, extra = "") {
   console.log(`${cond ? "PASS" : "FAIL"}  ${name}${!cond && extra ? `  →  ${extra}` : ""}`);
@@ -43,12 +57,42 @@ async function fileForm(field, path, name, type) {
   return fd;
 }
 
+/**
+ * Araca dosya yükler: yerelde form verisiyle, Blob ortamında arayüzle aynı yoldan
+ * (yükleme jetonu → doğrudan Blob'a yükleme → yolu API'ye kaydetme).
+ */
+async function uploadFile(call, cookie, vehicleId, kind, path, name, type) {
+  const route = { photo: "photos", video: "video", pdf: "expertise" }[kind];
+  if (!DIRECT) {
+    return call(`/api/crm/vehicles/${vehicleId}/${route}`, { method: "POST", body: await fileForm(kind === "photo" ? "files" : "file", path, name, type) });
+  }
+  const rel = `${vehicleId}/${crypto.randomUUID()}${name.slice(name.lastIndexOf("."))}`;
+  try {
+    await upload(`${kind === "pdf" ? "private" : "public"}/${rel}`, new Blob([await readFile(path)], { type }), {
+      access: "private",
+      handleUploadUrl: `${BASE}/api/crm/uploads`,
+      headers: { cookie, ...(ACCESS ? { authorization: ACCESS } : {}) },
+      clientPayload: JSON.stringify({ target: "vehicle", kind, vehicleId }),
+      contentType: type,
+    });
+  } catch (e) {
+    return { status: /forbidden|409|opsiyon/i.test(String(e.message)) ? 409 : 400, data: String(e.message) };
+  }
+  return call(`/api/crm/vehicles/${vehicleId}/${route}`, { method: "POST", json: kind === "photo" ? { paths: [rel] } : { path: rel } });
+}
+
 const publicHtml = async (path) => {
   const res = await fetch(`${BASE}${path}`);
   return { status: res.status, html: await res.text(), headers: res.headers };
 };
 
 // --- Güvenlik ---
+if (ACCESS) {
+  const gate = await fetch(`${BASE}/`, { noAccess: true });
+  check("Demo erişim kapısı: şifresiz istek reddedilir (401)", gate.status === 401, gate.status);
+  const gateCrm = await fetch(`${BASE}/crm/login`, { noAccess: true });
+  check("Demo erişim kapısı CRM'i de korur", gateCrm.status === 401, gateCrm.status);
+}
 {
   const r = await fetch(`${BASE}/api/crm/vehicles`, { method: "POST", body: "{}" });
   check("Oturumsuz CRM API isteği reddedilir (401)", r.status === 401, r.status);
@@ -85,18 +129,26 @@ const pubNoPhoto = await A(`/api/crm/vehicles/${id}/transition`, { method: "POST
 check("Fotoğraf olmadan yayımlanamaz (422)", pubNoPhoto.status === 422, JSON.stringify(pubNoPhoto.data));
 
 // Hatalı dosya türü
-const fake = await A(`/api/crm/vehicles/${id}/photos`, { method: "POST", body: await fileForm("files", "tests/fixtures/fake.jpg", "fake.jpg", "image/jpeg") });
+const fake = await uploadFile(A, ahmet.cookie, id, "photo", "tests/fixtures/fake.jpg", "fake.jpg", "image/jpeg");
 check("Sahte görsel dosyası reddedilir", fake.status === 422, JSON.stringify(fake.data));
 
 // 3. Fotoğraf yükleme
-const up = await A(`/api/crm/vehicles/${id}/photos`, { method: "POST", body: await fileForm("files", "tests/fixtures/car.jpg", "bmw.jpg", "image/jpeg") });
+const up = await uploadFile(A, ahmet.cookie, id, "photo", "tests/fixtures/car.jpg", "bmw.jpg", "image/jpeg");
 check("3. Fotoğraf yüklendi", up.status === 201, JSON.stringify(up.data));
 
 // Video + PDF
-const vid = await A(`/api/crm/vehicles/${id}/video`, { method: "POST", body: await fileForm("file", "tests/fixtures/sample.mp4", "tanitim.mp4", "video/mp4") });
+const vid = await uploadFile(A, ahmet.cookie, id, "video", "tests/fixtures/sample.mp4", "tanitim.mp4", "video/mp4");
 check("Video yüklendi", vid.status === 201, JSON.stringify(vid.data));
-const pdf = await A(`/api/crm/vehicles/${id}/expertise`, { method: "POST", body: await fileForm("file", "tests/fixtures/ekspertiz.pdf", "ekspertiz.pdf", "application/pdf") });
+const pdf = await uploadFile(A, ahmet.cookie, id, "pdf", "tests/fixtures/ekspertiz.pdf", "ekspertiz.pdf", "application/pdf");
 check("Ekspertiz PDF yüklendi", pdf.status === 201, JSON.stringify(pdf.data));
+{
+  const crmPage = await A(`/crm/vehicles/${id}`);
+  const pdfUrl = typeof crmPage.data === "string" ? crmPage.data.match(/\/api\/crm\/files\/[^"]+\.pdf/)?.[0] : null;
+  const anon = pdfUrl ? await fetch(`${BASE}${pdfUrl}`) : null;
+  const staff = pdfUrl ? await fetch(`${BASE}${pdfUrl}`, { headers: { cookie: ahmet.cookie } }) : null;
+  const body = staff ? Buffer.from(await staff.arrayBuffer()).subarray(0, 5).toString("ascii") : "";
+  check("Ekspertiz PDF'i oturumsuz açılmaz (401), personel açar", anon?.status === 401 && staff?.status === 200 && body === "%PDF-", `${anon?.status}/${staff?.status}`);
+}
 
 // 4. Ekspertiz/özellik düzenleme
 const edit = await A(`/api/crm/vehicles/${id}`, {
@@ -170,7 +222,7 @@ const mRel = await M(`/api/crm/vehicles/${id}/transition`, { method: "POST", jso
 check("11c. Mehmet Ahmet'in opsiyonunu kaldıramaz", mRel.status === 409);
 const mEdit = await M(`/api/crm/vehicles/${id}`, { method: "PATCH", json: { brand: "BMW", model: "5 Serisi", year: 2023, km: 1, price: 1, fuel: "Benzin", transmission: "Otomatik", bodyType: "Sedan" } });
 check("11d. Mehmet opsiyonlu aracın bilgilerini değiştiremez", mEdit.status === 409, mEdit.status);
-const mPhoto = await M(`/api/crm/vehicles/${id}/photos`, { method: "POST", body: await fileForm("files", "tests/fixtures/car.jpg", "x.jpg", "image/jpeg") });
+const mPhoto = await uploadFile(M, mehmet.cookie, id, "photo", "tests/fixtures/car.jpg", "x.jpg", "image/jpeg");
 check("11e. Mehmet opsiyonlu araca fotoğraf ekleyemez", mPhoto.status === 409, mPhoto.status);
 const aEdit = await A(`/api/crm/vehicles/${id}`, { method: "PATCH", json: { brand: "BMW", model: "5 Serisi", packageName: "520i M Sport E2E", year: 2023, km: 12000, price: 3_675_000, fuel: "Benzin", transmission: "Otomatik", bodyType: "Sedan" } });
 check("11f. Opsiyon sahibi Ahmet düzenleyebilir", aEdit.status === 200, aEdit.status);

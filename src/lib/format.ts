@@ -1,4 +1,5 @@
-export const mediaUrl = (rel: string | null | undefined) => (rel ? `/media/${rel}` : null);
+// "/demo-cars/..." statik seed görselleri olduğu gibi döner; diğerleri /media rotasından servis edilir.
+export const mediaUrl = (rel: string | null | undefined) => (rel ? (rel.startsWith("/") ? rel : `/media/${rel}`) : null);
 
 export const formatPrice = (n: number) => `${new Intl.NumberFormat("tr-TR").format(n)} TL`;
 export const formatKm = (n: number) => `${new Intl.NumberFormat("tr-TR").format(n)} km`;
