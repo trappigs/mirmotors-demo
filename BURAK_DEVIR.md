@@ -211,6 +211,8 @@ Durumlar koddan ve testlerden doğrulandı (son test: 22.10.2026, canlı adres d
 - Aynı tarayıcı profilinde tek oturum; HTTP Basic erişim şifresi tarayıcı kapanana kadar hatırlanır (CRM çıkışı onu silmez).
 - Yerelde `npx prisma dev` (PGlite) bağlantı adresine `connection_limit=1&pgbouncer=true` eklenmezse "prepared statement already exists" hatası verir.
 - Prisma CLI, AI ajanlarının `prisma migrate reset` çalıştırmasını kullanıcı onayı olmadan engeller; test kurulumu bu yüzden tabloları boşaltma yöntemini kullanır.
+- Temiz derlemede "Compiled with warnings" uyarısı: `jose` kütüphanesinin JWE sıkıştırma kodu (CompressionStream) Edge runtime'da desteklenmiyor.
+  Uygulama yalnızca JWS imzası kullanır, bu kod hiç çalışmaz; zararsızdır (ilk sürümde de vardı).
 - Vercel **Hobby** planı kişisel/ticari olmayan kullanım içindir; gerçek ticari yayında Pro gerekir.
 - Neon Free kullanılmadığında uyur; ilk istek kısa gecikebilir.
 
