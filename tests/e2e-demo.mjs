@@ -76,7 +76,8 @@ async function uploadFile(call, cookie, vehicleId, kind, path, name, type) {
       contentType: type,
     });
   } catch (e) {
-    return { status: /forbidden|409|opsiyon/i.test(String(e.message)) ? 409 : 400, data: String(e.message) };
+    // Sunucu yükleme jetonunu reddettiyse (yetki/kural) Blob istemcisi "client token" hatası verir.
+    return { status: /client token/i.test(String(e.message)) ? 409 : 400, data: String(e.message) };
   }
   return call(`/api/crm/vehicles/${vehicleId}/${route}`, { method: "POST", json: kind === "photo" ? { paths: [rel] } : { path: rel } });
 }
