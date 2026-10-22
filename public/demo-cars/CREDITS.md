@@ -5,7 +5,7 @@ Bu klasördeki fotoğraflar **Unsplash** üzerinden alınmıştır ve **Unsplash
 atıf zorunlu değildir (aşağıda yine de belirtilmiştir). Unsplash+ (ücretli) görsel kullanılmamıştır.
 
 Yapılan düzenlemeler: 4:3 kırpma, 1280×960 boyutlandırma, JPEG sıkıştırma, plakaların bulanıklaştırılması
-ve "TEMSİLİ GÖRSEL · DEMO" etiketi eklenmesi.
+ve "TEMSİLİ GÖRSEL · DEMO" etiketi eklenmesi. Golf fotoğraflarında sürücünün yüzü de bulanıklaştırıldı.
 
 **Önemli:** Fotoğraflar temsilidir. Mir Motors stoğundaki gerçek araçlar değildir; demo ilanlarındaki
 yıl/paket/renk bilgileri fotoğraftaki modelle uyumlu seçilmiştir. Gerçek yayında yalnızca galerinin kendi
@@ -25,3 +25,13 @@ yıl/paket/renk bilgileri fotoğraftaki modelle uyumlu seçilmiştir. Gerçek ya
 | audi-a5-1.jpg, -2, -3 | Audi A5 Sportback (makyajlı) | @stablevehiclecontracts | https://unsplash.com/photos/dfr4Tsn6eWM · 6sEtyf_37cQ · Wj9ezpOGHa8 |
 | hero-showroom.jpg | Showroom (yedek hero görseli) | @lorenzohamers | https://unsplash.com/photos/9njClq6GPG0 |
 | ../../demo-assets/ornek-bmw-5-serisi-1..3.jpg | BMW 5 Serisi (G30) — canlı demoda yüklemek için | @avenir_visuals | https://unsplash.com/photos/c35lDfr_7oA · Dp86PyoGtgM · tYxjUl6II9o |
+
+### Ana sayfa slider görselleri (geniş kadraj, aynı lisans)
+
+| Dosya | Kaynak fotoğraf |
+|---|---|
+| hero-slide-1.jpg | Volvo XC60 — @lovesyautopics, https://unsplash.com/photos/95Kt-AcCU5Y |
+| hero-slide-2.jpg | Volkswagen Golf 8 GTI — @omerhaktan, https://unsplash.com/photos/Cw08dtFisHM (plaka ve sürücü yüzü bulanıklaştırıldı) |
+| hero-slide-3.jpg | Showroom — @lorenzohamers, https://unsplash.com/photos/9njClq6GPG0 |
+
+Mobil kadrajda aynı fotoğrafların 4:3 sürümleri (volvo-xc60-1.jpg, vw-golf-1.jpg, hero-showroom.jpg) kullanılır.

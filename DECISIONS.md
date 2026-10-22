@@ -84,6 +84,8 @@ Gerçek WhatsApp API, Instagram DM, otomatik müşteri cevaplama, EİDS entegras
 - Renk token'ları `src/app/globals.css` `@theme` bloğunda: `brand #BA1020`, `brand-dark #990C19` (hover), `ink #17191D`, `paper #F4F4F6`, `muted #646B76`, `line #E3E5E9`. Eski `accent` token'ı geriye dönük uyumluluk için `brand` ile aynı kırmızıya eşlendi; CRM bu sayede kırmızıya uyarlandı, bileşenleri değişmedi.
 - Kırmızı: birincil CTA, kart fiyat bantları, aktif filtre etiketleri, bölüm vurgu çizgileri, bağlantı hover'ları, arama butonu, detay sayfası fiyat ve iletişim alanı.
 - "Opsiyonlu" durumu metin + kilit ikonu ile gösterilir (yalnızca renge bağlı değil).
+- Ana sayfa story şeridi yalnızca yerel veriden üretilir (`src/lib/home-stories.ts`): yayındaki araçlar + izinli showroom fotoğrafı. Instagram API kullanılmaz; teslimat, müşteri yorumu, kampanya gibi gerçekte olmayan içerik gösterilmez. "Öne Çıkanlar" ayrı bir öne çıkarma verisi olmadığı için stoktaki en üst fiyat segmentidir. Instagram bağlantısı `NEXT_PUBLIC_INSTAGRAM_URL` ile verilir; boşsa "Instagram · yakında" yazar.
+- Hero slider metinleri Mir Motors'a özgüdür; Borz'un taksit/kredi/senetli/kampanya/konsinye/nakit alım içerikleri kullanılmadı. Slider görselleri Unsplash, "TEMSİLİ GÖRSEL · DEMO" etiketli; masaüstü geniş ve mobil 4:3 ayrı kırpma.
 - Logo: Mir Motors'a özgü kelime markası (kırmızı eğik blok içinde "M" + MIR siyah / MOTORS kırmızı, tek satır).
 
 ## Demo araç fotoğrafları

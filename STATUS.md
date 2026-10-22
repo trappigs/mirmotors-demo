@@ -19,6 +19,7 @@
 **Müşteri sitesi**
 - Ana sayfa, Araçlarımız, Araç detayı, Hakkımızda, İletişim; mobil uyumlu; her sayfada "DEMO · Örnek Araçlar" bandı
 - Kırmızı-beyaz-siyah tasarım sistemi (Borz Motor referansı). Araç listeleme (Borz Motor düzenine uyarlanmış): geniş arama alanı (marka/model/paket metin araması, maksimum fiyat, durum), yatay hızlı filtre etiketleri (fiyat aralığı, kasa tipi, durum), "Detaylı Filtreler" paneli (marka → model, fiyat, yıl, km, yakıt, vites, kasa, durum), ızgara/liste görünümü, masaüstünde 4 sütun
+- Ana sayfa: navbar altında story şeridi (Yeni Gelenler, Stoktakiler, SUV, Sedan, Öne Çıkanlar, Showroom — yayındaki araçlardan üretilir; tam ekran görüntüleyici: ok/ESC/dokunma/kaydırma), 3 slaytlı hero slider (~5 sn otomatik, fare/klavye odağında ve azaltılmış harekette durur) ve slider altına taşan Marka/Model/Model yılı arama kartı (mevcut /araclar filtrelerine gider)
 - Sıralama: yeni eklenen, fiyat artan/azalan, km artan, yıl azalan
 - Detay: galeri, video oynatıcı (Range destekli), özellikler, donanım, boya/değişen/hasar, ekspertiz özeti, durum, WhatsApp bağlantısı (wa.me)
 - Opsiyonlu etiketi; satış bekleyen/satılmış/taslak araç listede yok, eski bağlantı HTTP 404 "Bu ilan artık yayında değil"
@@ -74,6 +75,7 @@ Ortam: Windows 11, Node 24.18, üretim derlemesi. **Başarısız test yok.**
 | Sayfa yenileme / sunucu yeniden başlatma veri kaybı | GEÇTİ | Yeniden başlatma sonrası araç yerinde |
 | `db:reset` sonrası açık oturumlar | GEÇTİ (düzeltildi) | Önceden oturumlar düşüyordu; seed kullanıcılarına sabit kimlik verildi |
 | Mobil görünüm | GEÇTİ | 390 px: liste, detay (fiyat/WhatsApp üstte), CRM giriş; yatay taşma yok |
+| Ana sayfa story + slider | GEÇTİ | Story açma/ileri/geri/ESC/kaydırma, "Aracı İncele" yönlendirmesi; slider otomatik geçiş, hover/odak durdurma, oklar/göstergeler; arama BMW/X5/2020 → doğru sonuç; yeni yayımlanan araç "Yeni Gelenler"de ilk, satılan araç story'lerden çıkıyor |
 | Demo bandı tüm sitede | GEÇTİ | 6 sayfada (404 dahil) |
 | EİDS/ödeme iddiası yok | GEÇTİ | Müşteri sayfalarında taranarak doğrulandı |
 | CRM API oturumsuz/sahte çerezle erişim | GEÇTİ | 8 uç nokta 401; satış personeli yönetici işlemine 403 |
@@ -87,4 +89,4 @@ Ortam: Windows 11, Node 24.18, üretim derlemesi. **Başarısız test yok.**
 
 - Git: `master` dalı, commit geçmişi için `git log`
 - Yerel yedek: `C:\Users\Mami\Projeler\mirmotors-demo-yedek\` (git bundle + kaynak zip)
-- Yedek sunum: `demo-assets/yedek-sunum/` (19 masaüstü + 3 mobil ekran görüntüsü, 76 sn altyazılı video)
+- Yedek sunum: `demo-assets/yedek-sunum/` (19 masaüstü + 3 mobil ekran görüntüsü, ana sayfa tam boy masaüstü/mobil, 76 sn altyazılı video)

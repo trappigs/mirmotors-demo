@@ -110,3 +110,14 @@ body {
     @apply inline-flex items-center gap-1.5 rounded-full border border-line bg-white px-3 py-1 text-xs font-medium text-ink transition hover:border-brand hover:text-brand;
   }
 }
+
+/* Story ilerleme çubuğu */
+@keyframes story-progress {
+  from { width: 0%; }
+  to { width: 100%; }
+}
+
+/* Hero slider yumuşak geçiş */
+@media (prefers-reduced-motion: reduce) {
+  .motion-fade { transition: none !important; }
+}
