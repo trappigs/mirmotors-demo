@@ -39,6 +39,8 @@ export function parseFilters(sp: SearchParams) {
     bodyType: str(sp.kasa),
     status: status === "AVAILABLE" || status === "OPTIONED" ? status : undefined,
     sort: (sort && sort in SORTS ? sort : "new") as SortKey,
+    q: str(sp.q)?.slice(0, 80),
+    view: (str(sp.gorunum) === "liste" ? "list" : "grid") as "grid" | "list",
   };
 }
 export type Filters = ReturnType<typeof parseFilters>;
@@ -58,6 +60,10 @@ export async function findPublicVehicles(f: Filters) {
     fuel: f.fuel,
     transmission: f.transmission,
     bodyType: f.bodyType,
+    // Metin araması: her kelime marka, model veya pakette geçmeli.
+    AND: (f.q ?? "").split(/\s+/).filter(Boolean).slice(0, 6).map((w) => ({
+      OR: [{ brand: { contains: w } }, { model: { contains: w } }, { packageName: { contains: w } }],
+    })),
   };
   return prisma.vehicle.findMany({
     where,
@@ -89,3 +95,12 @@ export async function findPublicVehicle(id: string) {
 }
 
 export type PublicVehicleListItem = Awaited<ReturnType<typeof findPublicVehicles>>[number];
+
+/** Hızlı fiyat aralığı seçimleri (TL). */
+export const PRICE_PRESETS: { label: string; min?: number; max?: number }[] = [
+  { label: "1,5 milyon altı", max: 1_500_000 },
+  { label: "1,5 – 2,5 milyon", min: 1_500_000, max: 2_500_000 },
+  { label: "2,5 – 3,5 milyon", min: 2_500_000, max: 3_500_000 },
+  { label: "3,5 – 5 milyon", min: 3_500_000, max: 5_000_000 },
+  { label: "5 milyon üzeri", min: 5_000_000 },
+];

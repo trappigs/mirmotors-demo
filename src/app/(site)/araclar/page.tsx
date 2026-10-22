@@ -1,19 +1,35 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Suspense } from "react";
 import { FilterPanel } from "@/components/site/FilterPanel";
 import { SortSelect } from "@/components/site/SortSelect";
-import { VehicleCard } from "@/components/site/VehicleCard";
-import { SORTS, findPublicVehicles, parseFilters, publicBrandModels, type SearchParams } from "@/lib/public-vehicles";
+import { VehicleCard, VehicleRow } from "@/components/site/VehicleCard";
+import { PRICE_PRESETS, SORTS, findPublicVehicles, parseFilters, publicBrandModels, type SearchParams } from "@/lib/public-vehicles";
 
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = { title: "Araçlarımız" };
+export const metadata: Metadata = { title: "Tüm Araçlarımız" };
+
+type Values = Record<string, string | undefined>;
 
 const nf = new Intl.NumberFormat("tr-TR");
 const num = (v: string) => (/^\d+$/.test(v.replace(/\./g, "")) ? nf.format(Number(v.replace(/\./g, ""))) : v);
 
-/** Seçili filtreleri okunur etiketlere çevirir; her etiket kendi parametresini kaldıran bağlantıya sahiptir. */
-function activeFilterChips(values: Record<string, string | undefined>) {
+/** Mevcut parametreleri koruyarak verilen anahtarları değiştiren (undefined → kaldırır) bağlantı üretir. */
+function hrefWith(values: Values, patch: Record<string, string | undefined>) {
+  const params = new URLSearchParams();
+  for (const [k, v] of Object.entries({ ...values, ...patch })) if (v) params.set(k, v);
+  const qs = params.toString();
+  return qs ? `/araclar?${qs}` : "/araclar";
+}
+
+/** Hızlı seçim etiketi: aktifse tıklayınca kaldırır, değilse uygular. */
+function quick(values: Values, patch: Record<string, string | undefined>) {
+  const active = Object.entries(patch).every(([k, v]) => (values[k] || undefined) === v);
+  const off = Object.fromEntries(Object.keys(patch).map((k) => [k, undefined]));
+  return { active, href: hrefWith(values, active ? off : patch) };
+}
+
+/** Seçili filtreleri okunur etiketlere çevirir; her etiket kendi parametresini kaldırır. */
+function activeFilterChips(values: Values) {
   const range = (min: string, max: string, unit: string, label: string) => {
     const a = values[min], b = values[max];
     if (!a && !b) return null;
@@ -22,7 +38,8 @@ function activeFilterChips(values: Record<string, string | undefined>) {
   };
   const one = (k: string, label?: string, map?: Record<string, string>) =>
     values[k] ? { keys: k === "marka" ? ["marka", "model"] : [k], text: `${label ? label + ": " : ""}${map?.[values[k]!] ?? values[k]}` } : null;
-  const chips = [
+  return [
+    one("q", "Arama"),
     one("marka"),
     one("model"),
     range("minFiyat", "maxFiyat", " TL", "Fiyat"),
@@ -32,79 +49,150 @@ function activeFilterChips(values: Record<string, string | undefined>) {
     one("vites"),
     one("kasa"),
     one("durum", undefined, { AVAILABLE: "Satışta", OPTIONED: "Opsiyonlu" }),
-  ].filter((c): c is { keys: string[]; text: string } => Boolean(c));
+  ]
+    .filter((c): c is { keys: string[]; text: string } => Boolean(c))
+    .map((c) => ({ text: c.text, href: hrefWith(values, Object.fromEntries(c.keys.map((k) => [k, undefined]))) }));
+}
 
-  return chips.map((c) => {
-    const params = new URLSearchParams();
-    for (const [k, v] of Object.entries(values)) if (v && !c.keys.includes(k)) params.set(k, v);
-    const qs = params.toString();
-    return { text: c.text, href: qs ? `/araclar?${qs}` : "/araclar" };
-  });
+function Chip({ href, active, children }: { href: string; active: boolean; children: React.ReactNode }) {
+  return (
+    <Link
+      href={href}
+      aria-pressed={active}
+      className={`inline-flex items-center gap-1.5 rounded-full border px-4 py-2 text-[13px] font-semibold transition ${
+        active ? "border-ink bg-ink text-white" : "border-zinc-200 bg-white text-ink hover:border-zinc-400"
+      }`}
+    >
+      {children}
+      {active && <span aria-hidden className="text-white/60">×</span>}
+    </Link>
+  );
+}
+
+function GroupLabel({ children }: { children: React.ReactNode }) {
+  return <p className="mb-2.5 border-l-[3px] border-accent pl-2.5 text-sm font-bold text-ink">{children}</p>;
 }
 
 export default async function VehiclesPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const sp = await searchParams;
   const filters = parseFilters(sp);
   const [vehicles, brandModels] = await Promise.all([findPublicVehicles(filters), publicBrandModels()]);
-  const values = Object.fromEntries(Object.entries(sp).map(([k, v]) => [k, Array.isArray(v) ? v[0] : v]));
+  const values: Values = Object.fromEntries(Object.entries(sp).map(([k, v]) => [k, Array.isArray(v) ? v[0] : v]));
   const chips = activeFilterChips(values);
+  const optionedCount = vehicles.filter((v) => v.status === "OPTIONED").length;
+  const isList = filters.view === "list";
+
+  // Arama formu kendi alanları dışındaki seçili filtreleri gizli alanlarla korur.
+  const searchOwn = ["q", "maxFiyat", "durum"];
+  const keep = Object.entries(values).filter(([k, v]) => v && !searchOwn.includes(k));
 
   return (
-    <>
-      <section className="relative overflow-hidden bg-ink text-white">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_120%_at_90%_0%,rgba(201,165,107,0.18),transparent_60%),linear-gradient(180deg,#0e1015,#111a2b)]" />
-        <div className="relative mx-auto max-w-7xl px-4 py-14 sm:px-6">
-          <p className="eyebrow-light">Stok</p>
-          <h1 className="mt-3 font-display text-4xl font-bold tracking-tight md:text-5xl">Araçlarımız</h1>
-          <p className="mt-3 max-w-xl text-zinc-400">Ekspertiz özetli, gerçek fotoğraflı seçkin ikinci el otomobiller.</p>
+    <div className="mx-auto max-w-7xl px-4 pb-10 pt-8 sm:px-6 md:pt-10">
+      {/* Başlık + görünüm + sıralama */}
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <h1 className="font-display text-3xl font-bold tracking-tight text-ink md:text-4xl">Tüm Araçlarımız</h1>
+        <div className="flex items-center gap-2">
+          <div className="flex rounded-xl border border-zinc-200 bg-white p-1 shadow-sm" role="group" aria-label="Görünüm">
+            <Link href={hrefWith(values, { gorunum: "liste" })} aria-label="Liste görünümü" aria-pressed={isList}
+              className={`grid h-9 w-9 place-items-center rounded-lg transition ${isList ? "bg-ink text-white" : "text-zinc-500 hover:text-ink"}`}>
+              <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01" /></svg>
+            </Link>
+            <Link href={hrefWith(values, { gorunum: undefined })} aria-label="Izgara görünümü" aria-pressed={!isList}
+              className={`grid h-9 w-9 place-items-center rounded-lg transition ${!isList ? "bg-ink text-white" : "text-zinc-500 hover:text-ink"}`}>
+              <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor" aria-hidden="true"><rect x="4" y="4" width="7" height="7" rx="1.5" /><rect x="13" y="4" width="7" height="7" rx="1.5" /><rect x="4" y="13" width="7" height="7" rx="1.5" /><rect x="13" y="13" width="7" height="7" rx="1.5" /></svg>
+            </Link>
+          </div>
+          <SortSelect
+            options={Object.entries(SORTS).map(([key, s]) => ({ key, label: s.label }))}
+            value={filters.sort}
+            params={Object.fromEntries(Object.entries(values).filter((e): e is [string, string] => Boolean(e[1])))}
+          />
+        </div>
+      </div>
+
+      {/* Geniş arama alanı */}
+      <section className="mt-6 rounded-2xl border border-zinc-200 bg-white p-5 shadow-[0_8px_30px_-12px_rgba(16,24,40,0.15)] md:p-6">
+        <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+          <div className="shrink-0">
+            <p className="font-display text-xl font-bold text-ink">Araçlar</p>
+            <p className="mt-0.5 text-sm text-zinc-500" data-testid="result-count">
+              {vehicles.length} ilan listeleniyor · {vehicles.length - optionedCount} satışta, {optionedCount} opsiyonlu
+            </p>
+          </div>
+          <form action="/araclar" className="grid flex-1 gap-2.5 sm:grid-cols-[1fr_auto] lg:max-w-3xl lg:grid-cols-[1.6fr_1fr_0.9fr_auto]">
+            {keep.map(([k, v]) => <input key={k} type="hidden" name={k} value={v} />)}
+            <input name="q" defaultValue={values.q ?? ""} placeholder="Marka, model veya paket ara" aria-label="Marka, model veya paket ara" className="input h-12 rounded-xl sm:col-span-2 lg:col-span-1" />
+            <input name="maxFiyat" defaultValue={values.maxFiyat ?? ""} inputMode="numeric" placeholder="Maksimum fiyat (TL)" aria-label="Maksimum fiyat" className="input h-12 rounded-xl" />
+            <select name="durum" defaultValue={values.durum ?? ""} aria-label="Durum" className="input h-12 rounded-xl">
+              <option value="">Tüm durumlar</option>
+              <option value="AVAILABLE">Satışta</option>
+              <option value="OPTIONED">Opsiyonlu</option>
+            </select>
+            <button className="btn-primary h-12 rounded-xl px-8 text-[15px] sm:col-span-2 lg:col-span-1" data-testid="search-submit">Ara</button>
+          </form>
         </div>
       </section>
 
-      <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6">
-        <div className="grid gap-8 lg:grid-cols-[300px_1fr]">
-          <aside className="lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:self-start lg:overflow-y-auto lg:rounded-2xl lg:pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            <FilterPanel key={JSON.stringify(values)} brandModels={brandModels} values={values} sort={filters.sort} />
-          </aside>
-
-          <section className="min-w-0">
-            <div className="card flex flex-wrap items-center justify-between gap-4 px-5 py-4">
-              <p className="text-sm text-zinc-600" data-testid="result-count">
-                <span className="font-display text-lg font-bold text-ink">{vehicles.length}</span> araç bulundu
-              </p>
-              <Suspense>
-                <SortSelect options={Object.entries(SORTS).map(([key, s]) => ({ key, label: s.label }))} value={filters.sort} />
-              </Suspense>
+      {/* Yatay hızlı filtreler */}
+      <section className="mt-6 grid gap-5 lg:grid-cols-[1fr_auto] lg:items-end">
+        <div className="space-y-4">
+          <div>
+            <GroupLabel>Fiyat aralığı</GroupLabel>
+            <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 [&::-webkit-scrollbar]:hidden [&>*]:shrink-0">
+              {PRICE_PRESETS.map((p) => {
+                const c = quick(values, { minFiyat: p.min?.toString(), maxFiyat: p.max?.toString() });
+                return <Chip key={p.label} {...c}>{p.label}</Chip>;
+              })}
             </div>
-
-            {chips.length > 0 && (
-              <div className="mt-4 flex flex-wrap items-center gap-2" aria-label="Seçili filtreler">
-                {chips.map((c) => (
-                  <Link key={c.text} href={c.href} className="chip border-accent/50 bg-accent/10 text-ink" title="Filtreyi kaldır">
-                    {c.text} <span aria-hidden className="text-zinc-500">×</span>
-                  </Link>
-                ))}
-                <Link href="/araclar" className="ml-1 text-xs font-semibold text-zinc-500 underline-offset-4 hover:text-ink hover:underline">
-                  Tümünü temizle
-                </Link>
-              </div>
-            )}
-
-            {vehicles.length === 0 ? (
-              <div className="card mt-6 px-6 py-16 text-center">
-                <p className="font-display text-lg font-semibold">Bu kriterlere uygun araç bulunamadı.</p>
-                <p className="mt-2 text-sm text-zinc-500">Filtreleri genişletmeyi deneyin veya danışmanımıza yazın.</p>
-                <Link href="/araclar" className="btn-outline mt-6">Filtreleri temizle</Link>
-              </div>
-            ) : (
-              <div className="mt-6 grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
-                {vehicles.map((v) => (
-                  <VehicleCard key={v.id} vehicle={v} />
-                ))}
-              </div>
-            )}
-          </section>
+          </div>
+          <div>
+            <GroupLabel>Kasa tipi ve durum</GroupLabel>
+            <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 [&::-webkit-scrollbar]:hidden [&>*]:shrink-0">
+              {["SUV", "Sedan", "Hatchback", "Coupe"].map((k) => {
+                const c = quick(values, { kasa: k });
+                return <Chip key={k} {...c}>{k}</Chip>;
+              })}
+              <span className="mx-1 hidden w-px self-stretch bg-zinc-200 sm:block" />
+              {[["AVAILABLE", "Satışta"], ["OPTIONED", "Opsiyonlu"]].map(([val, label]) => {
+                const c = quick(values, { durum: val });
+                return <Chip key={val} {...c}>{label}</Chip>;
+              })}
+            </div>
+          </div>
         </div>
-      </div>
-    </>
+        <div>
+          <FilterPanel key={JSON.stringify(values)} brandModels={brandModels} values={values} sort={filters.sort} />
+        </div>
+      </section>
+
+      {chips.length > 0 && (
+        <div className="mt-5 flex flex-wrap items-center gap-2 rounded-xl bg-white/70 px-4 py-3 ring-1 ring-zinc-200" aria-label="Seçili filtreler">
+          <span className="mr-1 text-xs font-semibold uppercase tracking-[0.12em] text-zinc-500">Seçili:</span>
+          {chips.map((c) => (
+            <Link key={c.text} href={c.href} className="chip border-accent/50 bg-accent/10 text-ink" title="Filtreyi kaldır">
+              {c.text} <span aria-hidden className="text-zinc-500">×</span>
+            </Link>
+          ))}
+          <Link href="/araclar" className="ml-1 text-xs font-semibold text-zinc-500 underline-offset-4 hover:text-ink hover:underline">Tümünü temizle</Link>
+        </div>
+      )}
+
+      {/* Sonuçlar */}
+      {vehicles.length === 0 ? (
+        <div className="mt-8 rounded-2xl border border-zinc-200 bg-white px-6 py-16 text-center">
+          <p className="font-display text-lg font-semibold">Bu kriterlere uygun araç bulunamadı.</p>
+          <p className="mt-2 text-sm text-zinc-500">Filtreleri genişletmeyi deneyin veya danışmanımıza yazın.</p>
+          <Link href="/araclar" className="btn-outline mt-6">Filtreleri temizle</Link>
+        </div>
+      ) : isList ? (
+        <div className="mt-8 space-y-4">
+          {vehicles.map((v) => <VehicleRow key={v.id} vehicle={v} />)}
+        </div>
+      ) : (
+        <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {vehicles.map((v) => <VehicleCard key={v.id} vehicle={v} />)}
+        </div>
+      )}
+    </div>
   );
 }

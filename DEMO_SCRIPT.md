@@ -52,9 +52,9 @@ npm start
 | 0:30 | Yönetici — http://localhost:3000/crm | Özet kartları (stok, satışta, opsiyonlu, satış bekleyen, satılan) ve son işlemler. |
 | 0:50 | Yönetici — **+ Yeni araç ekle → Manuel giriş** | Örnek BMW bilgilerini girin, 3–4 donanım seçin, boya/değişen "Yok", ekspertiz özeti. **Taslak olarak kaydet ve devam et**. |
 | 2:00 | Yönetici — araç sayfası | Önce **Kontrol ettim, yayımla** → "en az 1 fotoğraf" uyarısı (kural sunucuda). **Bilgisayardan fotoğraf yükle** → fotoğrafları seçin. Bir fotoğrafa **Kapak yap**. **Kontrol ettim, yayımla** → "Satışta". |
-| 2:45 | Müşteri — http://localhost:3000/araclar | Yenileyin; BMW listede. Marka **BMW**, Maks. fiyat **4000000** → **Filtrele**. İlanı açın: galeri, özellikler, ekspertiz özeti, WhatsApp. |
+| 2:45 | Müşteri — http://localhost:3000/araclar | "Tüm Araçlarımız": dört sütunlu katalog. Arama kutusuna **BMW**, Maksimum fiyat **4000000** → **Ara**. Ardından **Sedan** etiketine tıklayın. Gerekirse **Detaylı Filtreler** ile marka/model/yıl/km/yakıt/vites seçin. Sağ üstten liste görünümü ve sıralama. İlanı açın: galeri, özellikler, ekspertiz özeti, WhatsApp. |
 | 3:30 | Ahmet — aynı aracın CRM sayfası (Araçlar listesinden) | **Opsiyonla** → "Opsiyon sahibi: Ahmet (siz)". |
-| 3:45 | Müşteri | Yenileyin → **Opsiyonlu** etiketi. |
+| 3:45 | Müşteri | Yenileyin → kartta **Opsiyonlu** rozeti; araç listede kalmaya devam eder. |
 | 4:00 | Mehmet — aynı aracın CRM sayfası | **Satış sürecini başlat** → kırmızı uyarı "Bu araç Ahmet tarafından opsiyonlanmış. İşlem engellendi." Vurgu: kontrol sunucuda/veritabanında; aynı anda iki istek gelirse yalnızca biri geçer. Mehmet aracın bilgilerini de değiştiremez. |
 | 4:30 | Ahmet | Anlaşılan fiyatı girin → **Satış sürecini başlat** → "Satış Bekliyor". Müşteri sekmesinde yenileyin: ilan listeden kalktı. |
 | 5:00 | Yönetici | Sayfayı yenileyin → **Noter devri tamamlandı** kutusu + tarih → **Satışı tamamla** → "Satıldı". |

@@ -18,7 +18,7 @@
 
 **Müşteri sitesi**
 - Ana sayfa, Araçlarımız, Araç detayı, Hakkımızda, İletişim; mobil uyumlu; her sayfada "DEMO · Örnek Araçlar" bandı
-- Filtreler: marka → modele bağlı model, min/maks fiyat, yıl, km, yakıt, vites, kasa, Satışta/Opsiyonlu
+- Araç listeleme (Borz Motor düzenine uyarlanmış): geniş arama alanı (marka/model/paket metin araması, maksimum fiyat, durum), yatay hızlı filtre etiketleri (fiyat aralığı, kasa tipi, durum), "Detaylı Filtreler" paneli (marka → model, fiyat, yıl, km, yakıt, vites, kasa, durum), ızgara/liste görünümü, masaüstünde 4 sütun
 - Sıralama: yeni eklenen, fiyat artan/azalan, km artan, yıl azalan
 - Detay: galeri, video oynatıcı (Range destekli), özellikler, donanım, boya/değişen/hasar, ekspertiz özeti, durum, WhatsApp bağlantısı (wa.me)
 - Opsiyonlu etiketi; satış bekleyen/satılmış/taslak araç listede yok, eski bağlantı HTTP 404 "Bu ilan artık yayında değil"
@@ -29,7 +29,7 @@
 - **AI ile video üzerinden giriş:** `ANTHROPIC_API_KEY` tanımlı olmadığı için **Simülasyon Modu**. Video gerçekten yüklenir ve araca bağlanır; taslak alanları sabit örnek transkript/çıktıdan gelir. Ekranda "canlı AI analizi değildir" yazar.
 - Canlı AI kodu (Claude yapılandırılmış çıktı, Whisper, ffmpeg kare çıkarma) yazıldı ve derleniyor; **gerçek API anahtarıyla test edilmedi.**
 - WhatsApp: yalnızca `wa.me` bağlantısı; demo numarası (905000000000) gerçek değildir.
-- Seed araç görselleri SVG illüstrasyondur ("TEMSİLİ GÖRSEL").
+- Seed araç görselleri SVG illüstrasyondur ("TEMSİLİ GÖRSEL"). Kullanım hakkı olan gerçek araç fotoğrafı bulunmadığı için üçüncü taraf fotoğraf kullanılmadı; CRM'den yüklenen gerçek fotoğraflar kartlara ve detay sayfasına otomatik yansır.
 
 ## Eksik özellikler
 
@@ -80,7 +80,7 @@ Ortam: Windows 11, Node 24.18, üretim derlemesi. **Başarısız test yok.**
 | Seed'de kişisel veri yok | GEÇTİ | Tarama |
 | Lint / TypeScript / build | GEÇTİ | `npm run lint`, `tsc`, `next build` |
 | Birim testleri | GEÇTİ | 7/7 (eşzamanlılık dahil) |
-| E2E API senaryosu | GEÇTİ | 43/43 (önceki raporda "41/41" yazılmıştı; doğru sayı o zaman 40/40 idi) |
+| E2E API senaryosu | GEÇTİ | 64/64 (21 arama/filtre kontrolü dahil) (önceki raporda "41/41" yazılmıştı; doğru sayı o zaman 40/40 idi) |
 | Canlı AI taslağı | TEST EDİLMEDİ | API anahtarı yok |
 
 ## Yedekler

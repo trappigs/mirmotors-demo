@@ -122,6 +122,24 @@ const filteredOut = await publicHtml("/araclar?marka=BMW&maxFiyat=3000000");
 check("7b. Fiyat aralığı dışındaki BMW filtrelenir", !filteredOut.html.includes(`/araclar/${id}`));
 const otherBrand = await publicHtml("/araclar?marka=Audi");
 check("7c. Başka marka filtresinde görünmez", !otherBrand.html.includes(`/araclar/${id}`));
+// Arama ve tüm filtreler (yeni listeleme sayfası): hedef araç dahil / hariç
+const has = async (qs) => (await publicHtml(`/araclar?${qs}`)).html.includes(`/araclar/${id}`);
+const filterCases = [
+  ["q=520i", true], ["q=bmw 520i", true], ["q=Audi", false],
+  ["kasa=Sedan", true], ["kasa=SUV", false],
+  ["yakit=Benzin", true], ["yakit=Dizel", false],
+  ["vites=Otomatik", true], ["vites=Manuel", false],
+  ["minYil=2023", true], ["maxYil=2022", false],
+  ["maxKm=20000", true], ["minKm=20000", false],
+  ["minFiyat=3500000&maxFiyat=5000000", true], ["minFiyat=5000000", false],
+  ["marka=BMW&model=5 Serisi", true], ["marka=BMW&model=X5", false],
+  ["durum=AVAILABLE", true], ["durum=OPTIONED", false],
+  ["gorunum=liste", true], ["gorunum=liste&q=520i&kasa=Sedan", true],
+];
+for (const [qs, expected] of filterCases) {
+  const got = await has(encodeURI(qs));
+  check(`Filtre ${qs} → ${expected ? "dahil" : "hariç"}`, got === expected, `got ${got}`);
+}
 const sorted = await publicHtml("/araclar?sirala=price_asc");
 check("Sıralama parametresi çalışır (200)", sorted.status === 200);
 

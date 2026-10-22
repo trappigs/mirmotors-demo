@@ -67,7 +67,7 @@ export function carSvg(opts: { color: string; bodyType: string; title: string; v
     <ellipse cx="615" cy="622" rx="520" ry="26" fill="url(#shadow)"/>
     ${car}
   </g>
-  <text x="1150" y="770" text-anchor="end" font-family="Arial, Helvetica, sans-serif" font-size="16" letter-spacing="5" fill="${fg}" fill-opacity="0.55">TEMSİLİ GÖRSEL · DEMO</text>
+  <text x="600" y="770" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="16" letter-spacing="5" fill="${fg}" fill-opacity="0.55">TEMSİLİ GÖRSEL · DEMO</text>
 </svg>`;
 }
 

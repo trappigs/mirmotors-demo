@@ -1,4 +1,4 @@
-import { DemoBanner, SiteFooter, SiteHeader } from "@/components/site/SiteChrome";
+import { DemoBanner, MobileActionBar, SiteFooter, SiteHeader } from "@/components/site/SiteChrome";
 
 export default function SiteLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -7,6 +7,7 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
       <SiteHeader />
       <main>{children}</main>
       <SiteFooter />
+      <MobileActionBar />
     </>
   );
 }

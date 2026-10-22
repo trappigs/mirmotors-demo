@@ -32,14 +32,24 @@ export function Logo({ light = false }: { light?: boolean }) {
   );
 }
 
+export const waNumber = () => process.env.NEXT_PUBLIC_WHATSAPP_NUMBER?.replace(/\D/g, "");
+
 export function SiteHeader() {
+  const wa = waNumber();
   return (
-    <header className="sticky top-0 z-40 border-b border-white/10 bg-ink/90 backdrop-blur-xl">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-6 px-4 sm:px-6">
-        <Logo light />
-        <NavLinks items={NAV} />
-        <div className="hidden md:block">
-          <Link href="/araclar" className="btn-accent px-4 py-2">Stoğu İncele</Link>
+    <header className="sticky top-0 z-40 border-b border-zinc-200 bg-white/95 backdrop-blur-xl">
+      <div className="relative mx-auto flex h-[72px] max-w-7xl items-center justify-between gap-6 px-4 sm:px-6">
+        <div className="flex items-center gap-8">
+          <Logo />
+          <NavLinks items={NAV} />
+        </div>
+        <div className="hidden items-center gap-3 lg:flex">
+          {wa && (
+            <a href={`https://wa.me/${wa}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-xl border border-emerald-600/30 px-4 py-2.5 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-50">
+              <IconWhatsApp className="h-4 w-4" /> WhatsApp Danışman
+            </a>
+          )}
+          <Link href="/araclar" className="btn-primary rounded-xl px-5 py-2.5">Tüm Araçlar</Link>
         </div>
         <MobileNav items={NAV} />
       </div>
@@ -47,10 +57,27 @@ export function SiteHeader() {
   );
 }
 
+/** Mobilde ekranın altında sabit iletişim çubuğu (yalnızca bağlantı; ödeme/satış işlemi yok). */
+export function MobileActionBar() {
+  const wa = waNumber();
+  return (
+    <div className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-2 gap-2 border-t border-zinc-200 bg-white/95 p-3 backdrop-blur-xl lg:hidden">
+      {wa ? (
+        <a href={`https://wa.me/${wa}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-2 rounded-xl border border-emerald-600/30 py-3 text-sm font-semibold text-emerald-700">
+          <IconWhatsApp className="h-4 w-4" /> WhatsApp
+        </a>
+      ) : (
+        <Link href="/iletisim" className="btn-outline rounded-xl py-3">İletişim</Link>
+      )}
+      <Link href="/araclar" className="btn-primary rounded-xl py-3">Tüm Araçlar</Link>
+    </div>
+  );
+}
+
 export function SiteFooter() {
   const year = new Date().getFullYear();
   return (
-    <footer className="mt-24 bg-ink text-zinc-400">
+    <footer className="mt-24 bg-ink pb-20 text-zinc-400 lg:pb-0">
       <div className="h-px bg-gradient-to-r from-transparent via-accent/60 to-transparent" />
       <div className="mx-auto grid max-w-7xl gap-12 px-4 py-16 sm:px-6 md:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1.2fr_1.4fr]">
         <div>
