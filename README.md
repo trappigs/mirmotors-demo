@@ -1,33 +1,45 @@
 # Mir Motors — Galeri Sitesi + CRM (DEMO)
 
-Mir Motors için kurumsal araç satış web sitesi ve galeri CRM'i demosu. Müşteri sitesi ile personel paneli aynı uygulamadadır;
-araç ekleme → yayımlama → opsiyon → satış → ilanın kaldırılması zinciri veritabanı üzerinde gerçekten çalışır.
+Mir Motors için kurumsal araç satış web sitesi ve galeri CRM'i demosu. Müşteri sitesi (`/`) ile personel paneli (`/crm`) aynı Next.js uygulamasındadır;
+araç ekleme → fotoğraf yükleme → yayımlama → opsiyon → noter onaylı satış → ilanın kaldırılması zinciri veritabanı üzerinde gerçekten çalışır.
 
 > Bu bir demo sürümüdür. Araçlar, fiyatlar ve görseller temsilidir. Üretim ortamı güvenlik sertifikası veya hukuki uyumluluk garantisi verilmez.
+> AI ile video girişi **Simülasyon Modu**'ndadır; canlı AI analizi doğrulanmamıştır.
 
-## Gereksinimler
+- **Canlı demo:** https://mirmotors-demo.vercel.app (CRM ek erişim şifresi ister)
+- **Bu dal:** `vercel-deploy` — PostgreSQL (Neon) + Vercel Blob. İlk yerel SQLite sürümü `master` dalındadır.
 
-- Node.js 20+ (24 ile test edildi), npm
-- İsteğe bağlı: `ffmpeg` (canlı AI modunda videodan kare çıkarmak için)
+## Belgeler
 
-## Kurulum ve çalıştırma
+| Belge | İçerik |
+|---|---|
+| [BURAK_KURULUM.md](BURAK_KURULUM.md) | **Adım adım kurulum**, çalıştırma, testler, güvenli geliştirme |
+| [BURAK_DEVIR.md](BURAK_DEVIR.md) | Teknik devir: mimari, veri modeli, API, yetki, durum makinesi, özellik durum tablosu, bilinen hatalar |
+| [PROJECT_HISTORY.md](PROJECT_HISTORY.md) | Proje geçmişi ve alınan kararların özeti |
+| [ROADMAP_BURAK.md](ROADMAP_BURAK.md) | Geliştirme yol haritası |
+| [DECISIONS.md](DECISIONS.md) | Teknik kararlar ve gerekçeleri |
+| [STATUS.md](STATUS.md) | Durum raporu ve kabul testleri |
+| [VERCEL_DEPLOY.md](VERCEL_DEPLOY.md) | Vercel dağıtımı, ortam değişkenleri, ücretsiz servisler |
+| [DEMO_SCRIPT.md](DEMO_SCRIPT.md) | Sunum akışı |
+| [CLAUDE.md](CLAUDE.md) | Claude Code ile geliştirme kuralları |
 
-Tek komut (kurulum + örnek veri + üretim derlemesi + sunucu):
+## Hızlı başlangıç (yerel)
+
+Gereksinim: Node.js 20+ ve yerel PostgreSQL (`npx prisma dev` veya Docker). Ayrıntı: [BURAK_KURULUM.md](BURAK_KURULUM.md).
 
 ```bash
-npm install
+npm ci
 ```
 
 ```bash
-npm run demo
+npx prisma dev --name mirmotors --detach
 ```
 
-Site: http://localhost:3000 · CRM: http://localhost:3000/crm
+```bash
+node scripts/ensure-env.mjs
+```
 
-> **Dikkat:** `npm run demo` her çalıştırmada örnek veriyi baştan yükler; eklenen araçlar ve yüklenen dosyalar silinir.
-> Verileri koruyarak yeniden başlatmak için (derleme yapılmışsa) yalnızca `npm start` kullanın.
-
-Geliştirme modunda çalıştırmak için:
+`.env` içindeki `DATABASE_URL` / `DATABASE_URL_UNPOOLED` değerlerini yerel adresle güncelleyin, sonra:
 
 ```bash
 npm run setup
@@ -37,35 +49,23 @@ npm run setup
 npm run dev
 ```
 
+Site: http://localhost:3000 · CRM: http://localhost:3000/crm
+
+> **Dikkat:** `npm run demo`, `npm run setup` ve `npm run db:reset` **tüm verileri siler** ve örnek veriyi baştan yükler.
+> Yalnızca localhost veritabanında çalışırlar; bulut veritabanında durdurulurlar. Verileri korumak için `npm run dev` veya `npm start`.
+
 | Komut | Açıklama |
 |---|---|
-| `npm run setup` | `.env` yoksa oluşturur, Prisma istemcisini üretir, SQLite şemasını kurar, örnek veriyi yükler |
-| `npm run db:reset` | Demo verisini ve yüklenen dosyaları sıfırlar (sunum öncesi) |
-| `npm run demo` | setup + build + start (**verileri sıfırlar**) |
-| `npm start` | Derlenmiş uygulamayı başlatır (**veriler korunur**) |
-| `npm test` | Durum makinesi birim testleri (eşzamanlılık testleri dahil) |
-| `npm run e2e` | Çalışan sunucuya karşı 14 adımlık demo senaryosu testi (`node tests/e2e-demo.mjs http://localhost:3000`) |
+| `npm run setup` | `.env` yoksa oluşturur, Prisma istemcisi, migration, örnek veri (**veriyi siler**) |
+| `npm run db:reset` | Örnek veriyi baştan yükler (**veriyi siler**) |
+| `npm run demo` | setup + build + start (**veriyi siler**) |
+| `npm run db:seed:cloud` | Bulut veritabanına ilk yükleme (hiçbir şey silmez; veri varsa atlar) |
+| `npm run dev` / `npm start` | Geliştirme / derlenmiş uygulama (veriler korunur) |
+| `npm test` | Birim testleri (`TEST_DATABASE_URL` yerel PostgreSQL ister) |
+| `npm run e2e` | Çalışan sunucuya karşı uçtan uca senaryo (test aracı ekler) |
 | `npm run lint` / `npm run build` | Lint ve üretim derlemesi |
 
-> `npm run e2e` veritabanına test aracı ekler; sunumdan önce `npm run db:reset` çalıştırın.
-
-## Ortam değişkenleri
-
-`.env.example` dosyasına bakın. Özet:
-
-| Değişken | Zorunlu | Açıklama |
-|---|---|---|
-| `DATABASE_URL` | Evet | SQLite dosyası (`file:./dev.db` → `prisma/dev.db`) |
-| `SESSION_SECRET` | Evet | Oturum çerezi imzalama anahtarı (setup otomatik üretir) |
-| `ANTHROPIC_API_KEY` | Hayır | Canlı AI taslağı. Yoksa AI ekranı **Simülasyon Modu**'nda çalışır |
-| `OPENAI_API_KEY` | Hayır | Ses → metin (Whisper). Yoksa transkript elle yapıştırılır |
-| `NEXT_PUBLIC_WHATSAPP_NUMBER` | Hayır | İlan sayfasındaki WhatsApp bağlantısı (demo numarası gerçek değildir) |
-| `STORAGE_DIR` | Hayır | Yüklemelerin klasörü (varsayılan `./storage`) |
-| `COOKIE_SECURE` | Hayır | HTTPS arkasında `1` |
-
-## Demo kullanıcı hesapları
-
-Tüm hesapların şifresi: `MirDemo2026!` (yalnızca yerel demo içindir)
+## Yerel demo hesapları
 
 | Kullanıcı | E-posta | Rol |
 |---|---|---|
@@ -73,30 +73,11 @@ Tüm hesapların şifresi: `MirDemo2026!` (yalnızca yerel demo içindir)
 | Ahmet | ahmet@mirmotors.demo | Satış personeli |
 | Mehmet | mehmet@mirmotors.demo | Satış personeli |
 
-## Kullanılan teknolojiler
+Yerel şifre `prisma/seed.ts` → `LOCAL_DEMO_PASSWORD` (yalnızca yerel örnek veri). Canlı ortamda farklı şifreler kullanılır ve bu depoda yer almaz.
 
-- **Next.js 15** (App Router, TypeScript) — site, CRM ve API rotaları tek uygulamada
-- **Tailwind CSS 4** — arayüz
-- **Prisma 6 + SQLite** — yerel veritabanı (dosya: `prisma/dev.db`)
-- **jose** (HS256 imzalı, httpOnly oturum çerezi) + **bcryptjs** (şifre özeti)
-- **zod** — sunucu tarafı doğrulama ve AI çıktı şeması
-- **@anthropic-ai/sdk** — AI taslak servisi (`claude-opus-5-5`, yapılandırılmış JSON çıktı)
-- **Vitest** — birim testleri
+## Teknolojiler
 
-## Proje yapısı
+Next.js 15 (App Router, TypeScript) · Tailwind CSS 4 · Prisma 6 + PostgreSQL (Neon) · Vercel Blob · jose + bcryptjs (oturum) · zod · Vitest ·
+@anthropic-ai/sdk (canlı AI yolu, doğrulanmadı).
 
-```
-prisma/schema.prisma        Veri modeli (Vehicle, VehiclePhoto, StatusHistory, Sale, User)
-prisma/seed.ts              Örnek veri (11 temsili araç, 3 kullanıcı)
-src/lib/vehicle-status.ts   Durum makinesi — koşullu/atomik geçişler
-src/lib/storage.ts          Dosya yükleme (tür, boyut, dosya imzası kontrolü)
-src/lib/ai/                 AI taslak servisi, simülasyon verisi, kare çıkarma
-src/middleware.ts           /crm ve /api/crm için oturum kontrolü
-src/app/(site)/             Müşteri sitesi
-src/app/crm/                CRM paneli
-src/app/api/crm/            CRM API (her rota ayrıca sunucu tarafı yetki kontrolü yapar)
-storage/public              Fotoğraf ve videolar (/media/... ile servis edilir)
-storage/private             Ekspertiz PDF'leri (yalnızca oturumlu /api/crm/files/...)
-```
-
-Diğer belgeler: [DEMO_SCRIPT.md](DEMO_SCRIPT.md) · [STATUS.md](STATUS.md) · [DECISIONS.md](DECISIONS.md)
+Ortam değişkenleri: [.env.example](.env.example) ve [BURAK_DEVIR.md](BURAK_DEVIR.md) → "Ortam değişkenleri".

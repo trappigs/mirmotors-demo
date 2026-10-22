@@ -1,5 +1,9 @@
 # Teknik Kararlar
 
+> Ürün kararlarının kronolojik özeti: `PROJECT_HISTORY.md`. Bu belge teknik kararları içerir.
+> `vercel-deploy` dalında değişen kararlar en alttaki **"Vercel dağıtımı (vercel-deploy dalı)"** bölümündedir; yukarıdaki
+> SQLite / `storage/` / bellek içi sayaç ifadeleri ilk yerel sürümü (`master`) anlatır.
+
 ## Altyapı
 
 | Karar | Gerekçe |
@@ -95,3 +99,22 @@ Gerçek WhatsApp API, Instagram DM, otomatik müşteri cevaplama, EİDS entegras
 - İşleme: 4:3 kırpma (kartlarla aynı oran), 1280×960, ~160 KB JPEG; görünür plakalar ve başka bir galerinin plaka logosu bulanıklaştırıldı; köşede "TEMSİLİ GÖRSEL · DEMO" etiketi (kart, galeri ve hero kırpmalarında görünür kalacak konumda).
 - Model eşleşmesi: her araç için aynı marka/modelin fotoğrafı seçildi. Fotoğraftaki nesil/donanım farklıysa fotoğraf değil demo verisi uyarlandı (C Serisi 2020/W205, Evoque 2018/1. nesil, Golf GTI, XC60 2021 R-Design, renkler). Mini Cooper taslak olduğu için fotoğrafsızdır (fotoğrafsız yayın engelini göstermek için).
 - Gerçek yayında yalnızca galerinin kendi çektiği fotoğraflar kullanılmalıdır.
+
+## Vercel dağıtımı (vercel-deploy dalı)
+
+| Karar | Gerekçe |
+|---|---|
+| Ayrı `vercel-deploy` dalı ve ayrı çalışma klasörü | Çalışan yerel SQLite demosu (`master`) bozulmasın. |
+| SQLite → PostgreSQL (Neon Free, Vercel Marketplace, fra1) | Vercel'in diski kalıcı değil ve örnekler arasında paylaşılmaz. Şema `prisma migrate` migration'larıyla yönetilir; deploy yalnızca `migrate deploy` çalıştırır. |
+| Arama `mode: "insensitive"` | PostgreSQL'de `contains` büyük/küçük harfe duyarlıdır (SQLite'ta değildi). |
+| Dosyalar özel (private) Vercel Blob mağazasında, tarayıcıdan doğrudan yükleme | Vercel istek gövdesi 4,5 MB ile sınırlı. Jeton `/api/crm/uploads`'ta oturum + araç yetkisi + tür/boyut kısıtıyla verilir; kayıt, sunucu boyutu ve dosya imzasını doğruladıktan sonra oluşturulur. `onUploadCompleted` kullanılmaz (erişim kapısı ve yerel test uyumu). |
+| Tek özel mağaza; medya `/media`, PDF `/api/crm/files` üzerinden uygulamadan akıtılır | PDF'ler herkese açık olmamalı; iki mağaza yerine tek özel mağaza + uygulama rotası. Range başlığı Blob'a iletilir (video sarma). |
+| Seed fotoğrafları statik `/demo-cars/...` | Blob kotası kullanmaz; silme yalnızca kaydı kaldırır. |
+| Vercel'de video 50 MB | Blob ücretsiz kotası; araç/satış akışı videoya bağlı değil. |
+| Giriş deneme sayacı veritabanında (`User.failedLogins`, tek atomik UPDATE) | Sunucusuz ortamda bellek içi sayaç örnekler arasında paylaşılmaz. |
+| CRM için HTTP Basic erişim kapısı (`DEMO_ACCESS_PASSWORD`), Vercel'de tanımsızsa CRM 503 | İnternete açık adreste sabit demo şifresiyle korumasız CRM bırakılmasın. Müşteri sitesi açık. |
+| Bulut personel şifresi `DEMO_STAFF_PASSWORD` (≥12 karakter, yerel şifreden farklı) | Yerel sabit demo şifresi bulutta geçersiz. |
+| Sıfırlayan komutlar yalnızca localhost veritabanında; bulut seed'i yalnızca boş veritabanına | `npm run demo` bulut veritabanını yanlışlıkla silemesin (gerçek Neon adresiyle denendi: durdu). |
+| Vercel'de AI her zaman simülasyon | Canlı yol yerel dosyadan kare çıkarır; Vercel'de doğrulanmadı. |
+| Çerez Vercel'de otomatik `Secure`; fonksiyon bölgesi `fra1` | HTTPS; veritabanı ve Blob ile aynı bölge. |
+| Yalnızca ücretsiz katmanlar (Vercel Hobby, Neon Free, Blob) | Prototip aşaması; Hobby ticari kullanım için uygun değil, canlı kullanımda Pro gerekir. |

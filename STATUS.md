@@ -1,5 +1,8 @@
 # Durum Raporu — 22.10.2026 (son demo kontrolü)
 
+> Bu rapor ilk yerel sürümün (SQLite, `master`) kabul testlerini anlatır. Vercel sürümünün (`vercel-deploy`) canlı test sonuçları
+> `VERCEL_DEPLOY.md` → "Canlı dağıtım" bölümünde, güncel özellik durum tablosu `BURAK_DEVIR.md`'dedir.
+
 ## Gerçekten çalışan özellikler
 
 **CRM**
