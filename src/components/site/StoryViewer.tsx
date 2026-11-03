@@ -129,7 +129,7 @@ export function StoryViewer({ stories, startIndex, onClose, onSeen }: {
           {slide.subtitle && <span className="mb-2 inline-block rounded-md bg-brand px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide">{slide.subtitle}</span>}
           <p className="font-display text-xl font-bold leading-tight" data-testid="story-title">{slide.title}</p>
           {slide.href && (
-            <Link href={slide.href} onClick={onClose} className="btn-primary mt-4 w-full rounded-xl py-3 font-bold" data-testid="story-link">
+            <Link href={slide.href} onClick={onClose} className="btn-gold mt-4 w-full rounded-xl py-3 font-bold" data-testid="story-link">
               {slide.hrefLabel ?? "Aracı İncele"} →
             </Link>
           )}

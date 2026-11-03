@@ -93,7 +93,7 @@ export default async function VehicleDetailPage({ params }: Props) {
             {v.model} <span className="font-semibold text-muted">{v.packageName}</span>
           </h1>
         </div>
-        <p className="rounded-lg bg-brand px-4 py-2 font-display text-2xl font-extrabold tracking-tight text-white lg:hidden">{formatPrice(v.price)}</p>
+        <p className="rounded-lg bg-ink px-4 py-2 font-display text-2xl font-extrabold tracking-tight text-gold lg:hidden">{formatPrice(v.price)}</p>
       </header>
 
       <div className="mt-8 grid gap-10 lg:grid-cols-[1fr_380px]">
@@ -104,7 +104,7 @@ export default async function VehicleDetailPage({ params }: Props) {
           <section className="mt-10 grid grid-cols-2 gap-3 sm:grid-cols-3">
             {highlights.map(({ icon: Icon, label, value }) => (
               <div key={label} className="card flex items-center gap-3.5 p-4">
-                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-brand-soft text-brand">
+                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-brand-soft text-brand-dark">
                   <Icon className="h-5 w-5" />
                 </span>
                 <div className="min-w-0">
@@ -197,12 +197,12 @@ export default async function VehicleDetailPage({ params }: Props) {
         {/* Fiyat ve iletişim kartı */}
         <aside className="lg:sticky lg:top-24 lg:self-start">
           <div className="overflow-hidden rounded-2xl bg-white shadow-[0_10px_30px_-14px_rgba(16,24,40,0.3)] ring-1 ring-line">
-            <div className="bg-brand px-6 py-5 text-white">
+            <div className="bg-ink px-6 py-5 text-white">
               <div className="flex items-center justify-between gap-3">
                 <p className="text-xs font-bold uppercase tracking-[0.12em] text-white/85">Satış fiyatı</p>
                 {optioned ? <OptionedBadge /> : <span className="badge bg-white text-emerald-700">Satışta</span>}
               </div>
-              <p className="mt-1.5 font-display text-[34px] font-extrabold tracking-tight">{formatPrice(v.price)}</p>
+              <p className="mt-1.5 font-display text-[34px] font-extrabold tracking-tight text-gold">{formatPrice(v.price)}</p>
             </div>
             <div className="p-6">
               <p className="text-sm font-bold uppercase tracking-wide text-ink">{v.year} {v.brand} {v.model} {v.packageName}</p>

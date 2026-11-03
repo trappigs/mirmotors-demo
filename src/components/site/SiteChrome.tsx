@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { MobileNav } from "./MobileNav";
 import { NavLinks } from "./NavLinks";
@@ -13,23 +14,22 @@ export const NAV = [
 export function DemoBanner() {
   return (
     <div className="bg-ink px-4 py-1.5 text-center text-[11px] font-medium tracking-wide text-white/85 sm:text-xs">
-      <span className="mr-2 rounded bg-brand px-1.5 py-0.5 text-[10px] font-bold text-white">DEMO</span>
+      <span className="mr-2 rounded bg-gold px-1.5 py-0.5 text-[10px] font-bold text-ink">DEMO</span>
       DEMO · Örnek Araçlar — Bu sitedeki ilanlar ve görseller temsilidir, gerçek satış teklifi değildir.
     </div>
   );
 }
 
-/** Mir Motors kelime markası: kırmızı eğik blok içinde "M" + MIR (siyah) MOTORS (kırmızı), tek satır. */
-export function Logo({ light = false }: { light?: boolean }) {
+/**
+ * Mir Motors'un gerçek logosu (işletmenin gönderdiği görsel; yalnızca kırpıldı, yeniden çizilmedi).
+ * Logo siyah zeminlidir; bu yüzden yalnızca siyah alanlarda (üst menü, alt bilgi) kullanılır.
+ * Not: elimizdeki dosya düşük çözünürlüklü (364 px); keskin görünüm için işletmeden SVG istenmeli.
+ */
+export function Logo({ size = "md" }: { size?: "md" | "lg" }) {
+  const h = size === "lg" ? "h-16" : "h-12 sm:h-[54px]";
   return (
-    <Link href="/" className="group flex items-center gap-2.5" aria-label="Mir Motors ana sayfa">
-      <span className="grid h-9 w-10 -skew-x-12 place-items-center rounded-[6px] bg-brand shadow-[0_4px_12px_-4px_rgba(186,16,32,0.6)] transition group-hover:bg-brand-dark">
-        <span className="skew-x-12 font-display text-lg font-extrabold italic leading-none text-white">M</span>
-      </span>
-      <span className="flex items-baseline gap-1.5 font-display leading-none">
-        <span className={`text-[22px] font-extrabold tracking-tight ${light ? "text-white" : "text-ink"}`}>MIR</span>
-        <span className="text-[22px] font-semibold tracking-tight text-brand">MOTORS</span>
-      </span>
+    <Link href="/" className="flex shrink-0 items-center" aria-label="Mir Motors ana sayfa">
+      <Image src="/brand/mir-motors-logo.png" alt="Mir Motors" width={364} height={144} priority className={`${h} w-auto`} />
     </Link>
   );
 }
@@ -39,19 +39,19 @@ export const waNumber = () => process.env.NEXT_PUBLIC_WHATSAPP_NUMBER?.replace(/
 export function SiteHeader() {
   const wa = waNumber();
   return (
-    <header className="sticky top-0 z-40 border-b border-line bg-white/95 backdrop-blur-xl">
-      <div className="relative mx-auto flex h-[72px] max-w-7xl items-center justify-between gap-6 px-4 sm:px-6">
+    <header className="sticky top-0 z-40 border-b border-white/10 bg-black">
+      <div className="relative mx-auto flex h-[68px] max-w-7xl items-center justify-between gap-6 px-4 sm:h-[76px] sm:px-6">
         <div className="flex items-center gap-10">
           <Logo />
           <NavLinks items={NAV} />
         </div>
         <div className="hidden items-center gap-3 lg:flex">
           {wa && (
-            <a href={`https://wa.me/${wa}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-xl border border-emerald-600/30 bg-white px-4 py-2.5 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-50">
+            <a href={`https://wa.me/${wa}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-xl border border-white/20 px-4 py-2.5 text-sm font-semibold text-white/90 transition hover:border-gold hover:text-gold">
               <IconWhatsApp className="h-4 w-4" /> WhatsApp Danışman
             </a>
           )}
-          <Link href="/araclar" className="btn-primary rounded-xl px-5 py-2.5">Tüm Araçlar</Link>
+          <Link href="/araclar" className="inline-flex items-center rounded-xl border border-gold/60 px-5 py-2.5 text-sm font-semibold text-gold transition hover:bg-gold hover:text-ink">Tüm Araçlar</Link>
         </div>
         <MobileNav items={NAV} />
       </div>
@@ -79,41 +79,41 @@ export function MobileActionBar() {
 export function SiteFooter() {
   const year = new Date().getFullYear();
   return (
-    <footer className="mt-20 bg-ink pb-20 text-zinc-400 lg:pb-0">
-      <div className="h-1 bg-brand" />
+    <footer className="mt-20 bg-black pb-20 text-zinc-400 lg:pb-0">
+      <div className="h-px bg-gradient-to-r from-transparent via-gold/60 to-transparent" />
       <div className="mx-auto grid max-w-7xl gap-12 px-4 py-14 sm:px-6 md:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1.2fr_1.4fr]">
         <div>
-          <Logo light />
+          <Logo size="lg" />
           <p className="mt-5 max-w-xs text-sm leading-relaxed">
             Seçkin ikinci el otomobiller, şeffaf ekspertiz bilgisi ve kişisel danışmanlık.
           </p>
-          <span className="mt-5 inline-flex rounded-md bg-brand px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.1em] text-white">
+          <span className="mt-5 inline-flex rounded-md bg-gold px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.1em] text-ink">
             Demo sürüm
           </span>
         </div>
 
         <div className="text-sm">
-          <p className="section-mark mb-4 text-sm font-bold text-white">Hızlı Linkler</p>
+          <p className="mb-4 border-l-2 border-gold pl-2.5 text-sm font-bold text-white">Hızlı Linkler</p>
           <ul className="space-y-2.5">
             {NAV.map((n) => (
               <li key={n.href}>
-                <Link href={n.href} className="transition hover:text-white hover:underline hover:decoration-brand hover:decoration-2 hover:underline-offset-4">{n.label}</Link>
+                <Link href={n.href} className="transition hover:text-gold">{n.label}</Link>
               </li>
             ))}
           </ul>
         </div>
 
         <div className="text-sm">
-          <p className="section-mark mb-4 text-sm font-bold text-white">İletişim</p>
+          <p className="mb-4 border-l-2 border-gold pl-2.5 text-sm font-bold text-white">İletişim</p>
           <ul className="space-y-3">
-            <li className="flex gap-2.5"><IconPin className="mt-0.5 h-4 w-4 shrink-0 text-brand" />Showroom adresi yayın öncesi eklenecek</li>
-            <li className="flex gap-2.5"><IconClock className="mt-0.5 h-4 w-4 shrink-0 text-brand" />Hafta içi 09:00–19:00 · Cmt 10:00–18:00</li>
-            <li className="flex gap-2.5"><IconWhatsApp className="mt-0.5 h-4 w-4 shrink-0 text-brand" />WhatsApp danışman hattı (demo)</li>
+            <li className="flex gap-2.5"><IconPin className="mt-0.5 h-4 w-4 shrink-0 text-gold" />Showroom adresi yayın öncesi eklenecek</li>
+            <li className="flex gap-2.5"><IconClock className="mt-0.5 h-4 w-4 shrink-0 text-gold" />Hafta içi 09:00–19:00 · Cmt 10:00–18:00</li>
+            <li className="flex gap-2.5"><IconWhatsApp className="mt-0.5 h-4 w-4 shrink-0 text-gold" />WhatsApp danışman hattı (demo)</li>
           </ul>
         </div>
 
         <div className="text-sm">
-          <p className="section-mark mb-4 text-sm font-bold text-white">Yasal Bilgilendirme</p>
+          <p className="mb-4 border-l-2 border-gold pl-2.5 text-sm font-bold text-white">Yasal Bilgilendirme</p>
           <p className="leading-relaxed">
             Bu site bir demo sürümüdür. İlanlar, fiyatlar ve görseller temsilidir. Site üzerinden ödeme, kapora veya
             sözleşme işlemi yapılmaz. Yetki belgesi ve zorunlu ilan bilgileri gerçek yayından önce eklenecektir.

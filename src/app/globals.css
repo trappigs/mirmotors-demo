@@ -1,31 +1,35 @@
 @import "tailwindcss";
 
 /*
- * Mir Motors renk sistemi (kırmızı-beyaz-siyah).
- * brand  = birincil kırmızı (CTA, fiyat bandı, aktif filtre, vurgu çizgisi)
- * accent = brand ile aynı (eski bileşenler ve CRM bu adla kullanır)
+ * Mir Motors renk sistemi — logodaki siyah ve altından türetildi, göz yormaması için ölçülü kullanılır.
+ * Zemin sıcak kırık beyaz; siyah yalnızca üst menü, alt bilgi, birincil düğme ve fiyat bantlarında;
+ * altın (brand) yalnızca vurgu: başlık çizgisi, küçük etiketler, odak halkası, bağlantı hover'ı.
+ * brand      = koyu altın/bronz (beyaz zeminde okunur metin, AA kontrast)
+ * gold       = parlak altın (yalnızca koyu zemin üzerinde metin)
+ * accent     = brand ile aynı (CRM bileşenleri bu adla kullanır)
  */
 @theme inline {
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --font-display: var(--font-sora), var(--font-inter), ui-sans-serif, sans-serif;
 
-  --color-brand: #ba1020;
-  --color-brand-dark: #990c19;
-  --color-brand-soft: #fdecee;
+  --color-brand: #8c6b22;
+  --color-brand-dark: #6f5419;
+  --color-brand-soft: #f5efe0;
+  --color-gold: #d4b062;
 
-  --color-ink: #17191d;
-  --color-ink-2: #202329;
-  --color-ink-3: #2b2f36;
-  --color-navy: #17191d;
-  --color-muted: #646b76;
-  --color-line: #e3e5e9;
+  --color-ink: #141416;
+  --color-ink-2: #1d1d20;
+  --color-ink-3: #2a2a2e;
+  --color-navy: #141416;
+  --color-muted: #66666d;
+  --color-line: #e6e3dc;
 
-  --color-paper: #f4f4f6;
-  --color-mist: #e9eaee;
+  --color-paper: #f7f6f2;
+  --color-mist: #eceae4;
 
-  --color-accent: #ba1020;
-  --color-accent-light: #d8323f;
-  --color-accent-dark: #990c19;
+  --color-accent: #8c6b22;
+  --color-accent-light: #b08a3a;
+  --color-accent-dark: #6f5419;
 }
 
 body {
@@ -35,8 +39,8 @@ body {
 }
 
 ::selection {
-  background: var(--color-brand);
-  color: #fff;
+  background: var(--color-gold);
+  color: var(--color-ink);
 }
 
 @layer components {
@@ -52,12 +56,17 @@ body {
   .btn {
     @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand/25 disabled:cursor-not-allowed disabled:opacity-50;
   }
-  /* Birincil CTA: dolu kırmızı */
+  /* Birincil CTA: siyah (logo zemini), hover'da koyu altın */
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand/25 disabled:cursor-not-allowed disabled:opacity-50 bg-brand text-white shadow-[0_6px_16px_-6px_rgba(186,16,32,0.55)] hover:bg-brand-dark;
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand/30 disabled:cursor-not-allowed disabled:opacity-50 bg-ink text-white shadow-[0_6px_16px_-8px_rgba(20,20,22,0.45)] hover:bg-brand-dark;
   }
+  /* Altın dolgu: yalnızca tekil vurgu düğmeleri (CRM "yeni araç") */
   .btn-accent {
-    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand/25 disabled:cursor-not-allowed disabled:opacity-50 bg-brand text-white shadow-[0_6px_16px_-6px_rgba(186,16,32,0.55)] hover:bg-brand-dark;
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand/30 disabled:cursor-not-allowed disabled:opacity-50 bg-brand text-white shadow-[0_6px_16px_-8px_rgba(111,84,25,0.5)] hover:bg-brand-dark;
+  }
+  /* Koyu zemin (hero, story) üzerindeki birincil CTA: siyah düğme orada görünmez, parlak altın kullanılır */
+  .btn-gold {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-gold/40 disabled:cursor-not-allowed disabled:opacity-50 bg-gold text-ink shadow-[0_6px_16px_-8px_rgba(212,176,98,0.6)] hover:bg-white;
   }
   /* İkincil: koyu */
   .btn-dark {
@@ -88,7 +97,7 @@ body {
   .eyebrow-light {
     @apply text-[12px] font-bold uppercase tracking-[0.14em] text-white/80;
   }
-  /* Bölüm başlığı solundaki kırmızı vurgu çizgisi */
+  /* Bölüm başlığı solundaki altın vurgu çizgisi */
   .section-mark {
     @apply border-l-[3px] border-brand pl-2.5;
   }

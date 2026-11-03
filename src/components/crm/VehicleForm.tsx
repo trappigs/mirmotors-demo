@@ -138,7 +138,7 @@ export function VehicleForm({ mode, vehicleId, initial, readOnly, ai }: Props) {
             <label key={eq} className="flex cursor-pointer items-center gap-2.5 rounded-lg border border-zinc-200 px-3 py-2 text-sm transition hover:border-zinc-400 has-[:checked]:border-accent has-[:checked]:bg-accent/10">
               <input
                 type="checkbox"
-                className="accent-[#ba1020]"
+                className="accent-[#8c6b22]"
                 checked={v.equipment.includes(eq)}
                 disabled={readOnly}
                 onChange={(e) => set("equipment", e.target.checked ? [...v.equipment, eq] : v.equipment.filter((x) => x !== eq))}

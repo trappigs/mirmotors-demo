@@ -9,7 +9,7 @@ export function MobileNav({ items }: { items: { href: string; label: string }[] 
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="grid h-11 w-11 place-items-center rounded-xl border border-zinc-200 text-ink"
+        className="grid h-11 w-11 place-items-center rounded-xl border border-white/20 text-white"
         aria-expanded={open}
         aria-label="Menüyü aç/kapat"
       >
@@ -18,9 +18,9 @@ export function MobileNav({ items }: { items: { href: string; label: string }[] 
         </svg>
       </button>
       {open && (
-        <nav className="absolute inset-x-0 top-full border-b border-zinc-200 bg-white px-4 pb-4 shadow-lg">
+        <nav className="absolute inset-x-0 top-full border-b border-white/10 bg-black px-4 pb-4 shadow-lg">
           {items.map((n) => (
-            <Link key={n.href} href={n.href} onClick={() => setOpen(false)} className="block border-b border-zinc-100 py-3.5 text-base font-medium text-ink last:border-0">
+            <Link key={n.href} href={n.href} onClick={() => setOpen(false)} className="block border-b border-white/10 py-3.5 text-base font-medium text-white/90 last:border-0">
               {n.label}
             </Link>
           ))}

@@ -17,16 +17,18 @@ export function OptionedBadge() {
   );
 }
 
-/** Kart fotoğrafı: CRM'den yüklenen kapak fotoğrafı otomatik kullanılır; yoksa nötr yer tutucu. */
+/** Kart fotoğrafı: CRM'den yüklenen kapak fotoğrafı; yoksa yanıltıcı araç görseli yerine "Fotoğraf eklenmedi" alanı. */
 function Photo({ v, className }: { v: Vehicle; className: string }) {
   const cover = mediaUrl(v.photos[0]?.path);
   return (
     <div className={`relative overflow-hidden bg-zinc-200 ${className}`}>
       {cover ? (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={cover} alt={`${v.year} ${v.brand} ${v.model}`} decoding="async" className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.04]" />
+        <img src={cover} alt={`${v.year} ${v.brand} ${v.model}`} loading="lazy" decoding="async" className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.04]" />
       ) : (
-        <div className="grid h-full place-items-center text-xs text-muted">Fotoğraf yok</div>
+        <div className="grid h-full place-items-center bg-[repeating-linear-gradient(45deg,#f1efe9_0_10px,#ebe8e0_10px_20px)] text-center text-xs font-semibold text-muted" data-testid="no-photo">
+          <span><svg viewBox="0 0 24 24" className="mx-auto mb-1.5 h-6 w-6" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true"><path d="M4 7h3l2-2h6l2 2h3v12H4z" /><circle cx="12" cy="13" r="3.5" /></svg>Fotoğraf eklenmedi</span>
+        </div>
       )}
       {v.status === "OPTIONED" && <div className="absolute left-2.5 top-2.5"><OptionedBadge /></div>}
       <span className="absolute right-2.5 top-2.5 rounded-md bg-ink/80 px-2 py-0.5 text-[11px] font-semibold text-white">{formatKm(v.km)}</span>
@@ -61,7 +63,7 @@ function Specs({ v, className = "" }: { v: Vehicle; className?: string }) {
 
 const title = (v: Vehicle) => `${v.year} ${v.brand} ${v.model} ${v.packageName ?? ""}`.trim();
 
-/** Katalog kartı (ızgara): fotoğraf → başlık → temel özellikler → tam genişlikte kırmızı fiyat bandı. */
+/** Katalog kartı (ızgara): fotoğraf → başlık → temel özellikler → tam genişlikte koyu fiyat bandı. */
 export function VehicleCard({ vehicle: v }: { vehicle: Vehicle }) {
   return (
     <Link
@@ -74,7 +76,7 @@ export function VehicleCard({ vehicle: v }: { vehicle: Vehicle }) {
           {title(v)}
         </h3>
         <Specs v={v} className="mt-2.5" />
-        <span className="mt-3 flex h-10 w-full items-center justify-center rounded-lg bg-brand font-display text-[17px] font-bold tracking-tight text-white transition group-hover:bg-brand-dark">
+        <span className="mt-3 flex h-10 w-full items-center justify-center rounded-lg bg-ink font-display text-[17px] font-bold tracking-tight text-white transition group-hover:text-gold">
           {formatPrice(v.price)}
         </span>
       </div>
@@ -96,7 +98,7 @@ export function VehicleRow({ vehicle: v }: { vehicle: Vehicle }) {
         <Specs v={v} className="mt-3 max-w-md" />
       </div>
       <div className="flex flex-col justify-center gap-2 border-t border-line p-5 sm:border-l sm:border-t-0">
-        <span className="flex items-center justify-center rounded-lg bg-brand py-3 font-display text-lg font-bold text-white transition group-hover:bg-brand-dark">
+        <span className="flex items-center justify-center rounded-lg bg-ink py-3 font-display text-lg font-bold text-white transition group-hover:text-gold">
           {formatPrice(v.price)}
         </span>
         <span className="flex items-center justify-center gap-1 text-sm font-semibold text-muted group-hover:text-brand">

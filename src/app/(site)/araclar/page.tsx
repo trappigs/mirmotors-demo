@@ -60,7 +60,7 @@ function Chip({ href, active, children }: { href: string; active: boolean; child
       href={href}
       aria-pressed={active}
       className={`inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-[12.5px] font-bold transition ${
-        active ? "border-brand bg-brand text-white shadow-[0_4px_10px_-4px_rgba(186,16,32,0.6)]" : "border-line bg-white text-ink hover:border-brand hover:text-brand"
+        active ? "border-ink bg-ink text-white shadow-[0_4px_10px_-6px_rgba(20,20,22,0.6)]" : "border-line bg-white text-ink hover:border-brand hover:text-brand"
       }`}
     >
       {children}
@@ -90,7 +90,7 @@ export default async function VehiclesPage({ searchParams }: { searchParams: Pro
     <div className="mx-auto max-w-7xl px-4 pb-10 pt-7 sm:px-6 md:pt-8">
       {/* Başlık + görünüm + sıralama */}
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <h1 className="font-display text-2xl font-extrabold tracking-tight text-brand md:text-[28px]">Tüm Araçlarımız</h1>
+        <h1 className="section-mark font-display text-2xl font-extrabold tracking-tight text-ink md:text-[28px]">Tüm Araçlarımız</h1>
         <div className="flex items-center gap-2">
           <div className="flex rounded-xl border border-line bg-white p-1 shadow-sm" role="group" aria-label="Görünüm">
             <Link href={hrefWith(values, { gorunum: "liste" })} aria-label="Liste görünümü" aria-pressed={isList}
@@ -169,7 +169,7 @@ export default async function VehiclesPage({ searchParams }: { searchParams: Pro
         <div className="mt-4 flex flex-wrap items-center gap-2 rounded-xl bg-white px-4 py-2.5 ring-1 ring-line" aria-label="Seçili filtreler">
           <span className="mr-1 text-xs font-bold uppercase tracking-[0.1em] text-muted">Seçili:</span>
           {chips.map((c) => (
-            <Link key={c.text} href={c.href} className="chip border-brand/30 bg-brand-soft font-semibold text-brand" title="Filtreyi kaldır">
+            <Link key={c.text} href={c.href} className="chip border-brand/30 bg-brand-soft font-semibold text-ink" title="Filtreyi kaldır">
               {c.text} <span aria-hidden>×</span>
             </Link>
           ))}

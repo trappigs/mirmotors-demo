@@ -3,7 +3,13 @@ import { useState } from "react";
 
 export function Gallery({ photos, alt }: { photos: string[]; alt: string }) {
   const [i, setI] = useState(0);
-  if (photos.length === 0) return <div className="aspect-[16/10] rounded-2xl bg-zinc-200" />;
+  if (photos.length === 0) {
+    return (
+      <div className="grid aspect-[16/10] place-items-center rounded-2xl bg-[repeating-linear-gradient(45deg,#f1efe9_0_12px,#ebe8e0_12px_24px)] text-sm font-semibold text-muted" data-testid="no-photo">
+        Fotoğraf eklenmedi
+      </div>
+    );
+  }
   const go = (d: number) => setI((x) => (x + d + photos.length) % photos.length);
   const arrow = "absolute top-1/2 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-full bg-black/40 text-xl text-white backdrop-blur transition hover:bg-black/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent";
   return (
@@ -18,7 +24,7 @@ export function Gallery({ photos, alt }: { photos: string[]; alt: string }) {
         aria-label="Fotoğraf galerisi"
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={photos[i]} alt={`${alt} — fotoğraf ${i + 1}`} className="h-full w-full object-cover" />
+        <img src={photos[i]} alt={`${alt} — fotoğraf ${i + 1}`} decoding="async" className="h-full w-full object-cover" />
         {photos.length > 1 && (
           <>
             <button type="button" onClick={() => go(-1)} aria-label="Önceki fotoğraf" className={`${arrow} left-4`}>‹</button>
@@ -40,7 +46,7 @@ export function Gallery({ photos, alt }: { photos: string[]; alt: string }) {
               className={`aspect-[16/10] overflow-hidden rounded-lg transition ${idx === i ? "ring-2 ring-accent ring-offset-2 ring-offset-paper" : "opacity-60 hover:opacity-100"}`}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={p} alt="" className="h-full w-full object-cover" />
+              <img src={p} alt="" loading="lazy" className="h-full w-full object-cover" />
             </button>
           ))}
         </div>

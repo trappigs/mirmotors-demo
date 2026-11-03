@@ -86,7 +86,7 @@ export default async function HomePage() {
           </Link>
         </div>
         <div className="mt-5 flex flex-wrap gap-2">
-          <Link href="/araclar" className="rounded-full border border-brand bg-brand px-3.5 py-1.5 text-[12.5px] font-bold text-white">Tümü</Link>
+          <Link href="/araclar" className="rounded-full border border-ink bg-ink px-3.5 py-1.5 text-[12.5px] font-bold text-white">Tümü</Link>
           {PRICE_PRESETS.map((p) => {
             const qs = new URLSearchParams();
             if (p.min) qs.set("minFiyat", String(p.min));
@@ -134,7 +134,7 @@ export default async function HomePage() {
           <div className="grid gap-4 sm:grid-cols-2">
             {REASONS.map(({ icon: Icon, title, text }) => (
               <div key={title} className="flex gap-3.5 rounded-xl bg-paper p-5">
-                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-brand text-white"><Icon className="h-5 w-5" /></span>
+                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-ink text-gold"><Icon className="h-5 w-5" /></span>
                 <div>
                   <h3 className="font-bold text-ink">{title}</h3>
                   <p className="mt-1 text-sm leading-relaxed text-muted">{text}</p>
