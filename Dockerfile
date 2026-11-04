@@ -7,7 +7,8 @@ WORKDIR /app
 FROM base AS build
 COPY package.json package-lock.json ./
 COPY prisma ./prisma
-RUN npm ci
+# Sunucunun paket deposuna bağlantısı zaman zaman yavaşlıyor: uzun bekleme ve yeniden deneme.
+RUN npm ci --fetch-timeout=600000 --fetch-retries=6 --fetch-retry-maxtimeout=120000
 COPY . .
 # Derleme veritabanına bağlanmaz; Prisma yalnızca bir adres ister.
 ENV DATABASE_URL=postgresql://derleme:derleme@localhost:5432/derleme \

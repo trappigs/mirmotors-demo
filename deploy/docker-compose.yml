@@ -20,7 +20,10 @@ services:
     # Port dışarı açılmaz: veritabanına yalnızca uygulama erişir.
 
   app:
-    build: ..
+    build:
+      context: ..
+      # Derleme sunucunun kendi ağıyla yapılır (köprü ağında paket indirme yavaş/kararsızdı).
+      network: host
     restart: unless-stopped
     env_file: .env
     environment:

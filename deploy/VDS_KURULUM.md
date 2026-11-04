@@ -1,0 +1,82 @@
+# Mir Motors — Kendi Sunucumuzda (VDS) Çalıştırma
+
+Vercel yerine tek bir Ubuntu sunucusunda: PostgreSQL + uygulama + Caddy (HTTPS), hepsi Docker'da.
+EİDS entegrasyonu Bakanlığa bildirilen **sabit çıkış IP'si** istediği için bu yol seçildi (Vercel'de sabit IP yalnızca ücretli planlarda).
+
+> Sunucu IP'si, şifreler ve SSH anahtarı bu depoda **yoktur**. Proje sahibinden alınır.
+
+## Sunucu
+
+| | |
+|---|---|
+| Sağlayıcı | Febzen (Ryzen VDS, 4 çekirdek, 4 GB RAM, 40 GB disk) |
+| İşletim sistemi | Ubuntu 24.04 LTS |
+| Giriş | Yalnızca SSH anahtarı (şifreyle giriş kapalı), root |
+| Güvenlik duvarı | ufw: yalnızca 22, 80, 443 açık; fail2ban açık; otomatik güvenlik güncellemeleri açık |
+| Dışarı çıkış | Sunucunun kendi IP'si (EİDS formundaki "Çıkış Kaynak Statik IP"); `ws.gtb.gov.tr:8443` erişimi doğrulandı |
+
+## Klasörler (sunucuda)
+
+| Yol | İçerik |
+|---|---|
+| `/opt/mirmotors/app` | Uygulama kaynak kodu (bu depo) |
+| `/opt/mirmotors/app/deploy/.env` | Gizli değerler (yalnızca root okur) — şablon: `deploy/env.example` |
+| `/var/backups/mirmotors` | Gece yedekleri (veritabanı + yüklenen dosyalar, 7 gün) |
+| Docker birimleri | `mirmotors_pgdata` (veritabanı), `mirmotors_storage` (yüklenen dosyalar), `mirmotors_caddy_data` (SSL sertifikaları) |
+
+## Servisler (`deploy/docker-compose.yml`)
+
+- **db** — PostgreSQL 17. Portu dışarı açık değildir.
+- **app** — Next.js uygulaması. Açılışta yalnızca `prisma migrate deploy` çalışır (veri silmez, seed çalıştırmaz).
+  Dosyalar sunucu diskinde (`storage/`); Vercel Blob kullanılmaz. Erişim şifresi yoksa CRM açılmaz (`DEMO_REQUIRE_ACCESS=1`).
+- **caddy** — 80/443. Alan adı yokken IP'den HTTP; alan adı eklenince SSL'i kendisi alır.
+
+## Güncelleme (yeni sürümü yayına alma)
+
+Bilgisayarda, proje klasöründe (değişiklikler commit edilmiş olmalı):
+
+```bash
+git archive --format=tar HEAD | ssh root@<SUNUCU_IP> 'rm -rf /opt/mirmotors/app.yeni && mkdir -p /opt/mirmotors/app.yeni && tar -x -C /opt/mirmotors/app.yeni && cp /opt/mirmotors/app/deploy/.env /opt/mirmotors/app.yeni/deploy/.env && rm -rf /opt/mirmotors/app.eski && mv /opt/mirmotors/app /opt/mirmotors/app.eski && mv /opt/mirmotors/app.yeni /opt/mirmotors/app'
+```
+
+```bash
+ssh root@<SUNUCU_IP> 'cd /opt/mirmotors/app/deploy && docker compose up -d --build'
+```
+
+Veritabanı ve dosyalar Docker birimlerinde durduğu için güncelleme veri silmez.
+
+## Alan adı ve HTTPS
+
+1. Alan adının DNS'inde `A` kaydı → sunucu IP'si (`@` ve `www`).
+2. `deploy/Caddyfile` içinde `:80 {` satırını `mirmotors.com.tr, www.mirmotors.com.tr {` yap.
+3. Sunucudaki `deploy/.env` içinde `COOKIE_SECURE="1"`.
+4. `docker compose up -d` — Caddy sertifikayı alır.
+5. EİDS başvurusundaki ReturnURL bu alan adıyla verilir.
+
+## İlk veri
+
+Boş veritabanına örnek stok (3 personel + 11 araç), personel şifresi `DEMO_STAFF_PASSWORD`'dan:
+
+```bash
+docker compose exec -e DEMO_STAFF_PASSWORD='...' app npm run db:seed:cloud
+```
+
+Veritabanında veri varsa hiçbir şey yapmaz. `npm run demo / setup / db:reset` sunucuda çalışmaz (yerel olmayan veritabanında durur).
+
+## Yedek ve geri yükleme
+
+- Her gece 03:30'da `deploy/backup.sh` (cron: `/etc/cron.d/mirmotors-yedek`). Yedekler aynı sunucudadır; sunucu kaybına karşı ayrıca dışarıya kopyalanmalıdır (yapılacak).
+- Veritabanını geri yükleme:
+
+```bash
+docker compose exec -T db pg_restore -U mirmotors -d mirmotors --clean --if-exists < /var/backups/mirmotors/db-<tarih>.dump
+```
+
+## Faydalı komutlar (sunucuda, `/opt/mirmotors/app/deploy` içinde)
+
+| Komut | Görev |
+|---|---|
+| `docker compose ps` | Servis durumu |
+| `docker compose logs app --tail 100` | Uygulama günlüğü |
+| `docker compose restart app` | Uygulamayı yeniden başlat |
+| `sh backup.sh` | Elle yedek al |
