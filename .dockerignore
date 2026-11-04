@@ -1,0 +1,10 @@
+node_modules
+.next
+.git
+.vercel
+storage
+.env*
+!.env.example
+deploy/.env
+demo-assets
+*.tsbuildinfo

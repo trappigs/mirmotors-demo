@@ -1,0 +1,12 @@
+# Alan adı yokken site IP adresinden HTTP ile açılır.
+# Alan adı alınıp DNS'te A kaydı sunucu IP'sine yönlendirilince ":80" satırını şununla değiştirin
+# (Caddy SSL sertifikasını kendisi alır ve yeniler):
+#   mirmotors.com.tr, www.mirmotors.com.tr {
+# Ardından deploy/.env içinde COOKIE_SECURE=1 yapın.
+:80 {
+	encode zstd gzip
+	request_body {
+		max_size 250MB
+	}
+	reverse_proxy app:3000
+}

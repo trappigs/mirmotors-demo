@@ -11,7 +11,8 @@ function accessGate(req: NextRequest, isCrm: boolean): NextResponse | null {
   const scope = process.env.DEMO_ACCESS_SCOPE === "all" ? "all" : "crm";
   if (scope === "crm" && !isCrm) return null;
   if (!password) {
-    if (process.env.VERCEL === "1") {
+    // İnternete açık kurulumlar (Vercel veya DEMO_REQUIRE_ACCESS=1 verilen sunucu): şifre yoksa CRM açılmaz.
+    if (process.env.VERCEL === "1" || process.env.DEMO_REQUIRE_ACCESS === "1") {
       return new NextResponse("Demo erişim şifresi yapılandırılmadı (DEMO_ACCESS_PASSWORD).", { status: 503 });
     }
     return null; // yerel geliştirme
