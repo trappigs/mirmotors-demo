@@ -39,7 +39,10 @@ export default function LoginPage() {
           {error && <p className="rounded-md bg-red-50 p-3 text-sm text-red-700">{error}</p>}
           <button disabled={busy} className="btn-primary w-full py-3">{busy ? "Giriş yapılıyor…" : "Giriş yap"}</button>
         </div>
-        <p className="mt-6 text-xs text-zinc-400">Demo hesapları README.md dosyasında listelenmiştir.</p>
+        <p className="mt-6 text-xs text-zinc-400">
+          Panelde yapılan işlemler kaydedilir. Kişisel verilerin işlenmesi hakkında:{" "}
+          <a href="/kvkk#veriler" className="underline hover:text-zinc-600">KVKK Aydınlatma Metni</a>
+        </p>
       </form>
     </div>
   );

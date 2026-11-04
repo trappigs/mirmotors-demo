@@ -118,6 +118,10 @@ export function SiteFooter() {
             Bu site bir demo sürümüdür. İlanlar, fiyatlar ve görseller temsilidir. Site üzerinden ödeme, kapora veya
             sözleşme işlemi yapılmaz. Yetki belgesi ve zorunlu ilan bilgileri gerçek yayından önce eklenecektir.
           </p>
+          <ul className="mt-3 space-y-1.5">
+            <li><Link href="/kvkk" className="transition hover:text-gold">KVKK Aydınlatma Metni</Link></li>
+            <li><Link href="/kvkk#cerez" className="transition hover:text-gold">Çerez Bilgilendirmesi</Link></li>
+          </ul>
         </div>
       </div>
       <div className="border-t border-white/10">
