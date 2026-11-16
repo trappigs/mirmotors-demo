@@ -281,3 +281,20 @@ model PushSubscription {
 
   @@index([userId])
 }
+
+/// WhatsApp Cloud API ile gelen müşteri mesajı (yalnız imzası doğrulanmış webhook olayları kaydedilir).
+/// Kişisel veri içerir (telefon, isim, mesaj): yalnız CRM personeli görür. Medya dosyası indirilmez, yalnız türü tutulur.
+model WhatsAppMessage {
+  id          String    @id @default(cuid())
+  waMessageId String    @unique // Meta'nın mesaj kimliği: tekrar gönderilen olaylar ikinci kez kaydedilmez
+  waId        String // gönderenin WhatsApp numarası (yalnız rakam, ülke koduyla)
+  contactName String?
+  type        String // text | image | audio | video | document | location | ...
+  text        String?
+  sentAt      DateTime
+  receivedAt  DateTime  @default(now())
+  readAt      DateTime? // personelden biri konuşmayı açınca
+
+  @@index([waId, sentAt])
+  @@index([sentAt])
+}

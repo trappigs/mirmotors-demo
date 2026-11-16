@@ -21,6 +21,7 @@ export default async function PanelLayout({ children }: { children: React.ReactN
             <nav className="hidden flex-wrap items-center gap-4 text-sm sm:flex">
               <Link href="/crm" className="text-zinc-300 hover:text-white">Özet</Link>
               <Link href="/crm/vehicles" className="text-zinc-300 hover:text-white">Araçlar</Link>
+              <Link href="/crm/mesajlar" className="text-zinc-300 hover:text-white">Mesajlar</Link>
               <Link href="/crm/vehicles/new" className="rounded-md bg-accent/15 px-2.5 py-1 font-semibold text-accent hover:bg-accent hover:text-white">+ Araç ekle</Link>
               {user.role === "ADMIN" && <Link href="/crm/ayarlar" className="text-zinc-300 hover:text-white">Ayarlar</Link>}
               <a href="/araclar" target="_blank" className="text-zinc-300 hover:text-white">Siteyi aç ↗</a>

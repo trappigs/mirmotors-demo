@@ -16,7 +16,7 @@ function activeTab(pathname: string, status: string | null): Tab | null {
   if (pathname.startsWith("/crm/vehicles/new")) return "new";
   if (pathname === "/crm/vehicles" && status === "yarim") return "yarim";
   if (pathname.startsWith("/crm/vehicles")) return "list";
-  if (pathname.startsWith("/crm/ayarlar")) return "menu";
+  if (pathname.startsWith("/crm/ayarlar") || pathname.startsWith("/crm/mesajlar")) return "menu";
   return null;
 }
 
@@ -81,6 +81,11 @@ function NavBar({ status, ...props }: Props & { status: string | null }) {
               <span className="font-semibold text-ink">{props.userName}</span> · {props.roleLabel}
             </p>
             <ul className="divide-y divide-zinc-100 border-t border-zinc-100 text-base">
+              <li>
+                <Link href="/crm/mesajlar" onClick={() => setOpen(false)} className="flex min-h-[52px] items-center px-5 font-medium active:bg-zinc-50">
+                  WhatsApp mesajları
+                </Link>
+              </li>
               {props.isAdmin && (
                 <li>
                   <Link href="/crm/ayarlar" onClick={() => setOpen(false)} className="flex min-h-[52px] items-center px-5 font-medium active:bg-zinc-50">
