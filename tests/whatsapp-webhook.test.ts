@@ -1,6 +1,6 @@
 import { createHmac } from "node:crypto";
 import { describe, expect, it } from "vitest";
-import { extractMessages, formatWaId, summarizeEvent, verifyChallenge, verifySignature } from "@/lib/whatsapp-webhook";
+import { extractMessages, formatWaId, normalizePhone, summarizeEvent, verifyChallenge, verifySignature } from "@/lib/whatsapp-webhook";
 
 const q = (o: Record<string, string>) => new URLSearchParams(o);
 
@@ -41,11 +41,12 @@ describe("gelen mesajların çıkarılması", () => {
 
   it("metin mesajını ad, numara ve zamanla çıkarır", () => {
     const [m, ...rest] = extractMessages(event({
+      metadata: { phone_number_id: "PNID" },
       contacts: [{ wa_id: "905321234567", profile: { name: "Ali Veli" } }],
       messages: [{ id: "wamid.1", from: "905321234567", timestamp: "1763337600", type: "text", text: { body: "Passat duruyor mu?" } }],
     }));
     expect(rest).toEqual([]);
-    expect(m).toEqual({ waMessageId: "wamid.1", waId: "905321234567", contactName: "Ali Veli", type: "text", text: "Passat duruyor mu?", sentAt: new Date(1763337600 * 1000) });
+    expect(m).toEqual({ waMessageId: "wamid.1", waId: "905321234567", contactName: "Ali Veli", type: "text", text: "Passat duruyor mu?", sentAt: new Date(1763337600 * 1000), phoneNumberId: "PNID" });
   });
 
   it("medyada açıklamayı alır, açıklama yoksa metin boş kalır; düğme yanıtını alır", () => {
@@ -72,5 +73,13 @@ describe("gelen mesajların çıkarılması", () => {
   it("numarayı okunur gösterir", () => {
     expect(formatWaId("905321234567")).toBe("+90 532 123 45 67");
     expect(formatWaId("4915112345678")).toBe("+4915112345678");
+  });
+});
+
+describe("personel telefonu", () => {
+  it("farklı yazımları WhatsApp kimliğine çevirir", () => {
+    for (const v of ["0532 123 45 67", "+90 532 123 45 67", "532 123 4567", "0090 532 123 45 67", "905321234567"]) expect(normalizePhone(v)).toBe("905321234567");
+    expect(normalizePhone("12")).toBeNull();
+    expect(normalizePhone("")).toBeNull();
   });
 });

@@ -17,6 +17,8 @@ model User {
   email           String    @unique
   passwordHash    String
   role            String // ADMIN | SALES
+  /// WhatsApp asistanı: bu numaradan gelen mesajlar bu personel adına cevaplanır (yalnız rakam, ülke koduyla: 905321234567)
+  phone           String?   @unique
   createdAt       DateTime  @default(now())
   // Hesap bazlı giriş deneme sınırı (sunucusuz ortamda örnekler arası paylaşılır)
   failedLogins    Int       @default(0)
@@ -282,7 +284,7 @@ model PushSubscription {
   @@index([userId])
 }
 
-/// WhatsApp Cloud API ile gelen müşteri mesajı (yalnız imzası doğrulanmış webhook olayları kaydedilir).
+/// WhatsApp mesajı: numaraya gelenler (yalnız imzası doğrulanmış webhook olayları) ve asistanın cevapları.
 /// Kişisel veri içerir (telefon, isim, mesaj): yalnız CRM personeli görür. Medya dosyası indirilmez, yalnız türü tutulur.
 model WhatsAppMessage {
   id          String    @id @default(cuid())
@@ -294,6 +296,7 @@ model WhatsAppMessage {
   sentAt      DateTime
   receivedAt  DateTime  @default(now())
   readAt      DateTime? // personelden biri konuşmayı açınca
+  direction   String    @default("IN") // IN: numaraya gelen · OUT: asistanın gönderdiği cevap
 
   @@index([waId, sentAt])
   @@index([sentAt])

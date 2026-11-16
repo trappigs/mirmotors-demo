@@ -47,7 +47,7 @@ export default async function MessagesPage({ searchParams }: { searchParams: Pro
       <div>
         <h1 className="font-display text-2xl font-bold">WhatsApp mesajları</h1>
         <p className="text-sm text-zinc-500">
-          Müşterilerin işletme numarasına yazdığı mesajlar. Buradan yanıt gönderilemez; fotoğraf, ses ve belgelerin yalnız türü görünür.
+          İşletme numarasına gelen mesajlar ve asistanın personele verdiği cevaplar. Buradan yanıt gönderilemez; fotoğraf, ses ve belgelerin yalnız türü görünür.
         </p>
       </div>
 
@@ -95,12 +95,12 @@ export default async function MessagesPage({ searchParams }: { searchParams: Pro
               ) : (
                 <ol className="flex-1 space-y-2 bg-[#f7f5f0] p-4">
                   {thread.map((m) => (
-                    <li key={m.id} className="max-w-[85%] rounded-lg rounded-tl-none bg-white px-3 py-2 shadow-sm">
+                    <li key={m.id} className={`max-w-[85%] rounded-lg px-3 py-2 shadow-sm ${m.direction === "OUT" ? "ml-auto rounded-tr-none bg-[#dcf8c6]" : "rounded-tl-none bg-white"}`}>
                       <p className={`whitespace-pre-wrap break-words text-sm ${m.text ? "" : "italic text-zinc-500"}`}>
                         {m.text && m.type !== "text" && <span className="mr-1 text-xs text-zinc-500">[{messageTypeLabel(m.type)}]</span>}
                         {preview(m)}
                       </p>
-                      <p className="mt-1 text-right text-[11px] text-zinc-400">{formatDateTime(m.sentAt)}</p>
+                      <p className="mt-1 text-right text-[11px] text-zinc-400">{m.direction === "OUT" && "Asistan · "}{formatDateTime(m.sentAt)}</p>
                     </li>
                   ))}
                 </ol>

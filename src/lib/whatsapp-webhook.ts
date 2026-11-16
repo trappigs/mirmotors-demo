@@ -43,6 +43,8 @@ export function summarizeEvent(body: unknown): { object: string; messages: numbe
 }
 
 export type IncomingMessage = { waMessageId: string; waId: string; contactName: string | null; type: string; text: string | null; sentAt: Date };
+/** Gelen mesaj + mesajın geldiği işletme numarasının kimliği (cevap bu numaradan gönderilir). */
+export type IncomingWithTarget = IncomingMessage & { phoneNumberId: string | null };
 
 const TYPE_LABELS: Record<string, string> = {
   image: "Fotoğraf", audio: "Ses kaydı", video: "Video", document: "Belge", sticker: "Çıkartma",
@@ -57,8 +59,8 @@ const MAX_TEXT = 4000;
  * Webhook gövdesindeki gelen müşteri mesajlarını çıkarır (durum güncellemeleri hariç).
  * Metin: text.body; medya/düğme mesajlarında açıklama ya da seçilen düğme metni. Medya dosyası alınmaz.
  */
-export function extractMessages(body: unknown): IncomingMessage[] {
-  const out: IncomingMessage[] = [];
+export function extractMessages(body: unknown): IncomingWithTarget[] {
+  const out: IncomingWithTarget[] = [];
   const entries = (body as { entry?: unknown })?.entry;
   for (const e of Array.isArray(entries) ? entries : []) {
     const changes = (e as { changes?: unknown })?.changes;
@@ -67,6 +69,7 @@ export function extractMessages(body: unknown): IncomingMessage[] {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const value = (c as { field?: string; value?: any })?.value;
       if ((c as { field?: string })?.field !== "messages" || !value || typeof value !== "object") continue;
+      const phoneNumberId = typeof value.metadata?.phone_number_id === "string" ? value.metadata.phone_number_id : null;
       const names = new Map<string, string>();
       for (const ct of Array.isArray(value.contacts) ? value.contacts : []) {
         const name = ct?.profile?.name;
@@ -89,11 +92,24 @@ export function extractMessages(body: unknown): IncomingMessage[] {
           type,
           text,
           sentAt: Number.isFinite(ts) && ts > 0 ? new Date(ts * 1000) : new Date(),
+          phoneNumberId,
         });
       }
     }
   }
   return out;
+}
+
+/**
+ * Personelin girdiği telefonu WhatsApp kimliğine çevirir: "0532 123 45 67", "+90 532…", "532…" → "905321234567".
+ * Geçersizse null.
+ */
+export function normalizePhone(input: string): string | null {
+  let d = input.replace(/\D/g, "");
+  if (d.startsWith("00")) d = d.slice(2);
+  if (d.length === 11 && d.startsWith("0")) d = "90" + d.slice(1);
+  if (d.length === 10 && d.startsWith("5")) d = "90" + d;
+  return /^\d{10,15}$/.test(d) ? d : null;
 }
 
 /** Numarayı okunur biçimde gösterir: 905321234567 → +90 532 123 45 67 (TR dışı numaralar yalnız + ile). */
