@@ -1,12 +1,24 @@
-# Alan adı yokken site IP adresinden HTTP ile açılır.
-# Alan adı alınıp DNS'te A kaydı sunucu IP'sine yönlendirilince ":80" satırını şununla değiştirin
-# (Caddy SSL sertifikasını kendisi alır ve yeniler):
-#   mirmotors.com.tr, www.mirmotors.com.tr {
-# Ardından deploy/.env içinde COOKIE_SECURE=1 yapın.
-:80 {
+# Site alan adıyla HTTPS üzerinden açılır; Caddy SSL sertifikasını kendisi alır ve yeniler.
+# Ön koşul: DNS'te mirmotors.com.tr ve www için A kaydı sunucu IP'sine yönlendirilmiş olmalı.
+# deploy/.env içinde COOKIE_SECURE=1 olmalı.
+# www adresi ana alan adına kalıcı yönlendirilir.
+
+www.mirmotors.com.tr {
+	redir https://mirmotors.com.tr{uri} permanent
+}
+
+mirmotors.com.tr {
 	encode zstd gzip
 	request_body {
 		max_size 250MB
 	}
+	header {
+		Strict-Transport-Security "max-age=31536000"
+	}
 	reverse_proxy app:3000
+}
+
+# IP adresiyle gelen düz HTTP istekleri alan adına yönlendirilir.
+:80 {
+	redir https://mirmotors.com.tr{uri} permanent
 }
