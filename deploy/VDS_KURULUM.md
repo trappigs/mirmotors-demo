@@ -29,14 +29,14 @@ EİDS entegrasyonu Bakanlığa bildirilen **sabit çıkış IP'si** istediği i�
 - **db** — PostgreSQL 17. Portu dışarı açık değildir.
 - **app** — Next.js uygulaması. Açılışta yalnızca `prisma migrate deploy` çalışır (veri silmez, seed çalıştırmaz).
   Dosyalar sunucu diskinde (`storage/`); Vercel Blob kullanılmaz. Erişim şifresi yoksa CRM açılmaz (`DEMO_REQUIRE_ACCESS=1`).
-- **caddy** — 80/443. Alan adı yokken IP'den HTTP; alan adı eklenince SSL'i kendisi alır.
+- **caddy** — 80/443, SSL'i kendisi alır ve yeniler. Sunucudaki diğer projelerle ortak (aşağıda "Ortak Caddyfile").
 
 ## Güncelleme (yeni sürümü yayına alma)
 
 Bilgisayarda, proje klasöründe (değişiklikler commit edilmiş olmalı):
 
 ```bash
-git archive --format=tar HEAD | ssh root@<SUNUCU_IP> 'rm -rf /opt/mirmotors/app.yeni && mkdir -p /opt/mirmotors/app.yeni && tar -x -C /opt/mirmotors/app.yeni && cp /opt/mirmotors/app/deploy/.env /opt/mirmotors/app.yeni/deploy/.env && rm -rf /opt/mirmotors/app.eski && mv /opt/mirmotors/app /opt/mirmotors/app.eski && mv /opt/mirmotors/app.yeni /opt/mirmotors/app'
+git archive --format=tar HEAD | ssh root@<SUNUCU_IP> 'rm -rf /opt/mirmotors/app.yeni && mkdir -p /opt/mirmotors/app.yeni && tar -x -C /opt/mirmotors/app.yeni && cp /opt/mirmotors/app/deploy/.env /opt/mirmotors/app/deploy/Caddyfile /opt/mirmotors/app.yeni/deploy/ && rm -rf /opt/mirmotors/app.eski && mv /opt/mirmotors/app /opt/mirmotors/app.eski && mv /opt/mirmotors/app.yeni /opt/mirmotors/app'
 ```
 
 ```bash
@@ -47,11 +47,16 @@ Veritabanı ve dosyalar Docker birimlerinde durduğu için güncelleme veri silm
 
 ## Alan adı ve HTTPS
 
+Kurulu (16.11.2026): `https://mirmotors.com.tr`, Let's Encrypt, `www` ve IP → ana alan adı.
+
+**Ortak Caddyfile:** Sunucudaki `/opt/mirmotors/app/deploy/Caddyfile` başka projelerin sitelerini de
+(kaderkocbulut.com, berberiz.tr) içerir; git'te tutulmaz, deploy'da üzerine yazılmamalıdır
+(yukarıdaki komut onu yeni klasöre taşır). Mir Motors blokları için kaynak: `deploy/caddy-mirmotors.conf`.
+Değişiklikten sonra: `docker compose restart caddy`.
+
 1. Alan adının DNS'inde `A` kaydı → sunucu IP'si (`@` ve `www`).
-2. `deploy/Caddyfile` içinde `:80 {` satırını `mirmotors.com.tr, www.mirmotors.com.tr {` yap.
-3. Sunucudaki `deploy/.env` içinde `COOKIE_SECURE="1"`.
-4. `docker compose up -d` — Caddy sertifikayı alır.
-5. EİDS başvurusundaki ReturnURL bu alan adıyla verilir.
+2. Sunucudaki `deploy/.env` içinde `COOKIE_SECURE="1"`.
+3. EİDS başvurusundaki ReturnURL bu alan adıyla verilir.
 
 ## İlk veri
 
