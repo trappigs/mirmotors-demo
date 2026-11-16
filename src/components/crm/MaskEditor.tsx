@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { DocPage } from "@/lib/client-docs";
 import { DOC_KIND_LABELS, type DocKind } from "@/lib/doc-review";
+import { maskApplyBlock, maskConfirmation } from "@/lib/mask-rules";
 
 type Rect = { x: number; y: number; w: number; h: number };
 /** Perde: sayfanın bir tarafını kenara kadar kapatır; kenar parmakla sürüklenir (ruhsatın sağ sayfası için). */
@@ -35,6 +36,13 @@ export function MaskEditor({ page, hint, onDone, onCancel, kind, onKind, progres
   const all = [...rects, ...(curtain ? [curtainRect(curtain)] : [])];
   const box = useRef<HTMLDivElement>(null);
   const start = useRef<{ x: number; y: number } | null>(null);
+  // Hiçbir şey kapatılmadıysa ya da ruhsatta sağ sayfa perdeyle kapatılmadıysa açık onay istenir.
+  const [confirmed, setConfirmed] = useState(false);
+  const maskState = { kind, rectCount: rects.length, hasCurtain: !!curtain, confirmed };
+  const confirmText = maskConfirmation(maskState);
+  const block = maskApplyBlock(maskState);
+  // Onay, verildiği belge türüne aittir; tür değişince yeniden istenir.
+  useEffect(() => setConfirmed(false), [kind]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onCancel();
@@ -81,12 +89,16 @@ export function MaskEditor({ page, hint, onDone, onCancel, kind, onKind, progres
         </span>
         <button type="button" onClick={() => (rects.length ? setRects((r) => r.slice(0, -1)) : setCurtain(null))} disabled={!all.length} className="btn-outline py-2 text-xs">Geri al</button>
         <button type="button" onClick={onCancel} className="btn-outline py-2 text-xs">Sonra</button>
-        {all.length > 0 ? (
-          <button type="button" disabled={!kind} onClick={() => onDone(all)} className="btn-accent py-2" data-testid="mask-apply">Maskeyi uygula ({all.length}) →</button>
-        ) : (
-          <button type="button" disabled={!kind} onClick={() => onDone([])} className="btn-accent py-2" data-testid="mask-apply">Bu sayfada kişisel veri yok →</button>
-        )}
+        <button type="button" disabled={!!block} title={block ?? undefined} onClick={() => onDone(all)} className="btn-accent py-2" data-testid="mask-apply">
+          {all.length > 0 ? `Maskeyi uygula (${all.length}) →` : "Bu sayfada kişisel veri yok →"}
+        </button>
       </div>
+      {confirmText && (
+        <label className="mx-auto mt-2 flex w-full max-w-5xl cursor-pointer items-start gap-2 rounded-md border border-amber-400 bg-amber-100/95 p-2.5 text-sm text-amber-950" data-testid="mask-confirm">
+          <input type="checkbox" className="mt-0.5 h-4 w-4 shrink-0" checked={confirmed} onChange={(e) => setConfirmed(e.target.checked)} data-testid="mask-confirm-input" />
+          <span>{confirmText}</span>
+        </label>
+      )}
       <div className="mx-auto mt-3 flex min-h-0 w-full max-w-5xl flex-1 items-center justify-center">
         <div
           ref={box}
