@@ -38,7 +38,7 @@ export function StoryBar({ stories, instagramUrl }: { stories: Story[]; instagra
                   aria-label={`${s.label} story'sini aç`}
                   data-testid={`story-${s.id}`}
                 >
-                  <span className={`rounded-full p-[2.5px] transition ${viewed ? "bg-zinc-300" : "bg-gradient-to-tr from-brand to-gold"} group-hover:scale-105 group-focus-visible:ring-2 group-focus-visible:ring-brand group-focus-visible:ring-offset-2`}>
+                  <span className={`rounded-full p-[2.5px] transition ${viewed ? "bg-zinc-300" : "bg-gradient-to-tr from-brand to-[#e8434f]"} group-hover:scale-105 group-focus-visible:ring-2 group-focus-visible:ring-brand group-focus-visible:ring-offset-2`}>
                     <span className="block rounded-full bg-white p-[2px]">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={s.cover} alt="" decoding="async" className="h-14 w-14 rounded-full object-cover" />

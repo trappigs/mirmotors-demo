@@ -35,7 +35,7 @@ const SECTIONS: Section[] = [
         "Bizimle iletişime geçen müşteri adayları (WhatsApp, telefon, e-posta, showroom): ad-soyad, telefon numarası, e-posta adresi, mesaj içeriği, ilgilendiğiniz araç ve görüşme notları.",
         "Araç satın alan müşteriler: kimlik bilgileri, iletişim bilgileri, satış ve noter devrine ilişkin bilgiler, satılan araca ilişkin bilgiler.",
         "Aracını satışa sunan veya ilan yetkisi veren araç sahipleri: ad-soyad, T.C. kimlik numarası, telefon numarası, tüzel kişilerde unvan, vergi numarası ve yetki belgesi numarası, araç plakası ve araca ilişkin bilgiler, Elektronik İlan Doğrulama Sistemi (EİDS) doğrulama sonucu.",
-        "Çalışanlarımız (yönetim paneli kullanıcıları): ad-soyad, kurumsal e-posta adresi, görev/rol, şifrenin geri döndürülemez özeti, panelde yapılan işlemlerin kaydı (hangi araçta hangi işlemin ne zaman yapıldığı), oturum çerezi ve başarısız giriş denemesi sayısı.",
+        "Çalışanlarımız (yönetim paneli kullanıcıları): ad-soyad, kurumsal e-posta adresi, görev/rol, şifrenin geri döndürülemez özeti, panelde yapılan işlemlerin kaydı (hangi araçta hangi işlemin ne zaman yapıldığı), oturum çerezi, başarısız giriş denemesi sayısı ve bildirimleri açtıysanız cihaz bildirim aboneliği.",
       ],
     ],
   },
@@ -82,6 +82,7 @@ const SECTIONS: Section[] = [
         "Hukuki ve mali danışmanlarımız.",
       ],
       "Bizimle WhatsApp üzerinden iletişime geçmeyi seçmeniz halinde mesajlarınız WhatsApp (Meta) altyapısında, WhatsApp'ın kendi koşulları çerçevesinde işlenir; bu altyapının sunucuları yurt dışında bulunabilir. İletişim için telefon, e-posta veya showroom kanallarını da kullanabilirsiniz.",
+      "Yönetim panelindeki otomatik belge okuma özelliği kullanıldığında, araç ruhsatı ve ekspertiz raporu görüntüleri ilan bilgilerinin çıkarılması amacıyla yurt dışında bulunan bir yapay zekâ hizmet sağlayıcısına (OpenAI) iletilir. Bu özellik yalnızca çalışanlarımız tarafından ve gerektiğinde kullanılır.",
     ],
   },
   {
@@ -121,7 +122,8 @@ const SECTIONS: Section[] = [
     title: "9. Çerez bilgilendirmesi",
     body: [
       "Müşteri sitesinde çerez veya benzeri tarayıcı depolaması kullanılmaz; reklam, analiz veya kişiselleştirme amaçlı çerez bulunmamaktadır.",
-      "Yalnızca çalışanlarımızın kullandığı yönetim panelinde, oturumun açık tutulması için zorunlu bir oturum çerezi kullanılır (adı: mm_session, süresi: 12 saat, tarayıcı betikleriyle okunamaz). Bu çerez hizmetin sunulması için zorunlu olduğundan ayrıca onay alınmaz.",
+      "Yalnızca çalışanlarımızın kullandığı yönetim panelinde, oturumun açık tutulması için zorunlu bir oturum çerezi kullanılır (adı: mm_session, süresi: 14 gün, panel kullanıldıkça yenilenir, tarayıcı betikleriyle okunamaz). Bu çerez hizmetin sunulması için zorunlu olduğundan ayrıca onay alınmaz.",
+      "Panelde bağlantı koptuğunda kaydedilemeyen form değişiklikleri, yeniden gönderilinceye kadar yalnızca çalışanın cihazında (tarayıcı yerel depolaması) tutulur. Bildirimleri açan çalışanın cihazı için tarayıcının bildirim aboneliği bilgisi sunucumuzda saklanır; bildirimler kapatıldığında silinir.",
       "İleride analiz veya pazarlama amaçlı çerez kullanılması halinde, bu çerezler yalnızca onayınızla etkinleştirilecek ve bu metin güncellenecektir.",
     ],
   },

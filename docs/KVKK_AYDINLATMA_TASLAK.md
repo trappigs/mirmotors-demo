@@ -40,3 +40,5 @@
 8. **Ekspertiz raporları:** ekspertiz PDF'lerinde araç sahibine ait kişisel veri olabilir; yalnızca personel erişiyor. Saklama ve müşteriye gösterim kuralı.
 9. **Çerez:** gelecekte analiz aracı eklenirse çerez onay mekanizması gerekecek (şu an gerekmiyor).
 10. **Açık rıza metni:** pazarlama (SMS/e-posta kampanya) planlanıyorsa ayrı açık rıza ve İYS kaydı.
+11. **Belge okuma (OpenAI, yurt dışı):** Burak'ın sürümüyle (16.11.2026) gelen otomatik belge okuma, `OPENAI_API_KEY` tanımlıysa ruhsat ve ekspertiz görüntülerini OpenAI'a gönderir (ruhsatta araç sahibinin adı ve T.C. kimlik no bulunur). KVKK md. 9 kapsamında yurt dışı aktarım dayanağı (standart sözleşme + Kurul'a bildirim?) ve maskeleme gereği değerlendirilmeli. Metinde aktarım bildirildi.
+12. **Oturum süresi:** panel oturum çerezi 12 saatten 14 güne (kayan) çıktı; panelde çevrimdışı form taslakları cihazda (localStorage) tutuluyor; bildirim aboneliği sunucuda. Metin güncellendi.

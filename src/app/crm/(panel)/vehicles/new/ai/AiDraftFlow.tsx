@@ -1,6 +1,7 @@
 "use client";
 import { useRef, useState } from "react";
 import { VehicleForm, emptyVehicleForm, type VehicleFormValues } from "@/components/crm/VehicleForm";
+import { DRIVETRAINS } from "@/lib/constants";
 import { directUpload } from "@/lib/direct-upload";
 
 type Draft = Record<string, unknown> & { equipment: string[]; evidence: { field: string; quote: string }[]; warnings: string[] };
@@ -15,12 +16,25 @@ type Result = {
 
 const FORM_KEYS = Object.keys(emptyVehicleForm) as (keyof VehicleFormValues)[];
 
+/** Alan adlarının ekranda görünen karşılıkları. */
+const FIELD_LABELS: Record<string, string> = {
+  brand: "Marka", model: "Model", packageName: "Seri / paket", year: "Model yılı", km: "Kilometre", price: "Fiyat",
+  fuel: "Yakıt", transmission: "Vites", bodyType: "Kasa tipi", color: "Renk", enginePower: "Motor gücü", engineCc: "Motor hacmi",
+  drivetrain: "Çekiş", equipment: "Donanım", damageNote: "Hasar açıklaması", tramerAmount: "Tramer", expertiseSummary: "Ekspertiz özeti",
+  description: "Açıklama", paintedParts: "Boyalı parça (söylenen)", changedParts: "Değişen parça (söylenen)",
+};
+/** Yayın ve ilan için gerekli, AI'nın bulamadığı veya hiç doldurmadığı alanlar (personel tamamlar). */
+const NEEDED = ["brand", "model", "year", "km", "price", "fuel", "transmission", "bodyType", "tramerAmount"];
+const ALWAYS_MANUAL = ["Hasar kaydı durumu", "Kaporta şeması (parça parça)", "Ekspertiz raporu", "Plaka, şasi son 6 hane, rehin/haciz, garanti, tescil", "Gerçek araç fotoğrafları"];
+const show = (v: unknown) => (Array.isArray(v) ? v.join(", ") : typeof v === "number" ? new Intl.NumberFormat("tr-TR").format(v) : String(v));
+
 function toFormValues(d: Draft): { values: Partial<VehicleFormValues>; fields: string[] } {
   const values: Partial<VehicleFormValues> = {};
   const fields: string[] = [];
   for (const k of FORM_KEYS) {
     const val = d[k];
     if (val === null || val === undefined || (Array.isArray(val) && val.length === 0)) continue;
+    if (k === "drivetrain" && !DRIVETRAINS.includes(String(val))) continue; // listede olmayan değer formda görünmez; personel seçer
     (values as Record<string, unknown>)[k] = Array.isArray(val) ? val : String(val);
     fields.push(k);
   }
@@ -60,11 +74,16 @@ export function AiDraftFlow({ live, transcription, direct }: { live: boolean; tr
 
   if (result) {
     const { values, fields } = toFormValues(result.draft);
+    const d = result.draft as Record<string, unknown>;
+    const found = Object.keys(FIELD_LABELS).filter((k) => d[k] !== null && d[k] !== undefined && !(Array.isArray(d[k]) && (d[k] as unknown[]).length === 0));
+    const notFound = NEEDED.filter((k) => !found.includes(k));
+    // AI'nın söylediği boya/değişen bilgisi parçalara işlenmez; personel kaporta şemasında doğrular.
+    const bodyNote = [d.paintedParts, d.changedParts].filter(Boolean).join(" · ");
     return (
       <div className="space-y-6">
-        <div className={`rounded-lg p-4 text-sm ${result.mode === "SIMULATION" ? "bg-amber-100 text-amber-900" : "bg-sky-100 text-sky-900"}`} data-testid="ai-mode-banner">
+        <div className={`rounded-lg p-4 text-sm ${result.mode === "SIMULATION" ? "border-2 border-amber-400 bg-amber-100 text-amber-950" : "bg-sky-100 text-sky-900"}`} data-testid="ai-mode-banner">
           {result.mode === "SIMULATION" ? (
-            <><strong>SİMÜLASYON MODU:</strong> Bu taslak canlı AI analizi değildir. Yüklediğiniz video kaydedildi ancak alanlar sabit bir örnek transkript ve örnek AI çıktısından doldurulmuştur.</>
+            <><strong className="text-base">AI SİMÜLASYONU — gerçek analiz değildir.</strong> Yüklediğiniz video kaydedildi ancak aşağıdaki bilgiler videonuzdan değil, sabit bir örnek transkript ve örnek çıktıdan gelir. Bu bilgileri gerçek araç bilgisi gibi kullanmayın.</>
           ) : (
             <><strong>Canlı AI taslağı</strong> ({result.transcriptSource === "whisper" ? "Whisper transkripti" : result.transcriptSource === "manual" ? "elle girilen transkript" : "transkript yok"}{result.framesUsed ? ` + ${result.framesUsed} video karesi` : ""}). Tüm alanları kontrol edin.</>
           )}
@@ -77,11 +96,6 @@ export function AiDraftFlow({ live, transcription, direct }: { live: boolean; tr
           <div className="card p-5">
             <h2 className="font-semibold">{result.mode === "SIMULATION" ? "Örnek transkript (simülasyon)" : "Transkript"}</h2>
             <p className="mt-3 max-h-48 overflow-y-auto whitespace-pre-line text-sm text-zinc-700">{result.transcript || "—"}</p>
-            {result.draft.warnings.length > 0 && (
-              <ul className="mt-4 space-y-1 text-sm text-amber-800">
-                {result.draft.warnings.map((w) => <li key={w}>⚠ {w}</li>)}
-              </ul>
-            )}
             {result.draft.evidence.length > 0 && (
               <details className="mt-4 text-sm">
                 <summary className="cursor-pointer text-zinc-600">Kanıt alıntıları ({result.draft.evidence.length})</summary>
@@ -91,6 +105,39 @@ export function AiDraftFlow({ live, transcription, direct }: { live: boolean; tr
               </details>
             )}
           </div>
+        </div>
+        <div className="grid gap-6 lg:grid-cols-2">
+          <section className="card p-5" data-testid="ai-found">
+            <h2 className="font-semibold">1 · {result.mode === "SIMULATION" ? "Simülasyonun doldurduğu bilgiler" : "AI tarafından bulunan bilgiler"}</h2>
+            {found.length === 0 ? (
+              <p className="mt-3 text-sm text-zinc-500">Videodan hiçbir bilgi çıkarılamadı. Tüm alanları aşağıda elle doldurun.</p>
+            ) : (
+              <dl className="mt-3 divide-y divide-zinc-100 text-sm">
+                {found.map((k) => (
+                  <div key={k} className="flex justify-between gap-4 py-1.5">
+                    <dt className="text-zinc-500">{FIELD_LABELS[k]}</dt>
+                    <dd className="text-right font-medium">{show(d[k])}</dd>
+                  </div>
+                ))}
+              </dl>
+            )}
+          </section>
+          <section className="card border-amber-200 p-5" data-testid="ai-missing">
+            <h2 className="font-semibold">2 · Eksik veya doğrulanması gereken bilgiler</h2>
+            {notFound.length > 0 && (
+              <p className="mt-3 text-sm"><strong>Bulunamadı:</strong> {notFound.map((k) => FIELD_LABELS[k]).join(", ")}</p>
+            )}
+            {bodyNote && (
+              <p className="mt-2 text-sm"><strong>Videoda söylenen boya/değişen:</strong> {bodyNote} — kaporta şemasında parça parça siz doğrulayın; AI parça durumunu belirlemez.</p>
+            )}
+            <p className="mt-2 text-sm"><strong>Her zaman personel girer:</strong> {ALWAYS_MANUAL.join(" · ")}</p>
+            {result.draft.warnings.length > 0 && (
+              <ul className="mt-2 space-y-1 text-sm text-amber-800">
+                {result.draft.warnings.map((w) => <li key={w}>⚠ {w}</li>)}
+              </ul>
+            )}
+            <p className="mt-3 text-xs text-zinc-500">Analiz videosu araca bağlanır ancak müşteri sitesinde gösterilmez; isterseniz araç sayfasından ayrıca yayımlayabilirsiniz.</p>
+          </section>
         </div>
         <VehicleForm
           mode="create"

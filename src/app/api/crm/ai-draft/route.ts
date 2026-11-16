@@ -3,7 +3,7 @@ import path from "path";
 import { requireApiUser } from "@/lib/auth";
 import { handleApiError, jsonError } from "@/lib/api";
 import { PUBLIC_DIR, saveUpload, storageDriver, verifyDirectUpload } from "@/lib/storage";
-import { aiStatus, generateDraft, simulationResult, transcribe, type DraftResult } from "@/lib/ai/vehicle-draft";
+import { aiStatus, emptyDraft, generateDraft, simulationResult, transcribe, type DraftResult } from "@/lib/ai/vehicle-draft";
 import { extractFrames } from "@/lib/ai/frames";
 
 export const maxDuration = 300;
@@ -42,13 +42,10 @@ export async function POST(req: Request) {
         source = "whisper";
       }
       const frames = await extractFrames(path.join(PUBLIC_DIR, videoPath));
-      if (!transcript && frames.length === 0) {
-        return jsonError(
-          "Transkript yok ve videodan kare çıkarılamadı. Konuşma dökümünü elle yapıştırın veya OPENAI_API_KEY tanımlayın.",
-          422,
-        );
-      }
-      const draft = await generateDraft({ transcript, frames });
+      // Bilgi çıkarılamasa da işlem hata vermez: boş taslakla devam edilir, personel alanları elle doldurur.
+      const draft = !transcript && frames.length === 0
+        ? emptyDraft("Videodan konuşma dökümü veya görüntü karesi alınamadı; hiçbir alan doldurulmadı. Bilgileri elle girin.")
+        : await generateDraft({ transcript, frames });
       result = { mode: "LIVE", transcript, transcriptSource: source, framesUsed: frames.length, draft };
     }
     return NextResponse.json({ ...result, videoPath });

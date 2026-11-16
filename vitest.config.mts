@@ -9,6 +9,8 @@ export default defineConfig({
     globalSetup: "./tests/global-setup.ts",
     env: { DATABASE_URL: testDb, DATABASE_URL_UNPOOLED: testDb, SESSION_SECRET: "test-secret-0123456789abcdef" },
     fileParallelism: false,
+    // Yerel `prisma dev` veritabanında ilk sorgular yavaş olabilir (belge analizi testi ~5 sn sürüyor).
+    testTimeout: 20000,
   },
-  resolve: { alias: { "@": path.resolve(import.meta.dirname, "src") } },
+  resolve: { alias: { "@": path.resolve(import.meta.dirname, "src"), "server-only": path.resolve(import.meta.dirname, "tests/server-only-stub.ts") } },
 });

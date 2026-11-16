@@ -96,7 +96,7 @@ export function HeroSlider({ slides }: { slides: HeroSlide[] }) {
                   return <Heading className="mt-4 max-w-xl font-display text-[32px] font-extrabold leading-[1.05] tracking-tight md:text-[56px]">{s.title}</Heading>;
                 })()}
                 <p className="mt-3 max-w-md text-[15px] leading-relaxed text-white/80 md:text-lg">{s.text}</p>
-                <Link href={s.href} className="btn-gold mt-6 w-fit rounded-xl px-7 py-3.5 text-[15px] font-bold" data-testid={`hero-cta-${i}`}>
+                <Link href={s.href} className="btn-primary mt-6 w-fit rounded-xl px-7 py-3.5 text-[15px] font-bold" data-testid={`hero-cta-${i}`}>
                   {s.cta} →
                 </Link>
               </div>

@@ -49,3 +49,7 @@ next-env.d.ts
 # tooling artifacts
 /.playwright-mcp
 /prisma/test.db*
+
+# Vercel/Neon CLI ajan becerileri (yerel araç çıktısı)
+/.agents/
+skills-lock.json

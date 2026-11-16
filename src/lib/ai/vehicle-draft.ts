@@ -64,6 +64,7 @@ Kurallar:
 - fuel/transmission/bodyType yalnızca verilen seçeneklerden biri olabilir.
 - Doldurduğun her alan için evidence listesine dökümden kısa bir alıntı ekle.
 - Çelişkili veya belirsiz noktaları warnings listesine Türkçe olarak yaz.
+- paintedParts/changedParts yalnızca dökümde söylenenlerin notudur; parça durumları personel tarafından kaporta şemasında doğrulanır.
 - description alanına dökümde geçen bilgilere dayanan, abartısız 1-3 cümlelik Türkçe ilan açıklaması yazabilirsin; yeni bilgi ekleme.`;
 
 export async function generateDraft(input: { transcript: string | null; frames: Buffer[] }): Promise<VehicleDraft> {
@@ -101,10 +102,20 @@ export async function transcribe(file: Blob, filename: string): Promise<string> 
     method: "POST",
     headers: { Authorization: `Bearer ${process.env.OPENAI_API_KEY}` },
     body: fd,
+    signal: AbortSignal.timeout(120_000),
   });
   if (!res.ok) throw new Error(`Transkripsiyon servisi hata verdi (${res.status})`);
   const data = (await res.json()) as { text?: string };
   return data.text?.trim() ?? "";
+}
+
+/** Hiçbir bilgi çıkarılamadığında dönen boş taslak (uydurma yok; personel elle doldurur). */
+export function emptyDraft(warning: string): VehicleDraft {
+  return {
+    brand: null, model: null, packageName: null, year: null, km: null, price: null, fuel: null, transmission: null, bodyType: null,
+    color: null, enginePower: null, engineCc: null, drivetrain: null, equipment: [], paintedParts: null, changedParts: null,
+    damageNote: null, tramerAmount: null, expertiseSummary: null, description: null, evidence: [], warnings: [warning],
+  };
 }
 
 export function simulationResult(): DraftResult {

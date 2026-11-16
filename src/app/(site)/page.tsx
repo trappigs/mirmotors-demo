@@ -5,7 +5,7 @@ import { HeroSearch } from "@/components/site/HeroSearch";
 import { HeroSlider, type HeroSlide } from "@/components/site/HeroSlider";
 import { StoryBar } from "@/components/site/StoryBar";
 import { buildStories } from "@/lib/home-stories";
-import { PRICE_PRESETS, findPublicVehicles, parseFilters, publicBrandModels } from "@/lib/public-vehicles";
+import { PRICE_PRESETS, allPublicVehicles, publicBrandModels } from "@/lib/public-vehicles";
 
 export const dynamic = "force-dynamic";
 
@@ -56,7 +56,7 @@ const REASONS = [
 ];
 
 export default async function HomePage() {
-  const [vehicles, brandModels] = await Promise.all([findPublicVehicles(parseFilters({})), publicBrandModels()]);
+  const [vehicles, brandModels] = await Promise.all([allPublicVehicles(), publicBrandModels()]);
   const featured = vehicles.slice(0, 8);
   const stories = buildStories(vehicles);
   const years = [...new Set(vehicles.map((v) => v.year))].sort((a, b) => b - a);

@@ -31,7 +31,8 @@ Seed (örnek stok) fotoğrafları `public/demo-cars/` içinden **statik dosya** 
 1. **CRM erişim kapısı (HTTP Basic):** `/crm` ve CRM API'leri önce `DEMO_ACCESS_USER` / `DEMO_ACCESS_PASSWORD` ister.
    Vercel'de `DEMO_ACCESS_PASSWORD` tanımlı değilse CRM **açılmaz** (503) — yanlışlıkla korumasız yayın olmaz.
    Müşteri sitesi açıktır; `DEMO_ACCESS_SCOPE=all` ile o da korunur.
-2. **Personel girişi:** Yönetici, Ahmet, Mehmet. Bulutta şifre `DEMO_STAFF_PASSWORD`'dan gelir; yerel demo şifresi (`MirDemo2026!`) bulutta kullanılamaz.
+2. **Personel girişi:** Yönetici, Ahmet, Mehmet. Bulutta her hesabın şifresi ayrı ortam değişkeninden gelir (`DEMO_PASSWORD_YONETICI` / `_AHMET` / `_MEHMET`); yerel demo şifreleri bulutta kullanılamaz.
+   **Demo V1 notu:** Canlıdaki mevcut 3 hesap henüz aynı şifreyi kullanıyor. Veri silmeden ayırmak için her hesapta bir kez `npm run personel:sifre` çalıştırın (canlı veritabanı adresiyle, dikkatle).
 3. Oturum çerezi Vercel'de otomatik `Secure` + `HttpOnly`.
 4. `noindex` başlığı, meta etiketi, `robots.txt` ve DEMO bandı korunur.
 
@@ -53,7 +54,7 @@ Seed (örnek stok) fotoğrafları `public/demo-cars/` içinden **statik dosya** 
 | `DEMO_ACCESS_USER` | Hayır | Varsayılan `mirmotors`. |
 | `BLOB_READ_WRITE_TOKEN` | Yükleme için evet | Blob mağazası bağlanınca eklenir; yoksa mağaza ayarlarından okuma-yazma anahtarı eklenir. |
 | `NEXT_PUBLIC_WHATSAPP_NUMBER`, `NEXT_PUBLIC_INSTAGRAM_URL` | Hayır | |
-| `DEMO_STAFF_PASSWORD` | Yalnızca seed sırasında | Vercel'e eklenmesi gerekmez; seed komutunu çalıştıran bilgisayarda verilir. |
+| `DEMO_PASSWORD_YONETICI`, `DEMO_PASSWORD_AHMET`, `DEMO_PASSWORD_MEHMET` | Yalnızca seed sırasında | Vercel'e eklenmesi gerekmez; seed komutunu çalıştıran bilgisayarda verilir. Her biri ≥12 karakter ve farklı. |
 
 ## Kurulum adımları
 
@@ -65,7 +66,7 @@ Tüm komutlar bu dalın klasöründe (`mirmotors-demo-vercel`) çalıştırılı
 3. **Blob mağazası (özel):** `vercel blob create-store mirmotors-media --access private` ve projeye bağla.
 4. **Ortam değişkenleri:** `SESSION_SECRET`, `DEMO_ACCESS_PASSWORD` (ve isteğe bağlı diğerleri) Production ortamına eklenir.
 5. **İlk veri (bir kez):** `vercel env pull .env.vercel.local` → değişkenleri yükleyip
-   `DEMO_STAFF_PASSWORD=... npm run db:seed:cloud` (tabloları oluşturur, boş veritabanına 3 personel + 11 örnek araç yükler).
+   `DEMO_PASSWORD_YONETICI=... DEMO_PASSWORD_AHMET=... DEMO_PASSWORD_MEHMET=... npm run db:seed:cloud` (tabloları oluşturur, boş veritabanına 3 personel + 11 örnek araç yükler).
 6. **Yayın:** `vercel deploy --prod`. GitHub bağlantısı gerekmez.
 7. **Canlı test:** `E2E_ACCESS=kullanıcı:şifre E2E_PASSWORD=... E2E_DIRECT=1 node tests/e2e-demo.mjs https://<proje>.vercel.app`
    (Test bir "520i M Sport E2E" aracı oluşturup satar; kayıt CRM satış geçmişinde kalır.)

@@ -1,0 +1,10 @@
+# Vercel'e yüklenmeyecek dosyalar (gizli değerler, yerel veri, büyük sunum dosyaları)
+.env*
+!.env.example
+storage
+node_modules
+.next
+.claude
+demo-assets
+tests
+*.bundle

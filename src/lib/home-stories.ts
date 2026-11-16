@@ -1,6 +1,8 @@
 import "server-only";
 import { mediaUrl } from "./format";
-import type { PublicVehicleListItem } from "./public-vehicles";
+import type { allPublicVehicles } from "./public-vehicles";
+
+type PublicVehicleListItem = Awaited<ReturnType<typeof allPublicVehicles>>[number];
 
 export type StorySlide = { image: string; title: string; subtitle?: string; href?: string; hrefLabel?: string };
 export type Story = { id: string; label: string; cover: string; slides: StorySlide[] };

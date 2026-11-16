@@ -1,15 +1,20 @@
 import { PrismaClient } from "@prisma/client";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { transitionVehicle, type Actor } from "@/lib/vehicle-status";
+import { BODY_PART_KEYS } from "@/lib/body-parts";
 
 const db = new PrismaClient();
 let admin: Actor, ahmet: Actor, mehmet: Actor;
 
+/** Sentetik, zorunlu ilan bilgileri tamam test aracı (gerçek plaka/şasi değildir). */
 async function newVehicle(status = "DRAFT", photos = 1) {
   const v = await db.vehicle.create({
     data: {
       brand: "BMW", model: "5 Serisi", year: 2022, km: 10000, price: 3_000_000,
       fuel: "Benzin", transmission: "Otomatik", bodyType: "Sedan", status, createdById: admin.id,
+      vehicleClass: "Otomobil", vehicleType: "TEST-TIP", equipment: JSON.stringify(["ABS"]), legalPlate: "00TEST00", legalVin: "TEST01",
+      damageRecord: "NONE", legalLien: "NONE", warrantyStatus: "NONE", legalRegisteredToCompany: true,
+      parts: { create: BODY_PART_KEYS.map((part) => ({ part, state: "ORIGINAL" })) },
     },
   });
   for (let i = 0; i < photos; i++) await db.vehiclePhoto.create({ data: { vehicleId: v.id, path: `t/${i}.jpg` } });
@@ -22,6 +27,7 @@ beforeAll(async () => {
   admin = await mk("admin", "ADMIN");
   ahmet = await mk("ahmet", "SALES");
   mehmet = await mk("mehmet", "SALES");
+  await db.companySettings.upsert({ where: { id: "default" }, create: { id: "default", title: "Test Otomotiv Ltd. Şti.", authorizationNo: "TEST-1" }, update: {} });
 });
 
 beforeEach(async () => {
@@ -31,7 +37,10 @@ beforeEach(async () => {
   await db.vehicle.deleteMany();
 });
 
-afterAll(() => db.$disconnect());
+afterAll(async () => {
+  await db.companySettings.deleteMany();
+  await db.$disconnect();
+});
 
 describe("yayımlama", () => {
   it("fotoğraf olmadan yayımlanamaz", async () => {

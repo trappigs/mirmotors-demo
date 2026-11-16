@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { SESSION_COOKIE, verifySession } from "@/lib/session";
+import { SESSION_COOKIE, readSession, sessionCookieOptions, sessionNeedsRenewal, signSession } from "@/lib/session";
 
 /**
  * Demo erişim kapısı (HTTP Basic). İnternete açık demo adresinde CRM, personel girişinden önce ayrı bir
@@ -54,8 +54,18 @@ export async function middleware(req: NextRequest) {
   if (!(pathname.startsWith("/crm") || pathname.startsWith("/api/crm"))) return NextResponse.next();
   if (pathname === "/crm/login") return NextResponse.next();
 
-  const session = await verifySession(req.cookies.get(SESSION_COOKIE)?.value);
-  if (session) return NextResponse.next();
+  const current = await readSession(req.cookies.get(SESSION_COOKIE)?.value);
+  if (current) {
+    const res = NextResponse.next();
+    // Kayan oturum: 1 günden eski çerez yeni 14 günlük çerezle değiştirilir (httpOnly/lax/secure ayarları aynı).
+    // Yenileme başarısız olursa istek yine geçer; mevcut çerez süresi dolana kadar geçerlidir.
+    if (sessionNeedsRenewal(current.issuedAt)) {
+      try {
+        res.cookies.set(SESSION_COOKIE, await signSession(current.session), sessionCookieOptions);
+      } catch {}
+    }
+    return res;
+  }
 
   if (pathname.startsWith("/api/")) {
     return NextResponse.json({ error: "Oturum gerekli" }, { status: 401 });

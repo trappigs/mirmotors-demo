@@ -84,11 +84,6 @@ Gerçek WhatsApp API, Instagram DM, otomatik müşteri cevaplama, EİDS entegras
 
 ## Görsel tasarım sistemi (müşteri sitesi)
 
-> **Güncel tema (03.11.2026): siyah + altın.** Burak'ın `demo-v1` dalındaki tema (logodan türetilen renkler, gerçek Mir Motors logosu,
-> siyah üst menü/alt bilgi, siyah fiyat bantları, altın vurgular) bu dala uygulandı; yalnızca görsel değişiklikler alındı, o daldaki yeni özellikler alınmadı.
-> Token'lar: `brand #8C6B22`, `brand-dark #6F5419`, `gold #D4B062`, `ink #141416`, `paper #F7F6F2`. Koyu zeminde birincil düğme `btn-gold`.
-> Aşağıdaki kırmızı tema maddeleri önceki sürümü anlatır.
-
 - Referans: Borz Motor `/tum-araclar` yerleşimi ve kırmızı-beyaz-siyah ilan platformu hissi (kullanıcı talebiyle). Borz logosu, metinleri, fotoğrafları ve peşinat/kredi/konsinye/nakit alım özellikleri kopyalanmadı.
 - Renk token'ları `src/app/globals.css` `@theme` bloğunda: `brand #BA1020`, `brand-dark #990C19` (hover), `ink #17191D`, `paper #F4F4F6`, `muted #646B76`, `line #E3E5E9`. Eski `accent` token'ı geriye dönük uyumluluk için `brand` ile aynı kırmızıya eşlendi; CRM bu sayede kırmızıya uyarlandı, bileşenleri değişmedi.
 - Kırmızı: birincil CTA, kart fiyat bantları, aktif filtre etiketleri, bölüm vurgu çizgileri, bağlantı hover'ları, arama butonu, detay sayfası fiyat ve iletişim alanı.
@@ -123,3 +118,6 @@ Gerçek WhatsApp API, Instagram DM, otomatik müşteri cevaplama, EİDS entegras
 | Vercel'de AI her zaman simülasyon | Canlı yol yerel dosyadan kare çıkarır; Vercel'de doğrulanmadı. |
 | Çerez Vercel'de otomatik `Secure`; fonksiyon bölgesi `fra1` | HTTPS; veritabanı ve Blob ile aynı bölge. |
 | Yalnızca ücretsiz katmanlar (Vercel Hobby, Neon Free, Blob) | Prototip aşaması; Hobby ticari kullanım için uygun değil, canlı kullanımda Pro gerekir. |
+| Hızlı araç girişi (2026-11-04): ruhsattan okunan kimlik bilgileri tek özet kartında ("Düzelt" ile açılır); fiyat/KM binlik noktalı büyük kutu + okunuşu ("1,25 milyon TL"); vites, kasa, takas tek dokunuşla | Ruhsat fotoğrafı marka/model/yıl/yakıt/renk/plaka/şasiyi zaten dolduruyor; arabam.com'daki sütunlu marka-model seçici gereksiz. Personel yalnızca ruhsatta olmayanları girer; okunuş eksik/fazla sıfırı yakalar. |
+| Renk listeden seçilir; ruhsattaki "BEYAZ" → "Beyaz" (`normalizeColor`), listede olmayan renk silinmez | Sitedeki renk filtresinde aynı rengin farklı yazımları çıkmasın. |
+| Takas araç başına (`Vehicle.tradeIn`, boş = belirtilmedi), sitede "Takasa uygun / Takas yapılmıyor" | Galeri her araçta takas kabul ediyorsa ileride işletme ayarına taşınabilir. |

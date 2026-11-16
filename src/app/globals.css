@@ -64,10 +64,6 @@ body {
   .btn-accent {
     @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand/30 disabled:cursor-not-allowed disabled:opacity-50 bg-brand text-white shadow-[0_6px_16px_-8px_rgba(111,84,25,0.5)] hover:bg-brand-dark;
   }
-  /* Koyu zemin (hero, story) üzerindeki birincil CTA: siyah düğme orada görünmez, parlak altın kullanılır */
-  .btn-gold {
-    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-gold/40 disabled:cursor-not-allowed disabled:opacity-50 bg-gold text-ink shadow-[0_6px_16px_-8px_rgba(212,176,98,0.6)] hover:bg-white;
-  }
   /* İkincil: koyu */
   .btn-dark {
     @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand/25 disabled:cursor-not-allowed disabled:opacity-50 bg-ink text-white hover:bg-ink-3;
@@ -117,6 +113,23 @@ body {
   }
   .chip {
     @apply inline-flex items-center gap-1.5 rounded-full border border-line bg-white px-3 py-1 text-xs font-medium text-ink transition hover:border-brand hover:text-brand;
+  }
+}
+
+/*
+ * CRM telefon kullanımı (yalnızca .crm-app içinde; müşteri sitesi etkilenmez).
+ * iOS Safari 16px altındaki form alanına odaklanınca sayfayı yakınlaştırır; bu yüzden telefonda en az 16px.
+ * Katmansız (unlayered) yazıldı ki alanlara verilmiş text-xs/text-sm yardımcı sınıflarını da telefonda ezsin.
+ * Düğmeler telefonda en az 44px yükseklik (parmakla rahat dokunma).
+ */
+@media (max-width: 639.98px) {
+  .crm-app input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="color"]),
+  .crm-app select,
+  .crm-app textarea {
+    font-size: 16px;
+  }
+  .crm-app :is(.btn, .btn-primary, .btn-accent, .btn-dark, .btn-outline, .btn-danger) {
+    min-height: 44px;
   }
 }
 

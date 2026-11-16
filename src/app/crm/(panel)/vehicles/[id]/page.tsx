@@ -3,15 +3,21 @@ import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { PUBLIC_STATUSES, STATUS_LABELS, type VehicleStatus } from "@/lib/constants";
-import { formatDateTime, formatPrice, mediaUrl, parseEquipment } from "@/lib/format";
+import { formatDateTime, formatPrice, mediaUrl } from "@/lib/format";
 import { ACTION_LABELS } from "@/lib/vehicle-status";
 import { canEditDetails, mediaChangeBlock } from "@/lib/permissions";
 import { MediaManager } from "@/components/crm/MediaManager";
 import { storageDriver } from "@/lib/storage";
 import { StatusActions } from "@/components/crm/StatusActions";
-import { VehicleForm, type VehicleFormValues } from "@/components/crm/VehicleForm";
-
-const s = (v: string | number | null | undefined) => (v === null || v === undefined ? "" : String(v));
+import { VehicleForm } from "@/components/crm/VehicleForm";
+import { PublishChecklist } from "@/components/crm/PublishChecklist";
+import { BodyPartsEditor } from "@/components/crm/BodyPartsEditor";
+import { DocReviewPanel } from "@/components/crm/DocReviewPanel";
+import { VehicleDocuments } from "@/components/crm/VehicleDocuments";
+import { parseReview } from "@/lib/doc-review";
+import { toPartMap } from "@/lib/body-parts";
+import { formInitial, vehicleChecklist } from "@/lib/vehicle-crm";
+import { autoListingNo } from "@/lib/listing-rules";
 
 export default async function CrmVehicleDetail({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ created?: string }> }) {
   const user = await requireUser();
@@ -25,6 +31,8 @@ export default async function CrmVehicleDetail({ params, searchParams }: { param
       createdBy: true,
       history: { orderBy: { createdAt: "desc" }, include: { user: true } },
       sales: { orderBy: { startedAt: "desc" }, include: { startedBy: true, completedBy: true } },
+      parts: { include: { updatedBy: { select: { name: true } } }, orderBy: { updatedAt: "desc" } },
+      documents: { orderBy: [{ kind: "desc" }, { page: "asc" }], include: { createdBy: { select: { name: true } } } },
     },
   });
   if (!v) notFound();
@@ -33,23 +41,26 @@ export default async function CrmVehicleDetail({ params, searchParams }: { param
   const locked = !canEditDetails(v, actor);
   const mediaLocked = mediaChangeBlock(v, actor) !== null;
   const isPublic = PUBLIC_STATUSES.includes(v.status as VehicleStatus);
-  const initial: VehicleFormValues = {
-    brand: v.brand, model: v.model, packageName: s(v.packageName), year: s(v.year), km: s(v.km), price: s(v.price),
-    fuel: v.fuel, transmission: v.transmission, bodyType: v.bodyType, color: s(v.color), enginePower: s(v.enginePower),
-    engineCc: s(v.engineCc), drivetrain: s(v.drivetrain), description: s(v.description), equipment: parseEquipment(v.equipment),
-    paintedParts: s(v.paintedParts), changedParts: s(v.changedParts), damageNote: s(v.damageNote), tramerAmount: s(v.tramerAmount),
-    expertiseSummary: s(v.expertiseSummary), legalListingNo: s(v.legalListingNo), legalAuthorizationNo: s(v.legalAuthorizationNo),
-    legalPlate: s(v.legalPlate), legalVin: s(v.legalVin), legalOwnerConsent: v.legalOwnerConsent,
-  };
+  const initial = formInitial(v);
+  const checklist = await vehicleChecklist(v);
+  const lastPart = v.parts[0];
+  const review = parseReview(v.docReview);
+  // "Satıldı" formundaki satan personel seçimi için (yalnızca satılabilir durumdaki araçta).
+  const staff = v.status === "AVAILABLE" || v.status === "OPTIONED" ? await prisma.user.findMany({ select: { id: true, name: true }, orderBy: { name: "asc" } }) : [];
+  const archiveRow = v.status === "ARCHIVED" ? v.history.find((h) => h.action === "archive") : undefined;
+  const archivedInfo = v.status === "ARCHIVED"
+    ? `${archiveRow?.user.name ?? "—"} · ${v.archivedAt ? formatDateTime(v.archivedAt) : "—"}${v.archivedFromStatus ? ` · önceki durum: ${STATUS_LABELS[v.archivedFromStatus as VehicleStatus] ?? v.archivedFromStatus}` : ""}`
+    : null;
+  const oldBodyText = [v.paintedParts && `Boyalı: ${v.paintedParts}`, v.changedParts && `Değişen: ${v.changedParts}`].filter(Boolean).join(" · ");
 
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <Link href="/crm/vehicles" className="text-sm text-zinc-500 hover:text-ink">← Araçlar</Link>
-          <h1 className="mt-2 font-display text-2xl font-bold">{v.brand} {v.model} <span className="font-normal text-zinc-500">{v.packageName}</span></h1>
+          <h1 className="mt-2 font-display text-2xl font-bold">{v.brand ?? "Marka girilmedi"} {v.model} <span className="font-normal text-zinc-500">{v.packageName}</span></h1>
           <p className="text-sm text-zinc-500">
-            {v.year} · {formatPrice(v.price)} · Oluşturan: {v.createdBy.name} · {formatDateTime(v.createdAt)}
+            İlan no {v.legalListingNo ?? autoListingNo(v.id)} · {v.year ?? "Yıl girilmedi"} · {formatPrice(v.price)} · Oluşturan: {v.createdBy.name} · {formatDateTime(v.createdAt)}
             {v.aiDraftMode && <span className="ml-2 rounded bg-sky-100 px-2 py-0.5 text-xs text-sky-800">AI taslağı ({v.aiDraftMode === "LIVE" ? "canlı" : "simülasyon"})</span>}
           </p>
         </div>
@@ -60,23 +71,42 @@ export default async function CrmVehicleDetail({ params, searchParams }: { param
         )}
       </div>
 
-      {created && v.status === "DRAFT" && (
-        <p className="rounded-md bg-emerald-50 p-3 text-sm text-emerald-800">Taslak kaydedildi. Şimdi fotoğrafları yükleyin ve yayımlayın.</p>
+      {(v.status === "DRAFT" || v.status === "REVIEW") && !locked && (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-accent/40 bg-accent/5 p-4 text-sm" data-testid="wizard-cta">
+          <p>{created ? "Taslak kaydedildi. " : ""}Eksikleri adım adım tamamlamak için: bilgiler → kaporta ve hasar → fotoğraf → yayın.</p>
+          <Link href={`/crm/vehicles/${v.id}/tamamla`} className="btn-primary">Adım adım tamamla</Link>
+        </div>
       )}
 
       <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
         <div className="min-w-0 space-y-6">
+          {review && <DocReviewPanel vehicleId={v.id} review={review} status={v.status} readOnly={locked} />}
           <MediaManager
             direct={storageDriver() === "blob"}
             vehicleId={v.id}
-            photos={v.photos.map((p) => ({ id: p.id, url: mediaUrl(p.path)!, isCover: p.isCover }))}
+            photos={[...v.photos].sort((a, b) => a.sortOrder - b.sortOrder).map((p) => ({ id: p.id, url: mediaUrl(p.path)!, isCover: p.isCover }))}
             videoUrl={mediaUrl(v.videoPath)}
+            videoPublic={v.videoPublic}
+            videoFromAi={Boolean(v.aiDraftMode)}
             pdfUrl={v.expertisePdfPath ? `/api/crm/files/${v.expertisePdfPath}` : null}
             locked={mediaLocked}
           />
+          <VehicleDocuments
+            vehicleId={v.id}
+            readOnly={locked}
+            docs={v.documents.map((d) => ({ id: d.id, path: d.path, kind: d.kind, page: d.page, by: d.createdBy.name, quality: JSON.parse(d.quality ?? "[]") as string[] }))}
+          />
+          <BodyPartsEditor
+            vehicleId={v.id}
+            staff={toPartMap(v.parts)}
+            report={toPartMap(v.parts, "reportState")}
+            readOnly={locked}
+            lastUpdate={lastPart ? `${lastPart.updatedBy?.name ?? "—"} · ${formatDateTime(lastPart.updatedAt)}` : null}
+          />
+          {oldBodyText && <p className="text-xs text-zinc-500">Eski serbest metin kaydı (şemaya aktarılmadı): {oldBodyText}</p>}
           <div>
             <h2 className="mb-3 font-display text-lg font-semibold">Araç bilgileri {locked && <span className="text-sm font-normal text-zinc-500">(bu durumda düzenleme yetkiniz yok)</span>}</h2>
-            <VehicleForm mode="edit" vehicleId={v.id} initial={initial} readOnly={locked} />
+            <VehicleForm mode="edit" vehicleId={v.id} initial={initial} readOnly={locked} published={v.status !== "DRAFT"} version={v.updatedAt.toISOString()} />
           </div>
         </div>
 
@@ -88,7 +118,12 @@ export default async function CrmVehicleDetail({ params, searchParams }: { param
             user={{ id: user.id, role: user.role }}
             optionedBy={v.optionedBy ? { id: v.optionedBy.id, name: v.optionedBy.name } : null}
             price={v.price}
+            canArchive={user.role === "ADMIN" ? ["REVIEW", "DRAFT", "AVAILABLE"].includes(v.status) : (v.status === "REVIEW" || v.status === "DRAFT") && v.createdById === user.id}
+            archivedInfo={archivedInfo}
+            staff={staff}
           />
+
+          {v.status !== "SOLD" && v.status !== "ARCHIVED" && <PublishChecklist items={checklist.items} vehicleId={v.id} compact={v.status !== "DRAFT" && v.status !== "REVIEW"} />}
 
           {v.sales.length > 0 && (
             <section className="card p-5" data-testid="sales-records">

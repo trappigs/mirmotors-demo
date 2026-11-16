@@ -2,6 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Gallery } from "@/components/site/Gallery";
+import { BodyDiagram, BodyLegend } from "@/components/BodyDiagram";
+import { groupByState, summarizeParts, toPartMap } from "@/lib/body-parts";
+import { DAMAGE_RECORD_LABELS, LIEN_LABELS, autoListingNo, warrantyText } from "@/lib/listing-rules";
+import { getCompanyInfo } from "@/lib/company";
 import { OptionedBadge } from "@/components/site/VehicleCard";
 import {
   IconBolt, IconCalendar, IconCar, IconCheck, IconDoc, IconFuel, IconGauge, IconGear, IconPalette, IconShield, IconWhatsApp,
@@ -18,9 +22,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return { title: v ? `${v.brand} ${v.model} ${v.year}` : "İlan yayında değil" };
 }
 
-/** "Yok" gibi temiz kayıtları görsel olarak olumlu, diğerlerini dikkat çeken bloklarda gösterir. */
-const isClean = (t: string | null) => !!t && /^(yok|hayır|orijinal|hasar kaydı yok)/i.test(t.trim());
-
 export default async function VehicleDetailPage({ params }: Props) {
   const { id } = await params;
   const v = await findPublicVehicle(id);
@@ -29,8 +30,13 @@ export default async function VehicleDetailPage({ params }: Props) {
   if (!v) notFound();
 
   const photos = v.photos.map((p) => mediaUrl(p.path)!);
+  const parts = toPartMap(v.parts);
+  const body = summarizeParts(parts);
+  const groups = groupByState(parts);
+  const company = await getCompanyInfo();
+  const NOT_ENTERED = "Bilgi girilmedi";
   const equipment = parseEquipment(v.equipment);
-  const listingNo = v.id.slice(-6).toUpperCase();
+  const listingNo = v.legalListingNo ?? autoListingNo(v.id);
   const wa = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER?.replace(/\D/g, "");
   const waText = encodeURIComponent(`Merhaba, ${v.year} ${v.brand} ${v.model} ${v.packageName ?? ""} ilanı hakkında bilgi almak istiyorum. (İlan: ${listingNo})`);
   const optioned = v.status === "OPTIONED";
@@ -46,7 +52,7 @@ export default async function VehicleDetailPage({ params }: Props) {
 
   const specs: [string, string | number | null][] = [
     ["Marka", v.brand],
-    ["Model", v.model],
+    ["Model / ticari ad", v.model],
     ["Paket", v.packageName],
     ["Model yılı", v.year],
     ["Kilometre", formatKm(v.km)],
@@ -57,12 +63,21 @@ export default async function VehicleDetailPage({ params }: Props) {
     ["Motor gücü", v.enginePower ? `${v.enginePower} hp` : null],
     ["Motor hacmi", v.engineCc ? `${v.engineCc} cc` : null],
     ["Çekiş", v.drivetrain],
+    ["Takas", v.tradeIn === null ? null : v.tradeIn ? "Takasa uygun" : "Takas yapılmıyor"],
   ];
 
-  const condition = [
-    { title: "Boyalı parçalar", text: v.paintedParts },
-    { title: "Değişen parçalar", text: v.changedParts },
-    { title: "Hasar açıklaması", text: v.damageNote },
+  // Zorunlu ilan bilgileri (Yönetmelik m.20/2, 21/1-a): bilinmeyen alan "Bilgi girilmedi" olarak gösterilir, değer uydurulmaz.
+  const legal: [string, string][] = [
+    ["İşletme unvanı", company.title ?? NOT_ENTERED],
+    ["Yetki belgesi no", v.legalAuthorizationNo ?? company.authorizationNo ?? NOT_ENTERED],
+    ["Plaka", v.legalPlate ?? NOT_ENTERED],
+    ["Şasi no (son 6 hane)", v.legalVin ? `••••••••••• ${v.legalVin}` : NOT_ENTERED],
+    ["Araç cinsi", v.vehicleClass ?? NOT_ENTERED],
+    ["Araç tipi", v.vehicleType ?? NOT_ENTERED],
+    ["Rehin / haciz", (v.legalLien && LIEN_LABELS[v.legalLien]) || NOT_ENTERED],
+    ["Kalan üretici / ithalatçı garantisi", warrantyText(v) ?? NOT_ENTERED],
+    ["Tescil", v.legalRegisteredToCompany === null ? NOT_ENTERED : v.legalRegisteredToCompany ? "İşletme adına tescilli" : "İşletme adına tescilli değil"],
+    ["İlan no", listingNo],
   ];
 
   const statusBadge = optioned ? (
@@ -115,7 +130,8 @@ export default async function VehicleDetailPage({ params }: Props) {
             ))}
           </section>
 
-          {v.videoPath && (
+          {/* Yalnızca personelin onayladığı tanıtım videosu gösterilir; AI analiz videosu otomatik yayımlanmaz. */}
+          {v.videoPath && v.videoPublic && (
             <section className="mt-12">
               <h2 className="section-mark font-display text-2xl font-extrabold tracking-tight">Tanıtım videosu</h2>
               <video src={mediaUrl(v.videoPath)!} controls preload="metadata" playsInline className="mt-5 aspect-video w-full rounded-2xl bg-black shadow-xl" data-testid="vehicle-video" />
@@ -147,27 +163,34 @@ export default async function VehicleDetailPage({ params }: Props) {
             </section>
           )}
 
-          <section className="mt-12">
-            <div className="flex flex-wrap items-end justify-between gap-3">
-              <h2 className="section-mark font-display text-2xl font-extrabold tracking-tight">Boya, değişen ve hasar</h2>
-              {v.tramerAmount !== null && (
-                <span className="rounded-md bg-ink px-3 py-1.5 text-xs font-bold text-white">
-                  Tramer: {v.tramerAmount === 0 ? "Kayıt yok" : formatPrice(v.tramerAmount)}
-                </span>
-              )}
-            </div>
-            <div className="mt-5 grid gap-4 sm:grid-cols-3">
-              {condition.map((c) => {
-                const clean = isClean(c.text);
-                return (
-                  <div key={c.title} className={`card border-l-4 p-5 ${clean ? "border-l-emerald-500" : c.text ? "border-l-brand" : "border-l-zinc-300"}`}>
-                    <p className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.08em] text-muted">
-                      <IconPalette className="h-4 w-4" />{c.title}
-                    </p>
-                    <p className="mt-2 text-sm font-semibold text-ink">{c.text || "Belirtilmedi"}</p>
-                  </div>
-                );
-              })}
+          <section className="mt-12" data-testid="body-section">
+            <h2 className="section-mark flex items-center gap-2 font-display text-2xl font-extrabold tracking-tight"><IconPalette className="h-6 w-6 text-brand" />Boya, değişen ve hasar</h2>
+            <div className="card mt-5 p-5 sm:p-6">
+              <BodyLegend />
+              <div className="mt-5 grid gap-6 md:grid-cols-[minmax(0,300px)_1fr] md:items-center">
+                <BodyDiagram parts={parts} />
+                <dl className="space-y-2.5 text-[15px]" data-testid="body-summary">
+                  {body.allOriginal ? (
+                    <p className="font-bold text-emerald-700">Tüm parçalar orijinal</p>
+                  ) : (
+                    <>
+                      {groups.CHANGED.length > 0 && <div><dt className="inline font-bold">Değişen: </dt><dd className="inline">{groups.CHANGED.join(", ")}</dd></div>}
+                      {groups.PAINTED.length > 0 && <div><dt className="inline font-bold">Boyalı: </dt><dd className="inline">{groups.PAINTED.join(", ")}</dd></div>}
+                      {groups.LOCAL_PAINT.length > 0 && <div><dt className="inline font-bold">Lokal boyalı: </dt><dd className="inline">{groups.LOCAL_PAINT.join(", ")}</dd></div>}
+                      {body.unknownCount > 0 && (
+                        <div className="text-muted">
+                          <dt className="inline font-bold">Doğrulanmadı: </dt>
+                          <dd className="inline">{body.unknownCount === 13 ? "Kaporta bilgisi henüz girilmedi" : groups.UNKNOWN.join(", ")}</dd>
+                        </div>
+                      )}
+                    </>
+                  )}
+                  <div className="border-t border-line pt-2.5"><dt className="inline font-bold">Tramer: </dt><dd className="inline" data-testid="tramer">{v.tramerAmount === null ? NOT_ENTERED : formatPrice(v.tramerAmount)}</dd></div>
+                  <div><dt className="inline font-bold">Hasar kaydı: </dt><dd className="inline" data-testid="damage-record">{(v.damageRecord && DAMAGE_RECORD_LABELS[v.damageRecord]) || NOT_ENTERED}</dd></div>
+                  {v.damageNote && <div><dt className="inline font-bold">{v.damageRecord === "MINOR" || v.damageRecord === "HEAVY" ? "Niteliği" : "Açıklama"}: </dt><dd className="inline">{v.damageNote}</dd></div>}
+                </dl>
+              </div>
+              <p className="mt-4 text-xs text-muted">Kaynak: Mir Motors araç kontrol bilgileri (galeri personelinin beyanı; resmî ekspertiz raporu değildir). Şema teknik gösterimdir, araç fotoğrafı değildir.</p>
             </div>
           </section>
 
@@ -178,12 +201,24 @@ export default async function VehicleDetailPage({ params }: Props) {
                 <IconShield className="h-5 w-5" />
               </span>
               <div>
-                <p className="leading-relaxed text-ink">{v.expertiseSummary || "Ekspertiz özeti için danışmanınızla iletişime geçin."}</p>
+                <p className="leading-relaxed text-ink">{v.expertiseSummary || "Ekspertiz özeti girilmedi; bilgi için danışmanınızla iletişime geçin."}</p>
                 <p className="mt-3 flex items-center gap-1.5 text-xs text-muted">
                   <IconDoc className="h-4 w-4" /> Ekspertiz raporunun tamamı showroomda incelenebilir.
                 </p>
               </div>
             </div>
+          </section>
+
+          <section className="mt-12" data-testid="legal-info">
+            <h2 className="section-mark font-display text-2xl font-extrabold tracking-tight">İlan ve yasal bilgiler</h2>
+            <dl className="card mt-5 grid overflow-hidden sm:grid-cols-2">
+              {legal.map(([k, val]) => (
+                <div key={k} className="flex items-center justify-between gap-4 border-b border-line px-5 py-3.5 text-sm sm:odd:border-r">
+                  <dt className="text-muted">{k}</dt>
+                  <dd className={`text-right font-semibold ${val === NOT_ENTERED ? "font-normal text-muted" : ""}`}>{val}</dd>
+                </div>
+              ))}
+            </dl>
           </section>
 
           {v.description && (

@@ -2,6 +2,9 @@
 // ile yapılır: aynı anda iki istek gelirse yalnızca biri satırı günceller, diğeri count=0 alır ve reddedilir.
 import type { PrismaClient, Prisma } from "@prisma/client";
 import { MIN_PHOTOS_TO_PUBLISH, type VehicleStatus } from "./constants";
+import { autoListingNo, blockerMessage, envCompanyInfo, publishBlockers, publishChecklist } from "./listing-rules";
+import { toPartMap } from "./body-parts";
+import { parseReview, reviewBlockers } from "./doc-review";
 
 export type Actor = { id: string; role: "ADMIN" | "SALES" };
 
@@ -10,19 +13,24 @@ export type TransitionResult =
   | { ok: false; status: number; error: string };
 
 export type TransitionAction =
+  | "completeReview"
   | "publish"
   | "unpublish"
   | "option"
   | "releaseOption"
   | "startSale"
   | "cancelSale"
-  | "completeSale";
+  | "completeSale"
+  | "archive"
+  | "restore";
 
 export type TransitionInput = {
   note?: string;
   agreedPrice?: number;
   notaryCompleted?: boolean;
   notaryDate?: Date;
+  /** Satışı yapan personel (isteğe bağlı; yalnızca satış notuna yazılır, yetki kuralları işlemi yapan kişiye göre işler). */
+  sellerId?: string;
 };
 
 type Tx = Prisma.TransactionClient;
@@ -44,6 +52,7 @@ async function explainConflict(tx: Tx, vehicleId: string, actor: Actor): Promise
   }
   if (v.status === "SOLD") return fail(409, "Bu araç satılmış. Satılmış araç üzerinde işlem yapılamaz.");
   if (v.status === "SALE_PENDING") return fail(409, "Bu aracın satış süreci zaten başlatılmış.");
+  if (v.status === "ARCHIVED") return fail(409, "Bu araç arşivde. Önce yönetici arşivden geri yüklemelidir.");
   return fail(409, `Araç bu işlem için uygun durumda değil (mevcut durum: ${v.status}).`);
 }
 
@@ -57,8 +66,20 @@ export async function transitionVehicle(
   const isAdmin = actor.role === "ADMIN";
   const now = new Date();
 
-  return db.$transaction(async (tx) => {
+  return db.$transaction(async (tx): Promise<TransitionResult> => {
     switch (action) {
+      case "completeReview": {
+        // Belgeden oluşturulan aracın kontrolü: çözülmemiş eşleşme / çelişki / onay varsa Taslak'a geçmez.
+        const v = await tx.vehicle.findUnique({ where: { id: vehicleId }, select: { docReview: true, status: true } });
+        if (!v) return fail(404, "Araç bulunamadı");
+        const blockers = reviewBlockers(parseReview(v.docReview));
+        if (blockers.length) return fail(422, `Kontrol tamamlanamaz: ${blockers.join(" · ")}`);
+        const r = await tx.vehicle.updateMany({ where: { id: vehicleId, status: "REVIEW" }, data: { status: "DRAFT" } });
+        if (r.count !== 1) return explainConflict(tx, vehicleId, actor);
+        await log(tx, vehicleId, "REVIEW", "DRAFT", "completeReview", actor, input.note);
+        return { ok: true, status: "DRAFT" };
+      }
+
       case "publish": {
         const photoCount = await tx.vehiclePhoto.count({ where: { vehicleId } });
         if (photoCount < MIN_PHOTOS_TO_PUBLISH) {
@@ -66,14 +87,31 @@ export async function transitionVehicle(
         }
         const v = await tx.vehicle.findUnique({ where: { id: vehicleId } });
         if (!v) return fail(404, "Araç bulunamadı");
-        if (!v.brand || !v.model || !v.price || v.price <= 0 || !v.year) {
-          return fail(422, "Marka, model, yıl ve fiyat doldurulmadan yayımlanamaz.");
-        }
+        // Belgeden oluşturulan araç (Kontrol Bekliyor) son kontrol ekranından tek onayla yayımlanır:
+        // belge kontrolündeki her konu (eşleşme, çelişki, AI bilgilerinin personel onayı) çözülmüş olmalıdır.
+        if (v.status !== "DRAFT" && v.status !== "REVIEW") return explainConflict(tx, vehicleId, actor);
+        const pending = reviewBlockers(parseReview(v.docReview));
+        if (pending.length) return fail(422, `Belge kontrolünde çözülmemiş konular var: ${pending.join(" · ")}`);
+        // Kontrol listesi (mevzuat + galeri kuralları): eksik her madde yayını engeller; arayüzdeki liste yalnızca yol gösterir.
+        const [parts, settings] = await Promise.all([
+          tx.vehiclePart.findMany({ where: { vehicleId }, select: { part: true, state: true, reportState: true } }),
+          tx.companySettings.findUnique({ where: { id: "default" } }),
+        ]);
+        const env = envCompanyInfo();
+        const company = { title: settings?.title || env.title, authorizationNo: settings?.authorizationNo || env.authorizationNo, mersis: null, address: null };
+        const items = publishChecklist({
+          v, company, photoCount, staffParts: toPartMap(parts), reportParts: toPartMap(parts, "reportState"), reviewBlockers: [],
+        });
+        const blockers = publishBlockers(items);
+        if (blockers.length) return fail(422, blockerMessage(blockers));
+        // Eski kayıtlarda ilan numarası yoksa yayında verilir.
+        const listingNo = v.legalListingNo ?? autoListingNo(vehicleId);
         const r = await tx.vehicle.updateMany({
-          where: { id: vehicleId, status: "DRAFT" },
-          data: { status: "AVAILABLE", publishedAt: now },
+          where: { id: vehicleId, status: v.status },
+          data: { status: "AVAILABLE", publishedAt: now, legalListingNo: listingNo },
         });
         if (r.count !== 1) return explainConflict(tx, vehicleId, actor);
+        if (v.status === "REVIEW") await log(tx, vehicleId, "REVIEW", "DRAFT", "completeReview", actor, "Son kontrolde onaylandı");
         await log(tx, vehicleId, "DRAFT", "AVAILABLE", "publish", actor, input.note);
         return { ok: true, status: "AVAILABLE" };
       }
@@ -112,16 +150,38 @@ export async function transitionVehicle(
       }
 
       case "startSale": {
-        // Opsiyon sahibi veya yönetici satış başlatabilir.
-        const r = await tx.vehicle.updateMany({
-          where: { id: vehicleId, status: "OPTIONED", ...(isAdmin ? {} : { optionedById: actor.id }) },
-          data: { status: "SALE_PENDING" },
-        });
+        // Opsiyonlu araçta: opsiyon sahibi veya yönetici. Satıştaki (AVAILABLE) araçta: her personel; araç işlemi yapanın
+        // adına opsiyonlanmış sayılır (optionedById) ki sonraki sahiplik kuralları aynı şekilde işlesin.
+        // Her iki durumda da araç SALE_PENDING olur (sitede gizlenir); SOLD için noter onayı (completeSale) gerekir.
+        const cur = await tx.vehicle.findUnique({ where: { id: vehicleId }, select: { status: true } });
+        if (!cur) return fail(404, "Araç bulunamadı");
+        // Satan personel güncellemeden önce doğrulanır (geçersizse araç hiç değişmez).
+        let note = input.note || null;
+        if (input.sellerId && input.sellerId !== actor.id) {
+          const seller = await tx.user.findUnique({ where: { id: input.sellerId }, select: { name: true } });
+          if (!seller) return fail(422, "Seçilen satış personeli bulunamadı.");
+          note = [`Satan personel: ${seller.name}`, note].filter(Boolean).join(" · ");
+        }
+        let from: VehicleStatus;
+        let r: Prisma.BatchPayload;
+        if (cur.status === "AVAILABLE") {
+          from = "AVAILABLE";
+          r = await tx.vehicle.updateMany({
+            where: { id: vehicleId, status: "AVAILABLE" },
+            data: { status: "SALE_PENDING", optionedById: actor.id, optionedAt: now },
+          });
+        } else {
+          from = "OPTIONED";
+          r = await tx.vehicle.updateMany({
+            where: { id: vehicleId, status: "OPTIONED", ...(isAdmin ? {} : { optionedById: actor.id }) },
+            data: { status: "SALE_PENDING" },
+          });
+        }
         if (r.count !== 1) return explainConflict(tx, vehicleId, actor);
         await tx.sale.create({
-          data: { vehicleId, startedById: actor.id, agreedPrice: input.agreedPrice ?? null, note: input.note || null },
+          data: { vehicleId, startedById: actor.id, agreedPrice: input.agreedPrice ?? null, note },
         });
-        await log(tx, vehicleId, "OPTIONED", "SALE_PENDING", "startSale", actor, input.note);
+        await log(tx, vehicleId, from, "SALE_PENDING", "startSale", actor, note ?? undefined);
         return { ok: true, status: "SALE_PENDING" };
       }
 
@@ -163,13 +223,55 @@ export async function transitionVehicle(
         await log(tx, vehicleId, "SALE_PENDING", "SOLD", "completeSale", actor, input.note || "Noter devri tamamlandı");
         return { ok: true, status: "SOLD" };
       }
+
+      case "archive": {
+        // Kalıcı silme yerine arşiv: kayıt, belgeler ve geçmiş korunur; müşteri sitesinde görünmez.
+        // Taslak / Kontrol Bekliyor: oluşturan personel veya yönetici. Satıştaki ilan: yalnızca yönetici (canlı ilanı kaldırır).
+        // Opsiyonlu, satış sürecindeki veya satılmış araç arşivlenemez.
+        const v = await tx.vehicle.findUnique({ where: { id: vehicleId }, select: { status: true, createdById: true } });
+        if (!v) return fail(404, "Araç bulunamadı");
+        if (v.status === "AVAILABLE") {
+          if (!isAdmin) return fail(403, "Satıştaki ilanı yalnızca yönetici arşivleyebilir.");
+        } else if (v.status === "DRAFT" || v.status === "REVIEW") {
+          if (!isAdmin && v.createdById !== actor.id) return fail(403, "Bu kaydı yalnızca oluşturan personel veya yönetici arşivleyebilir.");
+        } else {
+          return v.status === "ARCHIVED" ? fail(409, "Bu araç zaten arşivde.") : explainConflict(tx, vehicleId, actor);
+        }
+        const from = v.status as VehicleStatus;
+        const r = await tx.vehicle.updateMany({
+          where: { id: vehicleId, status: from, ...(isAdmin ? {} : { createdById: actor.id }) },
+          data: { status: "ARCHIVED", archivedAt: now, archivedById: actor.id, archivedFromStatus: from },
+        });
+        if (r.count !== 1) return explainConflict(tx, vehicleId, actor);
+        await log(tx, vehicleId, from, "ARCHIVED", "archive", actor, input.note);
+        return { ok: true, status: "ARCHIVED" };
+      }
+
+      case "restore": {
+        // Arşivden geri yükleme yalnızca yöneticidedir ve araç her zaman Taslak'a döner:
+        // yeniden yayın normal yayın kontrollerinden geçer.
+        if (!isAdmin) return fail(403, "Arşivden geri yükleme yalnızca yönetici yetkisindedir.");
+        const r = await tx.vehicle.updateMany({
+          where: { id: vehicleId, status: "ARCHIVED" },
+          data: { status: "DRAFT", archivedAt: null, archivedById: null, archivedFromStatus: null },
+        });
+        if (r.count !== 1) return explainConflict(tx, vehicleId, actor);
+        await log(tx, vehicleId, "ARCHIVED", "DRAFT", "restore", actor, input.note);
+        return { ok: true, status: "DRAFT" };
+      }
     }
   });
 }
 
-export const ACTION_LABELS: Record<TransitionAction | "create" | "edit", string> = {
+export const ACTION_LABELS: Record<TransitionAction | "create" | "edit" | "docReview" | "bodyParts" | "videoPublic" | "videoPrivate" | "photoOrder", string> = {
   create: "Oluşturuldu",
   edit: "Düzenlendi",
+  completeReview: "Belge kontrolü tamamlandı",
+  docReview: "Belge incelemesi",
+  bodyParts: "Kaporta şeması güncellendi",
+  videoPublic: "Video müşteriye açıldı",
+  videoPrivate: "Video müşteriden gizlendi",
+  photoOrder: "Fotoğraf sırası değişti",
   publish: "Yayımlandı",
   unpublish: "Yayından alındı",
   option: "Opsiyonlandı",
@@ -177,4 +279,6 @@ export const ACTION_LABELS: Record<TransitionAction | "create" | "edit", string>
   startSale: "Satış başlatıldı",
   cancelSale: "Satış iptal edildi",
   completeSale: "Satış tamamlandı (noter)",
+  archive: "Arşivlendi",
+  restore: "Arşivden geri yüklendi",
 };

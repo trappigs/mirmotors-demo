@@ -1,26 +1,23 @@
 import Link from "next/link";
-import { aiStatus } from "@/lib/ai/vehicle-draft";
 
+// İki giriş yolu, aynı araç kaydı ve aynı son kontrol: AI ile (ruhsat fotoğrafı, isteğe bağlı kontrol formu) veya manuel.
+// Videodan AI taslağı canlıda simülasyon olduğu için bu ekranda sunulmuyor; /crm/vehicles/new/ai rotası duruyor.
 export default function NewVehicleChooser() {
-  const ai = aiStatus();
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
+    <div className="mx-auto max-w-4xl space-y-6">
       <h1 className="font-display text-2xl font-bold">Yeni araç ekle</h1>
       <div className="grid gap-4 md:grid-cols-2">
-        <Link href="/crm/vehicles/new/manual" className="card block p-6 transition hover:border-zinc-900" data-testid="choose-manual">
-          <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">A · Önerilen</p>
-          <h2 className="mt-2 font-display text-xl font-semibold">Manuel giriş</h2>
-          <p className="mt-2 text-sm text-zinc-600">Araç bilgilerini formdan girin, ardından fotoğraf, video ve ekspertiz belgesini yükleyip yayımlayın.</p>
-        </Link>
-        <Link href="/crm/vehicles/new/ai" className="card block p-6 transition hover:border-zinc-900" data-testid="choose-ai">
-          <p className="text-xs font-semibold uppercase tracking-wide text-sky-700">
-            B · {ai.live ? "Canlı AI etkin" : "Simülasyon modu"}
-          </p>
-          <h2 className="mt-2 font-display text-xl font-semibold">AI ile video üzerinden giriş</h2>
+        <Link href="/crm/vehicles/new/belge" className="card block border-accent/50 p-6 transition hover:border-zinc-900" data-testid="choose-doc">
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-accent">Önerilen</p>
+          <h2 className="mt-1 font-display text-xl font-semibold">AI ile araç ekle</h2>
           <p className="mt-2 text-sm text-zinc-600">
-            Araç tanıtım videosunu yükleyin; konuşma dökümünden yapılandırılmış bir taslak oluşturulur. Tüm alanları siz doğrularsınız.
+            Ruhsatın fotoğrafını çekin (isterseniz doldurduğunuz Mir Motors kontrol formunu da ekleyin). Bilgiler otomatik doldurulur; kalanını siz tamamlarsınız.
           </p>
-          {!ai.live && <p className="mt-3 text-xs text-amber-700">API anahtarı tanımlı değil: örnek transkript ve örnek AI çıktısı kullanılır.</p>}
+          <p className="mt-3 text-xs text-zinc-500">Kişisel bilgiler göndermeden önce kapatılır. Fotoğraf, PDF ve iPhone (HEIC) desteklenir.</p>
+        </Link>
+        <Link href="/crm/vehicles/new/manual" className="card block p-6 transition hover:border-zinc-900" data-testid="choose-manual">
+          <h2 className="mt-5 font-display text-xl font-semibold">Manuel araç ekle</h2>
+          <p className="mt-2 text-sm text-zinc-600">Bilgileri kendiniz girin; ruhsat fotoğrafı gerekmez. Fotoğrafları ekleyip son kontrolden sonra yayımlayın.</p>
         </Link>
       </div>
     </div>

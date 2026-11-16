@@ -22,8 +22,9 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-ink px-4">
-      <form onSubmit={submit} className="w-full max-w-sm rounded-2xl bg-white p-8 shadow-2xl">
+    // min-h-dvh: mobil tarayıcı çubukları açılıp kapanırken taşmaz; safe-area: ana ekran uygulamasında çentik payı.
+    <div className="crm-app flex min-h-dvh items-center justify-center bg-ink px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))]">
+      <form onSubmit={submit} className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl sm:p-8">
         <p className="font-display text-xl font-bold tracking-[0.2em]">MIR <span className="font-light text-accent-dark">MOTORS</span></p>
         <h1 className="mt-6 text-lg font-semibold">Personel girişi</h1>
         <p className="text-sm text-zinc-500">Galeri CRM · Demo</p>

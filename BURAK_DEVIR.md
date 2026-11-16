@@ -153,7 +153,9 @@ yalnızca biri başarılı olur. Ayrıntılı tablo: `DECISIONS.md` → "Opsiyon
 | `DATABASE_URL`, `DATABASE_URL_UNPOOLED` | Yerel + Vercel | Neon entegrasyonu Vercel'e otomatik ekler |
 | `SESSION_SECRET` | Yerel + Vercel | Oturum imzalama anahtarı |
 | `DEMO_ACCESS_USER`, `DEMO_ACCESS_PASSWORD`, `DEMO_ACCESS_SCOPE` | Vercel | CRM erişim kapısı |
-| `DEMO_STAFF_PASSWORD` | Yalnızca bulut seed'ini çalıştırırken | Bulut personel şifresi |
+| `DEMO_PASSWORD_YONETICI`, `DEMO_PASSWORD_AHMET`, `DEMO_PASSWORD_MEHMET` | Yalnızca bulut seed'ini çalıştırırken | Her personel için ayrı bulut şifresi (Demo V1; eski tek `DEMO_STAFF_PASSWORD` kaldırıldı) |
+| `COMPANY_TITLE`, `COMPANY_AUTHORIZATION_NO`, `COMPANY_MERSIS`, `COMPANY_ADDRESS` | İsteğe bağlı | Zorunlu ilan/işletme bilgileri; boşsa sitede "yayın öncesi eklenecek" |
+| ~~`REQUIRE_LEGAL_FIELDS`~~ | Kaldırıldı (04.11.2026) | Zorunlu ilan bilgileri eksik ilan her zaman yayımlanamaz; ayar gerekmez |
 | `BLOB_READ_WRITE_TOKEN` | Vercel | Blob mağazası bağlanınca otomatik |
 | `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `FFMPEG_PATH` | İsteğe bağlı | Canlı AI (doğrulanmadı) |
 | `NEXT_PUBLIC_WHATSAPP_NUMBER`, `NEXT_PUBLIC_INSTAGRAM_URL` | İsteğe bağlı | Site bağlantıları (demo numarası gerçek değil) |

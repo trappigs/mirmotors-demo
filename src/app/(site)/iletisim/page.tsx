@@ -15,7 +15,7 @@ export default function ContactPage() {
           <h2 className="mt-5 font-display text-xl font-semibold">Showroom</h2>
           <p className="mt-2 text-zinc-600">Adres bilgisi gerçek yayından önce eklenecektir. (Demo)</p>
           <p className="mt-6 flex items-center gap-2 text-sm text-zinc-500">
-            <IconClock className="h-4 w-4" /> Hafta içi 09:00 – 19:00 · Cumartesi 10:00 – 18:00
+            <IconClock className="h-4 w-4" /> Çalışma saatleri yayın öncesi eklenecek (demo)
           </p>
         </div>
         <div className="card-dark relative overflow-hidden p-8">

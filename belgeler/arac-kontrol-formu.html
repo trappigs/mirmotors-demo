@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<title>Mir Motors – Araç Kontrol ve İlan Bilgi Formu</title>
+<style>
+  @page { size: A4; margin: 0; }
+  * { box-sizing: border-box; }
+  :root { --ink: #111318; --gold: #b38a2e; --gold-soft: #f6efdf; --line: #c9ccd3; --muted: #5b616e; }
+  html, body { margin: 0; background: #e9eaee; font-family: "Segoe UI", Arial, sans-serif; color: var(--ink); -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .page { width: 210mm; height: 297mm; margin: 8mm auto; background: #fff; padding: 9mm 10mm 8mm; position: relative; overflow: hidden; display: flex; flex-direction: column; }
+  @media print { body { background: #fff; } .page { margin: 0; page-break-after: always; } .page:last-child { page-break-after: auto; } }
+
+  header { display: flex; align-items: stretch; gap: 4mm; }
+  .logo { width: 26mm; height: 26mm; background: #000; border-radius: 3mm; display: grid; place-items: center; overflow: hidden; flex-shrink: 0; }
+  .logo img { width: 100%; height: 100%; object-fit: cover; }
+  .title { flex: 1; display: flex; flex-direction: column; justify-content: center; border-left: 1.2mm solid var(--gold); padding-left: 4mm; }
+  .title h1 { margin: 0; font-size: 15.5pt; letter-spacing: .3px; }
+  .title p { margin: 1mm 0 0; font-size: 8.5pt; color: var(--muted); }
+  .meta { width: 58mm; display: grid; gap: 1.6mm; align-content: center; }
+  .meta div { display: flex; align-items: center; font-size: 8.5pt; font-weight: 600; }
+  .meta span { width: 19mm; }
+  .meta i { flex: 1; height: 6.5mm; border: .3mm solid var(--line); border-radius: 1mm; }
+
+  .legend { margin-top: 2mm; font-size: 7.4pt; color: var(--muted); display: flex; gap: 5mm; flex-wrap: wrap; }
+  .req { color: #c0261b; font-weight: 800; }
+
+  h2 { margin: 3mm 0 1.6mm; font-size: 10pt; text-transform: uppercase; letter-spacing: .8px; background: var(--ink); color: #fff; padding: 1.6mm 3mm; border-radius: 1mm; display: flex; justify-content: space-between; align-items: center; }
+  h2 small { font-size: 7.5pt; font-weight: 500; text-transform: none; letter-spacing: 0; color: #e7d3a2; }
+
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.8mm 3mm; }
+  .f { display: flex; align-items: center; font-size: 8.5pt; font-weight: 600; min-height: 7mm; }
+  .f label { width: 27mm; flex-shrink: 0; }
+  .f i { flex: 1; height: 7mm; border: .3mm solid var(--line); border-radius: 1mm; }
+  .span2 { grid-column: span 2; }
+  .span3 { grid-column: span 3; }
+  .hint { font-size: 7pt; font-weight: 400; color: var(--muted); display: block; }
+
+  .opts { display: flex; flex-wrap: wrap; gap: 1mm 3.2mm; font-size: 8.3pt; font-weight: 500; align-items: center; }
+  .opts b { font-weight: 600; width: 27mm; }
+  .cb { display: inline-flex; align-items: center; gap: 1.2mm; white-space: nowrap; }
+  .cb::before { content: ""; width: 3.4mm; height: 3.4mm; border: .35mm solid #555; border-radius: .6mm; display: inline-block; }
+  .row { padding: 1.2mm 0; border-bottom: .2mm dashed #dfe1e6; }
+
+  .body { display: grid; grid-template-columns: 44mm 1fr; gap: 4mm; align-items: start; }
+  table { width: 100%; border-collapse: collapse; font-size: 8.3pt; }
+  th, td { border: .25mm solid var(--line); padding: .55mm 1.4mm; text-align: center; }
+  th { background: var(--gold-soft); font-size: 7.6pt; line-height: 1.15; }
+  td:first-child, th:first-child { text-align: left; }
+  td .n { display: inline-grid; place-items: center; width: 4.2mm; height: 4.2mm; border-radius: 50%; background: var(--ink); color: #fff; font-size: 6.5pt; font-weight: 700; margin-right: 1.4mm; }
+  td.box::after { content: ""; width: 3.4mm; height: 3.4mm; border: .35mm solid #555; border-radius: .6mm; display: inline-block; vertical-align: middle; }
+  .diagram { border: .25mm solid var(--line); border-radius: 2mm; padding: 2mm; }
+  .diagram p { margin: 1.5mm 0 0; font-size: 6.8pt; color: var(--muted); text-align: center; }
+
+  .note { font-size: 7.4pt; color: var(--muted); margin-top: 1.5mm; line-height: 1.35; }
+  .eq { display: grid; grid-template-columns: repeat(2, 1fr); gap: 2mm 5mm; }
+  .eq section { border: .25mm solid var(--line); border-radius: 1.5mm; padding: 2mm 2.5mm; }
+  .eq h3 { margin: 0 0 1.5mm; font-size: 8.5pt; color: var(--gold); text-transform: uppercase; letter-spacing: .5px; }
+  .eq .list { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2mm 2mm; font-size: 8.2pt; }
+  .lines div { border-bottom: .25mm solid var(--line); height: 6.6mm; }
+  .sign { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3mm; margin-top: 3mm; }
+  .sign div { border: .25mm solid var(--line); border-radius: 1.5mm; height: 22mm; padding: 1.5mm 2mm; font-size: 8pt; font-weight: 700; display: flex; flex-direction: column; justify-content: space-between; }
+  .sign small { font-weight: 400; color: var(--muted); font-size: 7pt; }
+  footer { margin-top: auto; padding-top: 2mm; border-top: .3mm solid var(--gold); font-size: 7pt; color: var(--muted); display: flex; justify-content: space-between; }
+</style>
+</head>
+<body>
+
+<!-- ======================= SAYFA 1 ======================= -->
+<div class="page">
+  <header>
+    <div class="logo"><img src="../public/brand/mir-motors-logo-orijinal.png" alt="Mir Motors"></div>
+    <div class="title">
+      <h1>Araç Kontrol ve İlan Bilgi Formu</h1>
+      <p>Mir Motors iç kontrol formudur; resmî ekspertiz raporu değildir.</p>
+    </div>
+    <div class="meta">
+      <div><span>Tarih</span><i></i></div>
+    </div>
+  </header>
+  <div class="legend">
+    <span><span class="req">*</span> İlan yayını için zorunlu (eksikse ilan yayımlanamaz)</span>
+    <span>Yıldızsız alanlar isteğe bağlıdır.</span>
+    <span>Emin olmadığınızı tahmin etmeyin: o satırı boş bırakın.</span>
+  </div>
+
+  <h2>1 · Temel bilgiler <small>Ruhsat ve araç üzerinden</small></h2>
+  <div class="grid">
+    <div class="f"><label>Plaka <span class="req">*</span></label><i></i></div>
+    <div class="f"><label>Satış fiyatı (TL) <span class="req">*</span></label><i></i></div>
+    <div class="f"><label>Marka <span class="req">*</span></label><i></i></div>
+    <div class="f"><label>Model / ticari ad <span class="req">*</span></label><i></i></div>
+    <div class="f"><label>Seri / paket</label><i></i></div>
+    <div class="f"><label>Araç cinsi <span class="req">*</span><span class="hint">Ruhsat D.5</span></label><i></i></div>
+    <div class="f"><label>Araç tipi <span class="req">*</span><span class="hint">Ruhsat D.2</span></label><i></i></div>
+    <div class="f"><label>Model yılı <span class="req">*</span></label><i></i></div>
+    <div class="f"><label>Kilometre <span class="req">*</span></label><i></i></div>
+    <div class="f"><label>Renk</label><i></i></div>
+    <div class="f"><label>Şasi no son 6 <span class="req">*</span></label><i></i></div>
+    <div class="f"><label>Motor hacmi (cc)</label><i></i></div>
+    <div class="f"><label>Motor gücü (hp)</label><i></i></div>
+    <div class="f"><label>Stok kodu<span class="hint">Galerinin iç kodu</span></label><i></i></div>
+  </div>
+  <div style="margin-top:1.5mm">
+    <div class="opts row"><b>Yakıt <span class="req">*</span></b><span class="cb">Benzin</span><span class="cb">Dizel</span><span class="cb">Hibrit</span><span class="cb">Elektrik</span><span class="cb">LPG</span></div>
+    <div class="opts row"><b>Vites <span class="req">*</span></b><span class="cb">Otomatik</span><span class="cb">Yarı otomatik</span><span class="cb">Manuel</span></div>
+    <div class="opts row"><b>Kasa tipi <span class="req">*</span></b><span class="cb">Sedan</span><span class="cb">Hatchback</span><span class="cb">SUV</span><span class="cb">Coupe</span><span class="cb">Cabrio</span><span class="cb">Station Wagon</span><span class="cb">MPV</span><span class="cb">Pick-up</span><span class="cb">Panelvan</span><span class="cb">Kamyonet</span><span class="cb">Minibüs</span></div>
+    <div class="opts row" style="border:0"><b>Çekiş</b><span class="cb">Önden çekiş</span><span class="cb">Arkadan itiş</span><span class="cb">4x4</span></div>
+  </div>
+
+  <h2><span>2 · Kaporta / boya durumu <span class="req" style="color:#f3c86b">*</span></span> <small>13 parçanın her biri için tek kutu işaretleyin</small></h2>
+  <div class="body">
+    <div class="diagram">
+      <svg viewBox="0 0 120 230" width="100%" aria-label="Üstten araç şeması">
+        <g fill="#fff" stroke="#333" stroke-width="1.2">
+          <rect x="22" y="6" width="76" height="16" rx="7"/>               <!-- ön tampon -->
+          <rect x="30" y="24" width="60" height="38" rx="6"/>              <!-- kaput -->
+          <rect x="8" y="26" width="20" height="40" rx="5"/>               <!-- sol ön çamurluk -->
+          <rect x="92" y="26" width="20" height="40" rx="5"/>              <!-- sağ ön çamurluk -->
+          <rect x="8" y="70" width="20" height="44" rx="3"/>               <!-- sol ön kapı -->
+          <rect x="92" y="70" width="20" height="44" rx="3"/>              <!-- sağ ön kapı -->
+          <rect x="34" y="72" width="52" height="78" rx="8"/>              <!-- tavan -->
+          <rect x="8" y="118" width="20" height="44" rx="3"/>              <!-- sol arka kapı -->
+          <rect x="92" y="118" width="20" height="44" rx="3"/>             <!-- sağ arka kapı -->
+          <rect x="8" y="166" width="20" height="38" rx="5"/>              <!-- sol arka çamurluk -->
+          <rect x="92" y="166" width="20" height="38" rx="5"/>             <!-- sağ arka çamurluk -->
+          <rect x="30" y="166" width="60" height="38" rx="6"/>             <!-- bagaj -->
+          <rect x="22" y="208" width="76" height="16" rx="7"/>             <!-- arka tampon -->
+        </g>
+        <g font-size="9" font-weight="700" text-anchor="middle" fill="#111">
+          <text x="60" y="17">4</text><text x="60" y="46">1</text>
+          <text x="18" y="49">6</text><text x="102" y="49">7</text>
+          <text x="18" y="95">8</text><text x="102" y="95">9</text>
+          <text x="60" y="114">2</text>
+          <text x="18" y="143">10</text><text x="102" y="143">11</text>
+          <text x="18" y="188">12</text><text x="102" y="188">13</text>
+          <text x="60" y="188">3</text><text x="60" y="219">5</text>
+        </g>
+        <text x="60" y="3.5" font-size="5.5" text-anchor="middle" fill="#666">ÖN</text>
+        <text x="2" y="118" font-size="5.5" fill="#666" transform="rotate(-90 4 118)">SOL</text>
+        <text x="118" y="112" font-size="5.5" fill="#666" transform="rotate(90 116 112)">SAĞ</text>
+      </svg>
+      <p>Üstten görünüş · sol/sağ, sürücü koltuğundan öne bakarken</p>
+    </div>
+    <table>
+      <thead><tr><th>Parça</th><th>Orijinal</th><th>Lokal<br>boyalı</th><th>Boyalı</th><th>Değişen</th><th>Kontrol<br>edilemedi</th></tr></thead>
+      <tbody>
+        <tr><td><span class="n">1</span>Kaput</td><td class="box"></td><td class="box"></td><td class="box"></td><td class="box"></td><td class="box"></td></tr>
+        <tr><td><span class="n">2</span>Tavan</td><td class="box"></td><td class="box"></td><td class="box"></td><td class="box"></td><td class="box"></td></tr>
+        <tr><td><span class="n">3</span>Bagaj</td><td class="box"></td><td class="box"></td><td class="box"></td><td class="box"></td><td class="box"></td></tr>
+        <tr><td><span class="n">4</span>Ön tampon</td><td class="box"></td><td class="box"></td><td class="box"></td><td class="box"></td><td class="box"></td></tr>
+        <tr><td><span class="n">5</span>Arka tampon</td><td class="box"></td><td class="box"></td><td class="box"></td><td class="box"></td><td class="box"></td></tr>
+        <tr><td><span class="n">6</span>Sol ön çamurluk</td><td class="box"></td><td class="box"></td><td class="box"></td><td class="box"></td><td class="box"></td></tr>
+        <tr><td><span class="n">7</span>Sağ ön çamurluk</td><td class="box"></td><td class="box"></td><td class="box"></td><td class="box"></td><td class="box"></td></tr>
+        <tr><td><span class="n">8</span>Sol ön kapı</td><td class="box"></td><td class="box"></td><td class="box"></td><td class="box"></td><td class="box"></td></tr>
+        <tr><td><span class="n">9</span>Sağ ön kapı</td><td class="box"></td><td class="box"></td><td class="box"></td><td class="box"></td><td class="box"></td></tr>
+        <tr><td><span class="n">10</span>Sol arka kapı</td><td class="box"></td><td class="box"></td><td class="box"></td><td class="box"></td><td class="box"></td></tr>
+        <tr><td><span class="n">11</span>Sağ arka kapı</td><td class="box"></td><td class="box"></td><td class="box"></td><td class="box"></td><td class="box"></td></tr>
+        <tr><td><span class="n">12</span>Sol arka çamurluk</td><td class="box"></td><td class="box"></td><td class="box"></td><td class="box"></td><td class="box"></td></tr>
+        <tr><td><span class="n">13</span>Sağ arka çamurluk</td><td class="box"></td><td class="box"></td><td class="box"></td><td class="box"></td><td class="box"></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="note">Boyasız plastik parça (ör. tampon) değişmemişse "Orijinal" işaretlenir. Sökme-takma, boyasız göçük ve plastik onarımı 2. sayfadaki "Açıklama" bölümüne yazılır. "Kontrol edilemedi" işaretli parça varken ilan yayımlanamaz.</p>
+
+  <h2>3 · Hasar ve yasal bilgiler</h2>
+  <div class="opts row"><b>Hasar kaydı <span class="req">*</span></b><span class="cb">Yok</span><span class="cb">Var</span><span class="cb">Ağır hasar kayıtlı</span></div>
+  <div class="grid" style="margin-top:1.5mm">
+    <div class="f span2"><label>Hasarın niteliği<span class="hint">Hasar varsa <span class="req">*</span></span></label><i></i></div>
+    <div class="f"><label>Tramer tutarı (TL)</label><i></i></div>
+  </div>
+  <div class="opts row" style="margin-top:1mm"><b>Rehin / haciz <span class="req">*</span></b><span class="cb">Yok</span><span class="cb">Var</span></div>
+  <div class="opts row"><b>Üretici / ithalatçı garantisi <span class="req">*</span></b><span class="cb">Yok</span><span class="cb">Devam ediyor</span></div>
+  <div class="grid" style="margin-top:1.5mm">
+    <div class="f"><label>Garanti bitiş tarihi<span class="hint">Devam ediyorsa <span class="req">*</span></span></label><i></i></div>
+    <div class="f"><label>Garanti bitiş km<span class="hint">Devam ediyorsa <span class="req">*</span></span></label><i></i></div>
+    <div class="opts"><b style="width:auto">Resmî ekspertiz raporu</b><span class="cb">Var</span><span class="cb">Yok</span></div>
+  </div>
+
+  <footer><span>Mir Motors · Araç Kontrol ve İlan Bilgi Formu</span><span>Sayfa 1 / 2</span></footer>
+</div>
+
+<!-- ======================= SAYFA 2 ======================= -->
+<div class="page">
+  <header style="align-items:center">
+    <div class="title" style="border-left-width:1.2mm">
+      <h1 style="font-size:15pt">Donanım, satış yetkisi ve onay</h1>
+      <p>Plaka: ____________________ &nbsp;&nbsp; Şasi son 6: ______________ &nbsp;&nbsp; Tarih: ______________</p>
+    </div>
+  </header>
+
+  <h2><span>4 · Donanım ve aksesuarlar <span class="req" style="color:#f3c86b">*</span></span> <small>Araçta olanları işaretleyin (en az 1)</small></h2>
+  <div class="eq">
+    <section><h3>Güvenlik</h3><div class="list">
+      <span class="cb">ABS</span><span class="cb">ESP</span><span class="cb">Sürücü / yolcu hava yastığı</span><span class="cb">Yan / perde hava yastığı</span>
+      <span class="cb">Isofix</span><span class="cb">Lastik basınç sensörü</span><span class="cb">Şerit takip asistanı</span><span class="cb">Kör nokta uyarısı</span>
+      <span class="cb">Adaptif cruise control</span><span class="cb">Acil fren asistanı</span><span class="cb">Yorgunluk uyarısı</span><span class="cb">Yokuş kalkış desteği</span>
+    </div></section>
+    <section><h3>Konfor</h3><div class="list">
+      <span class="cb">Klima</span><span class="cb">Otomatik klima</span><span class="cb">Elektrikli camlar</span><span class="cb">Elektrikli aynalar</span>
+      <span class="cb">Hız sabitleyici</span><span class="cb">Anahtarsız giriş</span><span class="cb">Start-stop</span><span class="cb">Yağmur / far sensörü</span>
+      <span class="cb">Deri koltuk</span><span class="cb">Isıtmalı koltuk</span><span class="cb">Hafızalı koltuk</span><span class="cb">Elektrikli bagaj kapağı</span>
+    </div></section>
+    <section><h3>Multimedya</h3><div class="list">
+      <span class="cb">Bluetooth</span><span class="cb">USB</span><span class="cb">Apple CarPlay / Android Auto</span><span class="cb">Navigasyon</span>
+      <span class="cb">Dokunmatik ekran</span><span class="cb">Dijital gösterge</span><span class="cb">Head-up display</span><span class="cb">Premium ses sistemi</span>
+      <span class="cb">Kablosuz şarj</span><span class="cb">Ambiyans aydınlatma</span>
+    </div></section>
+    <section><h3>Dış donanım ve park</h3><div class="list">
+      <span class="cb">Sunroof</span><span class="cb">Panoramik cam tavan</span><span class="cb">LED / Lazer far</span><span class="cb">Sis farı</span>
+      <span class="cb">Alaşım jant</span><span class="cb">Park sensörü</span><span class="cb">Geri görüş kamerası</span><span class="cb">360° kamera</span>
+      <span class="cb">Park asistanı</span><span class="cb">Tavan rayı</span><span class="cb">Çeki demiri</span><span class="cb">Karartılmış cam</span>
+    </div></section>
+  </div>
+  <div class="f" style="margin-top:2mm"><label>Diğer donanım</label><i></i></div>
+
+  <h2><span>5 · Satış yetkisi <span class="req" style="color:#f3c86b">*</span></span> <small>En az biri</small></h2>
+  <div class="opts row"><span class="cb">Araç Mir Motors adına tescilli</span><span class="cb">Araç sahibinden satış / ilan izni alındı</span></div>
+  <div class="opts row" style="border:0"><b>e-Devlet ilan yetkisi</b><span class="cb">Gerekmiyor (işletme adına)</span><span class="cb">Verildi, bitiş: ______________</span><span class="cb">Henüz verilmedi</span></div>
+
+  <h2>6 · Açıklama / notlar <small>Sökme-takma, boyasız göçük, plastik onarım, mekanik notlar</small></h2>
+  <div class="lines"><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>
+
+  <h2>7 · Onay</h2>
+  <div class="sign">
+    <div>Kontrol eden personel<small>Ad soyad · imza</small></div>
+    <div>Bilgileri sisteme giren<small>Ad soyad · tarih</small></div>
+    <div>Yönetici onayı<small>Ad soyad · imza</small></div>
+  </div>
+  <p class="note">Bu form Mir Motors personelinin araç üzerinde yaptığı kontrolün kaydıdır; yetkili ekspertiz kuruluşunun raporu yerine geçmez. İlanda kaporta bilgisi "Mir Motors araç kontrol bilgileri" olarak gösterilir. Formu sisteme fotoğrafla yüklerken kişisel bilgi içeren alanları (imza, ad soyad) kapatın.</p>
+
+  <footer><span>Mir Motors · Araç Kontrol ve İlan Bilgi Formu</span><span>Sayfa 2 / 2</span></footer>
+</div>
+
+</body>
+</html>

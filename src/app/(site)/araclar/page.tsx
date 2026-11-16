@@ -3,7 +3,7 @@ import Link from "next/link";
 import { FilterPanel } from "@/components/site/FilterPanel";
 import { SortSelect } from "@/components/site/SortSelect";
 import { VehicleCard, VehicleRow } from "@/components/site/VehicleCard";
-import { PRICE_PRESETS, SORTS, findPublicVehicles, parseFilters, publicBrandModels, type SearchParams } from "@/lib/public-vehicles";
+import { PRICE_PRESETS, SORTS, findPublicVehicles, parseFilters, publicFilterCatalog, type SearchParams } from "@/lib/public-vehicles";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Tüm Araçlarımız" };
@@ -37,7 +37,10 @@ function activeFilterChips(values: Values) {
     return { keys: [min, max], text: `${label}: ${text}${unit}` };
   };
   const one = (k: string, label?: string, map?: Record<string, string>) =>
-    values[k] ? { keys: k === "marka" ? ["marka", "model"] : [k], text: `${label ? label + ": " : ""}${map?.[values[k]!] ?? values[k]}` } : null;
+    values[k]
+      ? { keys: k === "marka" ? ["marka", "model", "paket"] : k === "model" ? ["model", "paket"] : [k], text: `${label ? label + ": " : ""}${map?.[values[k]!] ?? values[k]}` }
+      : null;
+  const yn = { var: "Var", yok: "Yok" };
   return [
     one("q", "Arama"),
     one("marka"),
@@ -45,9 +48,21 @@ function activeFilterChips(values: Values) {
     range("minFiyat", "maxFiyat", " TL", "Fiyat"),
     range("minYil", "maxYil", "", "Yıl"),
     range("minKm", "maxKm", " km", "Km"),
+    one("paket", "Seri"),
     one("yakit"),
     one("vites"),
     one("kasa"),
+    one("renk", "Renk"),
+    one("cekis", "Çekiş"),
+    range("minCc", "maxCc", " cc", "Motor hacmi"),
+    range("minHp", "maxHp", " hp", "Motor gücü"),
+    one("boyali", "Boyalı parça", yn),
+    one("lokal", "Lokal boyalı", yn),
+    one("degisen", "Değişen parça", yn),
+    one("hasar", "Hasar kaydı", yn),
+    one("agirHasar", "Ağır hasar", yn),
+    one("ekspertiz", "Ekspertiz raporu", { var: "Mevcut", yok: "Yok" }),
+    one("donanim", "Donanım"),
     one("durum", undefined, { AVAILABLE: "Satışta", OPTIONED: "Opsiyonlu" }),
   ]
     .filter((c): c is { keys: string[]; text: string } => Boolean(c))
@@ -76,10 +91,10 @@ function GroupLabel({ children }: { children: React.ReactNode }) {
 export default async function VehiclesPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const sp = await searchParams;
   const filters = parseFilters(sp);
-  const [vehicles, brandModels] = await Promise.all([findPublicVehicles(filters), publicBrandModels()]);
-  const values: Values = Object.fromEntries(Object.entries(sp).map(([k, v]) => [k, Array.isArray(v) ? v[0] : v]));
+  const [{ vehicles, total, optioned, page, pages }, catalog] = await Promise.all([findPublicVehicles(filters), publicFilterCatalog()]);
+  // Sayfa numarası filtre değildir; filtre/sıralama değişince 1. sayfaya dönülür.
+  const values: Values = Object.fromEntries(Object.entries(sp).filter(([k]) => k !== "sayfa").map(([k, v]) => [k, Array.isArray(v) ? v[0] : v]));
   const chips = activeFilterChips(values);
-  const optionedCount = vehicles.filter((v) => v.status === "OPTIONED").length;
   const isList = filters.view === "list";
 
   // Arama formu kendi alanları dışındaki seçili filtreleri gizli alanlarla korur.
@@ -115,8 +130,9 @@ export default async function VehiclesPage({ searchParams }: { searchParams: Pro
         <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
           <div className="shrink-0">
             <p className="font-display text-xl font-bold text-ink">Araçlar</p>
-            <p className="mt-0.5 text-[13px] text-muted" data-testid="result-count">
-              {vehicles.length} ilan listeleniyor · {vehicles.length - optionedCount} satışta, {optionedCount} opsiyonlu
+            <p className="mt-0.5 text-[13px] text-muted" data-testid="result-count" data-total={total}>
+              {total} ilan bulundu · {total - optioned} satışta, {optioned} opsiyonlu
+              {pages > 1 && <> · Sayfa {page}/{pages}</>}
             </p>
           </div>
           <form action="/araclar" className="grid flex-1 grid-cols-2 gap-2.5 lg:max-w-3xl lg:grid-cols-[1.6fr_1fr_0.9fr_auto]">
@@ -161,7 +177,7 @@ export default async function VehiclesPage({ searchParams }: { searchParams: Pro
           </div>
         </div>
         <div>
-          <FilterPanel key={JSON.stringify(values)} brandModels={brandModels} values={values} sort={filters.sort} />
+          <FilterPanel key={JSON.stringify(values)} catalog={catalog} values={values} sort={filters.sort} />
         </div>
       </section>
 
@@ -173,12 +189,12 @@ export default async function VehiclesPage({ searchParams }: { searchParams: Pro
               {c.text} <span aria-hidden>×</span>
             </Link>
           ))}
-          <Link href="/araclar" className="ml-1 text-xs font-semibold text-muted underline-offset-4 hover:text-brand hover:underline">Tümünü temizle</Link>
+          <Link href="/araclar" className="ml-1 text-xs font-semibold text-muted underline-offset-4 hover:text-brand hover:underline" data-testid="clear-all">Filtreleri temizle</Link>
         </div>
       )}
 
       {/* Sonuçlar */}
-      {vehicles.length === 0 ? (
+      {total === 0 ? (
         <div className="mt-6 rounded-2xl bg-white px-6 py-16 text-center ring-1 ring-line">
           <p className="font-display text-lg font-semibold">Bu kriterlere uygun araç bulunamadı.</p>
           <p className="mt-2 text-sm text-muted">Filtreleri genişletmeyi deneyin veya danışmanımıza yazın.</p>
@@ -192,6 +208,23 @@ export default async function VehiclesPage({ searchParams }: { searchParams: Pro
         <div className="mt-6 grid gap-3.5 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3 xl:grid-cols-4">
           {vehicles.map((v) => <VehicleCard key={v.id} vehicle={v} />)}
         </div>
+      )}
+
+      {pages > 1 && (
+        <nav className="mt-8 flex flex-wrap items-center justify-center gap-1.5" aria-label="Sayfalar" data-testid="pagination">
+          {page > 1 && <Link href={hrefWith(values, { sayfa: String(page - 1) })} className="btn-outline rounded-lg px-3 py-2">‹ Önceki</Link>}
+          {Array.from({ length: pages }, (_, i) => i + 1).map((n) => (
+            <Link
+              key={n}
+              href={hrefWith(values, { sayfa: n === 1 ? undefined : String(n) })}
+              aria-current={n === page ? "page" : undefined}
+              className={`grid h-10 min-w-10 place-items-center rounded-lg px-3 text-sm font-semibold ${n === page ? "bg-ink text-white" : "bg-white text-ink ring-1 ring-line hover:ring-brand"}`}
+            >
+              {n}
+            </Link>
+          ))}
+          {page < pages && <Link href={hrefWith(values, { sayfa: String(page + 1) })} className="btn-outline rounded-lg px-3 py-2">Sonraki ›</Link>}
+        </nav>
       )}
     </div>
   );

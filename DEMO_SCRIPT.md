@@ -35,9 +35,11 @@ npm start
 
 | Profil | Adres | E-posta | Şifre |
 |---|---|---|---|
-| Yönetici | http://localhost:3000/crm/login | yonetici@mirmotors.demo | MirDemo2026! |
-| Ahmet | http://localhost:3000/crm/login | ahmet@mirmotors.demo | MirDemo2026! |
-| Mehmet | http://localhost:3000/crm/login | mehmet@mirmotors.demo | MirDemo2026! |
+| Yönetici | http://localhost:3000/crm/login | yonetici@mirmotors.demo | MirYonetici2026! |
+| Ahmet | http://localhost:3000/crm/login | ahmet@mirmotors.demo | MirAhmet2026! |
+| Mehmet | http://localhost:3000/crm/login | mehmet@mirmotors.demo | MirMehmet2026! |
+
+> Her personelin şifresi farklıdır (Demo V1). Satış personeli yönetici hesabına giremez.
 | Müşteri | http://localhost:3000/araclar | — | — |
 
 > Bir hesapla 10 kez yanlış şifre girilirse giriş 15 dakika kilitlenir. Olursa sunucuyu `npm start` ile yeniden başlatmak kilidi kaldırır (veriler korunur).
@@ -51,7 +53,7 @@ npm start
 | 0:00 | Müşteri — http://localhost:3000/ | "DEMO · Örnek Araçlar" bandı, tasarım. Bunun bir demo olduğunu, ilanların temsili olduğunu söyleyin. Navbar altındaki story şeridinden **Yeni Gelenler**'i açın (ok/ESC); hero slider'ın otomatik geçişini gösterin. |
 | 0:30 | Yönetici — http://localhost:3000/crm | Özet kartları (stok, satışta, opsiyonlu, satış bekleyen, satılan) ve son işlemler. |
 | 0:50 | Yönetici — **+ Yeni araç ekle → Manuel giriş** | Örnek BMW bilgilerini girin, 3–4 donanım seçin, boya/değişen "Yok", ekspertiz özeti. **Taslak olarak kaydet ve devam et**. |
-| 2:00 | Yönetici — araç sayfası | Önce **Kontrol ettim, yayımla** → "en az 1 fotoğraf" uyarısı (kural sunucuda). **Bilgisayardan fotoğraf yükle** → fotoğrafları seçin. Bir fotoğrafa **Kapak yap**. **Kontrol ettim, yayımla** → "Satışta". |
+| 2:00 | Yönetici — araç sayfası | Önce **Kontrol ettim, yayımla** → "en az 1 fotoğraf" uyarısı (kural sunucuda). **Bilgisayardan fotoğraf yükle** → fotoğrafları seçin; ‹ › oklarıyla sıralayın, birine **Kapak yap**. **Kaporta şeması**: önce *Boyalı*, *Değişen* gibi durumu seçin, sonra parçaya tıklayın → **Kaporta bilgilerini kaydet** (işaretlenmeyen parça "Bilinmiyor" kalır). Video yüklediyseniz **müşteri sitesinde yayımla** kutusunu ayrıca işaretleyin. **Kontrol ettim, yayımla** → "Satışta". |
 | 2:45 | Müşteri — http://localhost:3000/ → /araclar | Ana sayfayı yenileyin: yeni BMW **Yeni Gelenler** story'sinin kapağında. (İsteğe bağlı) slider altındaki aramada Marka **BMW**, Model **5 Serisi** → **Araç Ara**. Sonra "Tüm Araçlarımız": dört sütunlu katalog. Arama kutusuna **BMW**, Maksimum fiyat **4000000** → **Ara**. Ardından **Sedan** etiketine tıklayın. Gerekirse **Detaylı Filtreler** ile marka/model/yıl/km/yakıt/vites seçin. Sağ üstten liste görünümü ve sıralama. İlanı açın: galeri, özellikler, ekspertiz özeti, WhatsApp. |
 | 3:30 | Ahmet — aynı aracın CRM sayfası (Araçlar listesinden) | **Opsiyonla** → "Opsiyon sahibi: Ahmet (siz)". |
 | 3:45 | Müşteri | Yenileyin → kartta **Opsiyonlu** rozeti; araç listede kalmaya devam eder. |
@@ -60,7 +62,7 @@ npm start
 | 5:00 | Yönetici | Sayfayı yenileyin → **Noter devri tamamlandı** kutusu + tarih → **Satışı tamamla** → "Satıldı". |
 | 5:20 | Müşteri | Liste: araç yok. Eski ilan bağlantısı: "Bu ilan artık yayında değil". |
 | 5:40 | Yönetici — araç sayfası | **Satış kayıtları** (başlatan Ahmet, fiyat, noter tarihi, tamamlayan) ve **İşlem geçmişi**. Özet ekranında "Satılan araçlar" arttı. |
-| 6:10 | (İsteğe bağlı) Yönetici — **+ Araç ekle → AI ile video** | Video yükleyin → sarı **SİMÜLASYON MODU** bandı. "Canlı AI değil; API anahtarı bağlandığında aynı ekran gerçek analiz yapar." Fiyat/hasar/ekspertiz onayı olmadan kayıt alınmaz. |
+| 6:10 | (İsteğe bağlı) Yönetici — **+ Araç ekle → AI ile video** | Video yükleyin → **AI SİMÜLASYONU** bandı. Ekran üç bölümdür: 1) bulunan bilgiler, 2) eksik/doğrulanacak bilgiler, 3) personel onayı. Eksik bilgiyle taslak kaydedilir; yayın için eksikler tamamlanır. Analiz videosu müşteriye otomatik açılmaz. "Canlı AI değil; API anahtarı bağlandığında aynı ekran gerçek analiz yapar." |
 
 ## Demo başarısız olursa (yedek plan)
 

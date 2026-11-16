@@ -1,9 +1,9 @@
 import "server-only";
 import { randomUUID } from "crypto";
 import { existsSync } from "fs";
-import { mkdir, writeFile, unlink } from "fs/promises";
+import { mkdir, readFile, writeFile, unlink } from "fs/promises";
 import path from "path";
-import { del, get, head } from "@vercel/blob";
+import { del, get, head, put } from "@vercel/blob";
 import { UPLOAD_LIMITS } from "./constants";
 
 /**
@@ -33,6 +33,9 @@ export function storageDriver(): StorageDriver {
 }
 
 export const isStaticSeedPath = (rel: string) => rel.startsWith("/demo-cars/");
+
+/** Ekspertiz PDF'i ve belge fotoğrafları (ruhsat, ekspertiz) özel depolamadadır; yalnızca oturumlu personele servis edilir. */
+export const isPrivateKind = (kind: UploadKind) => kind === "pdf" || kind === "doc";
 
 const blobKey = (rel: string, isPrivate: boolean) => `${isPrivate ? "private" : "public"}/${rel}`;
 
@@ -78,11 +81,58 @@ export async function saveUpload(file: File, kind: UploadKind, subdir: string): 
     throw new UploadError("Dosya içeriği beklenen türle uyuşmuyor");
   }
   const safeSub = safeSubdir(subdir);
-  const dir = path.join(kind === "pdf" ? PRIVATE_DIR : PUBLIC_DIR, safeSub);
+  const dir = path.join(isPrivateKind(kind) ? PRIVATE_DIR : PUBLIC_DIR, safeSub);
   await mkdir(dir, { recursive: true });
-  const name = `${randomUUID()}${ext}`;
-  await writeFile(path.join(dir, name), buf);
+  const optimized = kind === "photo" || kind === "doc" ? await optimizeImage(buf, detected, kind) : null;
+  const name = `${randomUUID()}${optimized ? optimized.ext : ext}`;
+  await writeFile(path.join(dir, name), optimized ? optimized.data : buf);
   return `${safeSub}/${name}`;
+}
+
+/** En uzun kenar: ilan fotoğrafı site için 1920 px; belge fotoğrafı yazıların okunur kalması için 2400 px. */
+const MAX_EDGE: Record<"photo" | "doc", number> = { photo: 1920, doc: 2400 };
+
+/**
+ * Yüklenen görseli optimize eder: telefon yönünü (EXIF) uygular, en uzun kenarı sınırlar, konum dahil tüm
+ * meta veriyi siler ve JPEG/WEBP olarak sıkıştırır (şeffaf PNG beyaz zemine oturtulur). İçerik değiştirilmez.
+ * İşlenemezse (bozuk dosya) yükleme reddedilir.
+ */
+async function optimizeImage(buf: Buffer, mime: string, kind: "photo" | "doc"): Promise<{ data: Buffer; ext: string; mime: string }> {
+  const sharp = (await import("sharp")).default;
+  try {
+    const edge = MAX_EDGE[kind];
+    const img = sharp(buf, { failOn: "error" }).rotate().resize(edge, edge, { fit: "inside", withoutEnlargement: true });
+    if (mime === "image/webp") return { data: await img.webp({ quality: 82 }).toBuffer(), ext: ".webp", mime };
+    return { data: await img.flatten({ background: "#ffffff" }).jpeg({ quality: kind === "doc" ? 86 : 82, mozjpeg: true }).toBuffer(), ext: ".jpg", mime: "image/jpeg" };
+  } catch {
+    throw new UploadError("Görsel okunamadı; dosya bozuk olabilir");
+  }
+}
+
+/** Kayıtlı dosyanın tamamını okur (yerel veya Blob). */
+export async function readStored(rel: string, isPrivate: boolean): Promise<Buffer> {
+  if (storageDriver() === "blob") {
+    const res = await get(blobKey(rel, isPrivate), { access: "private", useCache: false });
+    if (!res || res.statusCode !== 200) throw new UploadError("Dosya okunamadı");
+    return Buffer.from(await new Response(res.stream).arrayBuffer());
+  }
+  const full = resolveSafe(isPrivate ? PRIVATE_DIR : PUBLIC_DIR, rel.split("/"));
+  if (!full) throw new UploadError("Geçersiz dosya yolu");
+  return readFile(full);
+}
+
+/**
+ * Blob sürücüsü: tarayıcıdan doğrudan yüklenen görseli sunucuda optimize edip aynı anahtara yeniden yazar
+ * (yerel yüklemedeki gibi konum bilgisi silinir, boyut küçülür). Yol değişmez.
+ */
+export async function optimizeStoredImage(rel: string, kind: "photo" | "doc"): Promise<void> {
+  if (storageDriver() !== "blob") return;
+  const isPrivate = isPrivateKind(kind);
+  const buf = await readStored(rel, isPrivate);
+  const mime = sniff(buf);
+  if (!mime) throw new UploadError("Görsel okunamadı");
+  const out = await optimizeImage(buf, mime, kind);
+  await put(blobKey(rel, isPrivate), out.data, { access: "private", allowOverwrite: true, addRandomSuffix: false, contentType: out.mime });
 }
 
 // --- Doğrudan (istemci) yükleme: Blob sürücüsü ---
@@ -96,7 +146,7 @@ const UUID_FILE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}
 export function parseDirectUploadKey(key: string, kind: UploadKind, subdir: string): string {
   const [area, sub, file, ...rest] = key.split("/");
   if (rest.length || !file || !UUID_FILE.test(file)) throw new UploadError("Geçersiz dosya adı");
-  if (area !== (kind === "pdf" ? "private" : "public")) throw new UploadError("Geçersiz depolama alanı");
+  if (area !== (isPrivateKind(kind) ? "private" : "public")) throw new UploadError("Geçersiz depolama alanı");
   if (sub !== safeSubdir(subdir)) throw new UploadError("Geçersiz klasör");
   checkExt(file, kind);
   return `${sub}/${file}`;
@@ -115,7 +165,7 @@ export function directUploadConstraints(kind: UploadKind) {
 export async function verifyDirectUpload(rel: unknown, kind: UploadKind, subdir: string): Promise<string> {
   if (storageDriver() !== "blob") throw new UploadError("Doğrudan yükleme bu ortamda kapalı");
   if (typeof rel !== "string") throw new UploadError("Dosya bulunamadı");
-  const isPrivate = kind === "pdf";
+  const isPrivate = isPrivateKind(kind);
   const relPath = parseDirectUploadKey(blobKey(rel, isPrivate), kind, subdir);
   const key = blobKey(relPath, isPrivate);
   const meta = await head(key).catch(() => null);

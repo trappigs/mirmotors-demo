@@ -10,6 +10,6 @@ export default async function setup() {
   const env = { ...process.env, DATABASE_URL: url, DATABASE_URL_UNPOOLED: url, PRISMA_HIDE_UPDATE_MESSAGE: "1" };
   execSync("npx prisma migrate deploy", { env, stdio: "ignore" });
   const db = new PrismaClient({ datasources: { db: { url } } });
-  await db.$executeRawUnsafe('TRUNCATE "StatusHistory", "Sale", "VehiclePhoto", "Vehicle", "User" CASCADE');
+  await db.$executeRawUnsafe('TRUNCATE "StatusHistory", "Sale", "VehiclePhoto", "Vehicle", "CompanySettings", "User" CASCADE');
   await db.$disconnect();
 }

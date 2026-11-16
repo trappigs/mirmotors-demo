@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { getCompanyInfo } from "@/lib/company";
 import { MobileNav } from "./MobileNav";
 import { NavLinks } from "./NavLinks";
 import { IconClock, IconPin, IconWhatsApp } from "./Icons";
@@ -23,7 +24,7 @@ export function DemoBanner() {
 /**
  * Mir Motors'un gerçek logosu (işletmenin gönderdiği görsel; yalnızca kırpıldı, yeniden çizilmedi).
  * Logo siyah zeminlidir; bu yüzden yalnızca siyah alanlarda (üst menü, alt bilgi) kullanılır.
- * Not: elimizdeki dosya düşük çözünürlüklü (364 px); keskin görünüm için işletmeden SVG istenmeli.
+ * Not: elimizdeki dosya düşük çözünürlüklü (444 px); keskin görünüm için işletmeden SVG istenmeli.
  */
 export function Logo({ size = "md" }: { size?: "md" | "lg" }) {
   const h = size === "lg" ? "h-16" : "h-12 sm:h-[54px]";
@@ -76,8 +77,9 @@ export function MobileActionBar() {
   );
 }
 
-export function SiteFooter() {
+export async function SiteFooter() {
   const year = new Date().getFullYear();
+  const company = await getCompanyInfo();
   return (
     <footer className="mt-20 bg-black pb-20 text-zinc-400 lg:pb-0">
       <div className="h-px bg-gradient-to-r from-transparent via-gold/60 to-transparent" />
@@ -106,8 +108,8 @@ export function SiteFooter() {
         <div className="text-sm">
           <p className="mb-4 border-l-2 border-gold pl-2.5 text-sm font-bold text-white">İletişim</p>
           <ul className="space-y-3">
-            <li className="flex gap-2.5"><IconPin className="mt-0.5 h-4 w-4 shrink-0 text-gold" />Showroom adresi yayın öncesi eklenecek</li>
-            <li className="flex gap-2.5"><IconClock className="mt-0.5 h-4 w-4 shrink-0 text-gold" />Hafta içi 09:00–19:00 · Cmt 10:00–18:00</li>
+            <li className="flex gap-2.5"><IconPin className="mt-0.5 h-4 w-4 shrink-0 text-gold" />{company.address ?? "Showroom adresi yayın öncesi eklenecek"}</li>
+            <li className="flex gap-2.5"><IconClock className="mt-0.5 h-4 w-4 shrink-0 text-gold" />Çalışma saatleri yayın öncesi eklenecek</li>
             <li className="flex gap-2.5"><IconWhatsApp className="mt-0.5 h-4 w-4 shrink-0 text-gold" />WhatsApp danışman hattı (demo)</li>
           </ul>
         </div>
@@ -116,8 +118,13 @@ export function SiteFooter() {
           <p className="mb-4 border-l-2 border-gold pl-2.5 text-sm font-bold text-white">Yasal Bilgilendirme</p>
           <p className="leading-relaxed">
             Bu site bir demo sürümüdür. İlanlar, fiyatlar ve görseller temsilidir. Site üzerinden ödeme, kapora veya
-            sözleşme işlemi yapılmaz. Yetki belgesi ve zorunlu ilan bilgileri gerçek yayından önce eklenecektir.
+            sözleşme işlemi yapılmaz.
           </p>
+          <dl className="mt-3 space-y-1 text-xs">
+            <div><dt className="inline text-zinc-500">Ticari unvan: </dt><dd className="inline">{company.title ?? "yayın öncesi eklenecek"}</dd></div>
+            <div><dt className="inline text-zinc-500">Yetki belgesi no: </dt><dd className="inline">{company.authorizationNo ?? "yayın öncesi eklenecek"}</dd></div>
+            {company.mersis && <div><dt className="inline text-zinc-500">MERSİS: </dt><dd className="inline">{company.mersis}</dd></div>}
+          </dl>
           <ul className="mt-3 space-y-1.5">
             <li><Link href="/kvkk" className="transition hover:text-gold">KVKK Aydınlatma Metni</Link></li>
             <li><Link href="/kvkk#cerez" className="transition hover:text-gold">Çerez Bilgilendirmesi</Link></li>

@@ -13,19 +13,24 @@
     "db:seed:cloud": "prisma migrate deploy && tsx prisma/seed.ts --cloud",
     "demo": "npm run setup && next build && next start",
     "vercel-build": "prisma generate && prisma migrate deploy && next build",
-    "e2e": "node tests/e2e-demo.mjs"
+    "e2e": "node tests/e2e-demo.mjs",
+    "personel:sifre": "tsx scripts/sifre-belirle.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.1.0",
     "@prisma/client": "^6.19.3",
     "@vercel/blob": "^2.8.2",
     "bcryptjs": "^3.0.3",
+    "heic2any": "^0.0.4",
     "jose": "^6.2.13",
     "next": "15.5.28",
+    "pdfjs-dist": "^6.3.289",
     "prisma": "^6.19.3",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "server-only": "^0.0.1",
+    "sharp": "^0.35.5",
+    "web-push": "^3.6.7",
     "zod": "^4.6.7"
   },
   "devDependencies": {
@@ -35,6 +40,7 @@
     "@types/node": "^24.19.2",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/web-push": "^3.6.4",
     "eslint": "^9",
     "eslint-config-next": "15.5.28",
     "tailwindcss": "^4",

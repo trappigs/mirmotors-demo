@@ -117,7 +117,8 @@ npm start
 | Ahmet | `ahmet@mirmotors.demo` | Satış personeli |
 | Mehmet | `mehmet@mirmotors.demo` | Satış personeli |
 
-Yerel demo şifresi `prisma/seed.ts` içindeki `LOCAL_DEMO_PASSWORD` değeridir (yalnızca yerel örnek veri içindir; canlı ortamda geçersizdir).
+Yerel demo şifreleri `prisma/seed.ts` içindeki `LOCAL_DEMO_PASSWORDS` değerleridir; her personelin şifresi farklıdır (yalnızca yerel örnek veri; canlı ortamda geçersiz).
+Var olan veritabanında (canlı dahil, veri silmeden) bir personelin şifresini değiştirmek için PowerShell: `$env:EMAIL="ahmet@mirmotors.demo"; $env:YENI_SIFRE="..."; npm run personel:sifre`
 Yerelde HTTP Basic erişim kapısı yoktur (`DEMO_ACCESS_PASSWORD` boş).
 
 Aynı tarayıcı profilinde tek oturum açılır; Ahmet ve Mehmet'i aynı anda denemek için ayrı tarayıcı profili veya gizli pencere kullan.

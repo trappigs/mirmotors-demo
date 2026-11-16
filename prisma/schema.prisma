@@ -12,59 +12,103 @@ datasource db {
 }
 
 model User {
-  id           String   @id @default(cuid())
-  name         String
-  email        String   @unique
-  passwordHash String
-  role         String // ADMIN | SALES
-  createdAt    DateTime @default(now())
+  id              String    @id @default(cuid())
+  name            String
+  email           String    @unique
+  passwordHash    String
+  role            String // ADMIN | SALES
+  createdAt       DateTime  @default(now())
   // Hesap bazlı giriş deneme sınırı (sunucusuz ortamda örnekler arası paylaşılır)
   failedLogins    Int       @default(0)
   failWindowStart DateTime?
 
-  createdVehicles Vehicle[]       @relation("VehicleCreatedBy")
-  optionedVehicles Vehicle[]      @relation("VehicleOptionedBy")
-  statusChanges   StatusHistory[]
-  salesStarted    Sale[]          @relation("SaleStartedBy")
-  salesCompleted  Sale[]          @relation("SaleCompletedBy")
+  createdVehicles   Vehicle[]          @relation("VehicleCreatedBy")
+  optionedVehicles  Vehicle[]          @relation("VehicleOptionedBy")
+  statusChanges     StatusHistory[]
+  salesStarted      Sale[]             @relation("SaleStartedBy")
+  salesCompleted    Sale[]             @relation("SaleCompletedBy")
+  partUpdates       VehiclePart[]
+  documents         VehicleDocument[]
+  docAnalyses       DocAnalysis[]
+  documentAudits    DocumentAudit[]
+  settingsUpdates   CompanySettings[]
+  pushSubscriptions PushSubscription[]
+}
+
+/// İşletme bilgileri (tek satır, id "default"): her ilana otomatik eklenir. Yönetici CRM > Ayarlar'dan girer; uydurulmaz.
+model CompanySettings {
+  id              String   @id @default("default")
+  title           String? // ticari unvan
+  authorizationNo String? // ikinci el taşıt yetki belgesi no
+  mersis          String?
+  address         String?
+  updatedById     String?
+  updatedBy       User?    @relation(fields: [updatedById], references: [id])
+  updatedAt       DateTime @updatedAt
 }
 
 model Vehicle {
-  id        String @id @default(cuid())
-  status    String @default("DRAFT") // DRAFT | AVAILABLE | OPTIONED | SALE_PENDING | SOLD
+  id     String @id @default(cuid())
+  status String @default("DRAFT") // REVIEW (Kontrol Bekliyor) | DRAFT | AVAILABLE | OPTIONED | SALE_PENDING | SOLD | ARCHIVED (yanlış/mükerrer kayıt; silinmez)
 
-  brand        String
-  model        String
+  // Taslakta eksik olabilir (ör. AI videodan bulamadıysa); yayımlamada zorunludur (src/lib/vehicle-status.ts).
+  brand        String?
+  model        String?
   packageName  String?
-  year         Int
-  km           Int
-  price        Int // TL
-  fuel         String
-  transmission String
-  bodyType     String
+  year         Int?
+  km           Int?
+  price        Int? // TL
+  tradeIn      Boolean? // takasa uygun mu · null = belirtilmedi
+  fuel         String?
+  transmission String?
+  bodyType     String?
   color        String?
   enginePower  Int? // HP
   engineCc     Int?
   drivetrain   String?
   description  String?
-  equipment    String  @default("[]") // JSON string[]
+  equipment    String   @default("[]") // JSON string[]
 
   // Boya / değişen / hasar / ekspertiz
-  paintedParts     String?
-  changedParts     String?
+  // Parça bazlı kaporta durumu VehiclePart tablosundadır; aşağıdaki sayaçlar filtreler için ondan türetilir.
+  paintedParts     String? // eski serbest metin (kaporta şemasından önceki kayıtlar)
+  changedParts     String? // eski serbest metin
   damageNote       String?
-  tramerAmount     Int?
+  damageRecord     String? // NONE (yok) | MINOR (var) | HEAVY (ağır hasar kayıtlı) | NOT_QUERIED (sorgulanmadı) | UNVERIFIED (doğrulanamadı) · null = bilgi girilmedi
+  tramerAmount     Int? // null = bilgi girilmedi (0 ile karıştırılmaz)
   expertiseSummary String?
   expertisePdfPath String? // yalnızca CRM içinde erişilir (özel depolama)
+  bodyVerified     Boolean @default(false) // tüm parçalar personelce doğrulandı (hiçbiri "Bilinmiyor" değil)
+  paintedCount     Int     @default(0)
+  localPaintCount  Int     @default(0)
+  changedCount     Int     @default(0)
 
-  videoPath String? @unique // bir video dosyası yalnızca bir araca ait olabilir
+  videoPath   String? @unique // bir video dosyası yalnızca bir araca ait olabilir
+  videoPublic Boolean @default(false) // personel onaylamadan video müşteri sitesinde gösterilmez
 
-  // Yasal alanlar: gerçek yayından önce doldurulacak (demo verilerinde boş bırakılır)
-  legalListingNo         String?
-  legalAuthorizationNo   String?
-  legalPlate             String?
-  legalVin               String?
-  legalOwnerConsent      Boolean @default(false)
+  // Yasal ilan alanları (ticari unvan ve yetki belgesi işletme düzeyindedir: src/lib/company.ts)
+  legalListingNo           String?
+  legalAuthorizationNo     String?
+  legalPlate               String?
+  legalVin                 String? // şasi numarasının yalnızca son 6 hanesi
+  legalVinPartial          Boolean  @default(false) // true: tam şasi okunamadı, yalnızca son 6 hane görülebildi
+  firstRegistration        String? // ruhsattaki ilk tescil tarihi (B)
+  vehicleClass             String? // ruhsattaki araç cinsi (D.5), ör. OTOMOBİL
+  vehicleType              String? // ruhsattaki araç tipi (D.2), olduğu gibi
+  tradeName                String? // ruhsattaki ticari ad (D.3), olduğu gibi; ilandaki anlaşılır model adı `model` alanındadır
+  inspectionUntil          String? // muayene geçerlilik tarihi (YYYY-AA-GG), isteğe bağlı
+  seats                    Int? // koltuk sayısı (S.1)
+  // Belgeden oluşturma: personelin çözmesi gereken eşleşme/çelişki/eksik bilgileri (JSON, src/lib/doc-review.ts)
+  docReview                String?
+  legalLien                String? // NONE | EXISTS | UNVERIFIED (rehin/haciz doğrulanmadı) · null = bilgi girilmedi
+  legalWarranty            String? // kalan garanti açıklaması ("Yok" dahil) · null = bilgi girilmedi
+  legalRegisteredToCompany Boolean? // araç işletme adına tescilli mi · null = bilgi girilmedi
+  legalOwnerConsent        Boolean  @default(false)
+  // Üretici/ithalatçı garantisi (Yönetmelik m.20/2-h): NONE = devam etmiyor, ACTIVE = devam ediyor (kalan süre + km), UNKNOWN = bilinmiyor · null = bilgi girilmedi
+  warrantyStatus           String?
+  warrantyUntil            String? // garanti bitiş tarihi (YYYY-AA-GG)
+  warrantyKm               Int? // garantinin bittiği kilometre
+  stockCode                String? // galerinin iç stok kodu (isteğe bağlı)
 
   // AI taslak izi
   aiDraftMode String? // LIVE | SIMULATION | null (manuel)
@@ -74,20 +118,109 @@ model Vehicle {
   optionedBy   User?     @relation("VehicleOptionedBy", fields: [optionedById], references: [id])
   optionedAt   DateTime?
 
-  createdById String
-  createdBy   User      @relation("VehicleCreatedBy", fields: [createdById], references: [id])
-  publishedAt DateTime?
-  soldAt      DateTime?
-  isDemoSeed  Boolean   @default(false)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  createdById        String
+  createdBy          User      @relation("VehicleCreatedBy", fields: [createdById], references: [id])
+  /// Otomatik taslak: tarayıcıda üretilen tek kullanımlık anahtar. Aynı giriş tekrar gönderilirse (ağ hatası, çift dokunma) ikinci taslak oluşmaz.
+  createKey          String?   @unique
+  /// Arşiv: yanlış/mükerrer kayıt stoktan ve siteden kalkar, veritabanında kalır; yetkili kişi geri yükleyebilir.
+  archivedAt         DateTime?
+  archivedById       String?
+  archivedFromStatus String?
+  publishedAt        DateTime?
+  soldAt             DateTime?
+  isDemoSeed         Boolean   @default(false)
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
 
-  photos  VehiclePhoto[]
-  history StatusHistory[]
-  sales   Sale[]
+  photos      VehiclePhoto[]
+  history     StatusHistory[]
+  sales       Sale[]
+  parts       VehiclePart[]
+  documents   VehicleDocument[]
+  docAnalyses DocAnalysis[]
 
   @@index([status])
   @@index([brand, model])
+}
+
+/// Araç belgesi görseli (ruhsat, ekspertiz raporu sayfası). Özel depolamada; yalnızca CRM'de görüntülenir, siteye çıkmaz.
+/// PDF'ler tarayıcıda sayfa sayfa görsele çevrilip maskelendikten sonra yüklenir.
+model VehicleDocument {
+  id          String       @id @default(cuid())
+  vehicleId   String? // analiz bitip araca bağlanana kadar boş
+  vehicle     Vehicle?     @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  analysisId  String?
+  analysis    DocAnalysis? @relation(fields: [analysisId], references: [id], onDelete: SetNull)
+  kind        String // RUHSAT | EKSPERTIZ
+  path        String       @unique // özel depolama göreli yolu (docs/<uuid>.jpg)
+  page        Int          @default(1) // çok sayfalı belgede sayfa sırası
+  sha256      String? // yüklenen dosyanın özeti (aynı belgenin tekrar yüklenmesini yakalar)
+  masked      Boolean      @default(false) // personel kişisel verileri maskelediğini onayladı
+  quality     String? // JSON: bulanık / karanlık / düşük çözünürlük uyarıları
+  createdById String
+  createdBy   User         @relation(fields: [createdById], references: [id])
+  createdAt   DateTime     @default(now())
+
+  @@index([vehicleId])
+  @@index([analysisId])
+  @@index([sha256])
+}
+
+/// Belgelerden AI analizi işi. Arka planda yürür; personel sayfayı kapatsa da durum ve sonuç saklanır.
+model DocAnalysis {
+  id           String            @id @default(cuid())
+  vehicleId    String? // oluşturulan veya belge eklenen araç
+  vehicle      Vehicle?          @relation(fields: [vehicleId], references: [id], onDelete: SetNull)
+  method       String // RUHSAT | RUHSAT_EKSPERTIZ | EKSPERTIZ | ADD (mevcut araca belge ekleme)
+  status       String            @default("UPLOADED") // UPLOADED | ANALYZING | COMPARING | REVIEW | DONE | ERROR | CANCELLED
+  mode         String? // LIVE | SIMULATION
+  model        String?
+  result       String? // JSON: birleştirilmiş okuma (kişisel veri içermez)
+  error        String?
+  attempts     Int               @default(0)
+  inputTokens  Int               @default(0)
+  outputTokens Int               @default(0)
+  costUsd      Float             @default(0)
+  durationMs   Int?
+  createdById  String
+  createdBy    User              @relation(fields: [createdById], references: [id])
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+  documents    VehicleDocument[]
+
+  @@index([status])
+  @@index([createdAt])
+}
+
+/// Belge erişim, yükleme, analiz ve silme kaydı (KVKK: kim, hangi belgeye, ne zaman).
+model DocumentAudit {
+  id         String   @id @default(cuid())
+  action     String // UPLOAD | ANALYZE | VIEW | LINK | DETACH | DELETE
+  documentId String?
+  analysisId String?
+  vehicleId  String?
+  note       String?
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  createdAt  DateTime @default(now())
+
+  @@index([documentId])
+  @@index([createdAt])
+}
+
+/// Kaporta parçası durumu: her parça ayrı satır. Kaydı olmayan parça "Bilinmiyor" sayılır.
+model VehiclePart {
+  id          String   @id @default(cuid())
+  vehicleId   String
+  vehicle     Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  part        String // HOOD | ROOF | ... (src/lib/body-parts.ts)
+  state       String   @default("UNKNOWN") // personel beyanı: ORIGINAL | LOCAL_PAINT | PAINTED | CHANGED | UNKNOWN
+  reportState String   @default("UNKNOWN") // ekspertiz raporundaki durum (çelişki uyarısı için)
+  updatedById String?
+  updatedBy   User?    @relation(fields: [updatedById], references: [id])
+  updatedAt   DateTime @updatedAt
+
+  @@unique([vehicleId, part])
 }
 
 model VehiclePhoto {
@@ -118,20 +251,33 @@ model StatusHistory {
 }
 
 model Sale {
-  id                String    @id @default(cuid())
-  vehicleId         String
-  vehicle           Vehicle   @relation(fields: [vehicleId], references: [id])
-  startedById       String
-  startedBy         User      @relation("SaleStartedBy", fields: [startedById], references: [id])
-  startedAt         DateTime  @default(now())
-  agreedPrice       Int?
-  note              String?
-  notaryCompleted   Boolean   @default(false)
-  notaryDate        DateTime?
-  completedById     String?
-  completedBy       User?     @relation("SaleCompletedBy", fields: [completedById], references: [id])
-  completedAt       DateTime?
-  cancelledAt       DateTime?
+  id              String    @id @default(cuid())
+  vehicleId       String
+  vehicle         Vehicle   @relation(fields: [vehicleId], references: [id])
+  startedById     String
+  startedBy       User      @relation("SaleStartedBy", fields: [startedById], references: [id])
+  startedAt       DateTime  @default(now())
+  agreedPrice     Int?
+  note            String?
+  notaryCompleted Boolean   @default(false)
+  notaryDate      DateTime?
+  completedById   String?
+  completedBy     User?     @relation("SaleCompletedBy", fields: [completedById], references: [id])
+  completedAt     DateTime?
+  cancelledAt     DateTime?
 
   @@index([vehicleId])
+}
+
+/// iPhone/PWA bildirim aboneliği (Web Push). Anahtarlar tarayıcının verdiği genel anahtarlardır; gizli değer değildir.
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+
+  @@index([userId])
 }

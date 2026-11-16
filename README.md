@@ -74,7 +74,10 @@ Site: http://localhost:3000 · CRM: http://localhost:3000/crm
 | Ahmet | ahmet@mirmotors.demo | Satış personeli |
 | Mehmet | mehmet@mirmotors.demo | Satış personeli |
 
-Yerel şifre `prisma/seed.ts` → `LOCAL_DEMO_PASSWORD` (yalnızca yerel örnek veri). Canlı ortamda farklı şifreler kullanılır ve bu depoda yer almaz.
+Yerel şifreler `prisma/seed.ts` → `LOCAL_DEMO_PASSWORDS` (her personelin şifresi farklı; yalnızca yerel örnek veri). Canlı ortamda farklı şifreler kullanılır ve bu depoda yer almaz.
+Var olan bir veritabanında şifre değiştirmek için: `npm run personel:sifre` (bkz. `scripts/sifre-belirle.ts`).
+
+Demo V1 değişiklikleri ve test sonuçları: [DEMO_V1_RAPOR.md](DEMO_V1_RAPOR.md).
 
 ## Teknolojiler
 

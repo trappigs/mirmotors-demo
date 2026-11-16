@@ -18,9 +18,11 @@ export async function PATCH(_req: Request, { params }: Ctx) {
     if (!photo) return jsonError("Fotoğraf bulunamadı", 404);
     const blocked = mediaChangeBlock(photo.vehicle, user);
     if (blocked) return jsonError(blocked, 409);
+    // Kapak yapılan fotoğraf sıranın başına alınır (sıra ve kapak tutarlı kalır).
+    const first = await prisma.vehiclePhoto.aggregate({ where: { vehicleId: id }, _min: { sortOrder: true } });
     await prisma.$transaction([
       prisma.vehiclePhoto.updateMany({ where: { vehicleId: id }, data: { isCover: false } }),
-      prisma.vehiclePhoto.update({ where: { id: photoId }, data: { isCover: true } }),
+      prisma.vehiclePhoto.update({ where: { id: photoId }, data: { isCover: true, sortOrder: (first._min.sortOrder ?? 0) - 1 } }),
     ]);
     revalidatePath(`/araclar/${id}`);
     return NextResponse.json({ ok: true });

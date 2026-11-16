@@ -10,6 +10,7 @@ import { directUploadConstraints, parseDirectUploadKey, storageDriver, UploadErr
 const payloadSchema = z.discriminatedUnion("target", [
   z.object({ target: z.literal("vehicle"), kind: z.enum(["photo", "video", "pdf"]), vehicleId: z.string().min(1).max(64) }),
   z.object({ target: z.literal("aiDraft") }),
+  z.object({ target: z.literal("docDraft") }),
 ]);
 
 /**
@@ -37,6 +38,11 @@ export async function POST(req: Request) {
           parseDirectUploadKey(pathname, "video", "drafts");
           return token("video");
         }
+        if (payload.target === "docDraft") {
+          // Ruhsat / ekspertiz fotoğrafı: özel alan, araç kaydından önce yüklenir.
+          parseDirectUploadKey(pathname, "doc", "docs");
+          return token("doc");
+        }
         const vehicle = await prisma.vehicle.findUnique({ where: { id: payload.vehicleId } });
         if (!vehicle) throw new UploadError("Araç bulunamadı");
         const blocked = mediaChangeBlock(vehicle, user);
@@ -51,7 +57,7 @@ export async function POST(req: Request) {
   }
 }
 
-function token(kind: "photo" | "video" | "pdf") {
+function token(kind: "photo" | "video" | "pdf" | "doc") {
   return {
     ...directUploadConstraints(kind),
     addRandomSuffix: false,

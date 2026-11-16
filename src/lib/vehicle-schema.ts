@@ -1,62 +1,92 @@
 import { z } from "zod";
 import { BODY_TYPES, FUEL_TYPES, TRANSMISSIONS } from "./constants";
+import { DAMAGE_RECORDS, LIEN_STATES, VIN_LAST6, WARRANTY_STATES } from "./listing-rules";
 
+const blank = (v: unknown) => v === "" || v === null || v === undefined || (typeof v === "string" && v.trim() === "");
 const optText = (max = 2000) =>
-  z.preprocess((v) => (typeof v === "string" && v.trim() === "" ? null : v), z.string().trim().max(max).nullable().optional());
-const optInt = (min: number, max: number) =>
+  z.preprocess((v) => (blank(v) ? null : v), z.string().trim().max(max).nullable().optional());
+const optInt = (min: number, max: number, message = "Geçersiz sayı") =>
   z.preprocess(
-    (v) => (v === "" || v === null || v === undefined ? null : Number(v)),
-    z.number().int().min(min).max(max).nullable().optional(),
+    (v) => (blank(v) ? null : Number(String(v).replace(/\./g, ""))),
+    z.number({ message }).int(message).min(min, message).max(max, message).nullable().optional(),
   );
+const optEnum = (values: readonly string[], message: string) =>
+  z.preprocess((v) => (blank(v) ? null : v), z.enum(values as [string, ...string[]], { message }).nullable().optional());
+const optBool = z.preprocess((v) => (v === "" || v === null || v === undefined ? null : v === true || v === "true"), z.boolean().nullable().optional());
 
+/**
+ * Araç formu. Taslak eksik bilgiyle kaydedilebilir (ör. AI videodan bulamadıysa); yayımlama için zorunlu
+ * alanlar durum makinesinde denetlenir (src/lib/listing-rules.ts → missingVehicleFields).
+ */
 export const vehicleInputSchema = z.object({
-  brand: z.string().trim().min(1, "Marka zorunlu").max(60),
-  model: z.string().trim().min(1, "Model zorunlu").max(60),
+  brand: optText(60),
+  model: optText(60),
   packageName: optText(120),
-  year: z.coerce.number().int().min(1950, "Geçersiz yıl").max(new Date().getFullYear() + 1, "Geçersiz yıl"),
-  km: z.coerce.number().int().min(0, "Kilometre negatif olamaz").max(2_000_000),
-  price: z.coerce.number().int().min(1, "Fiyat zorunlu").max(1_000_000_000),
-  fuel: z.enum(FUEL_TYPES as [string, ...string[]], { message: "Yakıt türü seçin" }),
-  transmission: z.enum(TRANSMISSIONS as [string, ...string[]], { message: "Vites türü seçin" }),
-  bodyType: z.enum(BODY_TYPES as [string, ...string[]], { message: "Kasa tipi seçin" }),
+  year: optInt(1950, new Date().getFullYear() + 1, "Geçersiz model yılı"),
+  km: optInt(0, 2_000_000, "Geçersiz kilometre"),
+  price: optInt(1, 1_000_000_000, "Geçersiz fiyat"),
+  // Gönderilmezse dokunulmaz (kısmi düzenleme takas bilgisini silmez); "" = belirtilmedi.
+  tradeIn: z.preprocess((v) => (v === undefined ? undefined : v === "" || v === null ? null : v === true || v === "true"), z.boolean().nullable().optional()),
+  fuel: optEnum(FUEL_TYPES, "Yakıt türü seçin"),
+  transmission: optEnum(TRANSMISSIONS, "Vites türü seçin"),
+  bodyType: optEnum(BODY_TYPES, "Kasa tipi seçin"),
   color: optText(60),
-  enginePower: optInt(1, 2000),
-  engineCc: optInt(1, 10000),
+  enginePower: optInt(1, 2000, "Geçersiz motor gücü"),
+  engineCc: optInt(1, 10000, "Geçersiz motor hacmi"),
   drivetrain: optText(60),
   description: optText(4000),
-  equipment: z.array(z.string().trim().min(1).max(80)).max(80).default([]),
-  paintedParts: optText(1000),
-  changedParts: optText(1000),
+  // Gönderilmezse dokunulmaz (kısmi düzenleme donanım listesini silmez); oluşturmada veritabanı varsayılanı "[]".
+  equipment: z.array(z.string().trim().min(1).max(80)).max(80).optional(),
   damageNote: optText(2000),
-  tramerAmount: optInt(0, 100_000_000),
+  damageRecord: optEnum(DAMAGE_RECORDS, "Hasar kaydı durumunu seçin"),
+  tramerAmount: optInt(0, 100_000_000, "Geçersiz tramer tutarı"),
   expertiseSummary: optText(4000),
-  legalListingNo: optText(60),
+  // legalListingNo formdan alınmaz: sistem otomatik verir (listing-rules → autoListingNo).
   legalAuthorizationNo: optText(60),
   legalPlate: optText(20),
-  legalVin: optText(30),
+  legalVin: z.preprocess(
+    (v) => (blank(v) ? null : String(v).trim().toUpperCase()),
+    z.string().regex(VIN_LAST6, "Şasi no için yalnızca son 6 haneyi girin").nullable().optional(),
+  ),
+  legalLien: optEnum(LIEN_STATES, "Rehin / haciz durumunu seçin"),
+  legalWarranty: optText(200),
+  vehicleClass: optText(60),
+  vehicleType: optText(120),
+  inspectionUntil: z.preprocess((v) => (blank(v) ? null : v), z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Muayene tarihini seçin").nullable().optional()),
+  stockCode: optText(40),
+  warrantyStatus: optEnum(WARRANTY_STATES, "Garanti durumunu seçin"),
+  warrantyUntil: z.preprocess((v) => (blank(v) ? null : v), z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Garanti bitiş tarihini seçin").nullable().optional()),
+  warrantyKm: optInt(0, 2_000_000, "Geçersiz garanti kilometresi"),
+  legalRegisteredToCompany: optBool,
   legalOwnerConsent: z.boolean().optional(),
-  // AI taslağından gelen kayıtlarda insan doğrulaması zorunludur.
+  // AI taslağından gelen kayıtlarda personel onayı zorunludur.
   aiDraftMode: z.enum(["LIVE", "SIMULATION"]).nullable().optional(),
   aiDraftJson: optText(20000),
-  // AI akışında yüklenen video (storage/public/drafts/...) araca bağlanır.
+  // AI akışında yüklenen analiz videosu (storage/public/drafts/...) araca bağlanır; müşteriye otomatik açılmaz.
   draftVideoPath: z.string().regex(/^drafts\/[a-f0-9-]+\.(mp4|webm|mov)$/).nullable().optional(),
-  verifiedPrice: z.boolean().optional(),
-  verifiedDamage: z.boolean().optional(),
-  verifiedExpertise: z.boolean().optional(),
+  aiReviewed: z.boolean().optional(),
+  // Otomatik taslak: tarayıcının ürettiği tek kullanımlık anahtar (aynı giriş iki taslak oluşturmaz).
+  createKey: z.string().regex(/^[a-f0-9-]{20,64}$/i).optional(),
+  // Stokta aynı plakalı araç varken personel "Yine de yeni kayıt oluştur" dediyse.
+  plateDuplicateAck: z.boolean().optional(),
+  // Eşzamanlı düzenleme: istemcinin gördüğü kayıt sürümü (updatedAt). Arada başka çalışan değiştirdiyse kayıt reddedilir.
+  baseVersion: z.string().max(40).optional(),
+  // "Benim değişikliğimi kaydet": personel uyarıyı gördü ve kendi değerlerini kaydetmeyi seçti.
+  overwrite: z.boolean().optional(),
 });
 
 export type VehicleInput = z.infer<typeof vehicleInputSchema>;
 
 export function toVehicleData(input: VehicleInput) {
-  const { equipment, draftVideoPath: _v, verifiedPrice: _p, verifiedDamage: _d, verifiedExpertise: _e, ...rest } = input;
-  void _v; void _p; void _d; void _e;
-  return { ...rest, equipment: JSON.stringify(equipment) };
+  const { equipment, draftVideoPath: _v, aiReviewed: _r, createKey: _k, plateDuplicateAck: _p, baseVersion: _b, overwrite: _o, ...rest } = input;
+  void _v; void _r; void _k; void _p; void _b; void _o;
+  return { ...rest, ...(equipment ? { equipment: JSON.stringify(equipment) } : {}) };
 }
 
 export function checkAiVerification(input: VehicleInput): string | null {
   if (!input.aiDraftMode) return null;
-  if (!input.verifiedPrice || !input.verifiedDamage || !input.verifiedExpertise) {
-    return "AI taslağından oluşturulan araçlarda fiyat, hasar ve ekspertiz bilgileri personel tarafından doğrulanmalıdır.";
+  if (!input.aiReviewed) {
+    return "AI taslağından araç oluşturmak için AI'nın bulduğu bilgileri kontrol ettiğinizi onaylayın.";
   }
   return null;
 }
