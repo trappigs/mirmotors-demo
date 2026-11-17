@@ -68,6 +68,15 @@ docker compose exec -e DEMO_STAFF_PASSWORD='...' app npm run db:seed:cloud
 
 Veritabanında veri varsa hiçbir şey yapmaz. `npm run demo / setup / db:reset` sunucuda çalışmaz (yerel olmayan veritabanında durur).
 
+## Akşam özeti (CRM bildirimi)
+
+- Her akşam 19:00'da (`/etc/cron.d/mirmotors-ozet`) abone personele "Günün özeti" bildirimi gider: son 24 saatteki kayıt/yayın/opsiyon/satış sayıları, bekleyen işler, WhatsApp'tan yazan kişi sayısı.
+- İstek kapsayıcının içinden `CRON_SECRET` ile yapılır (anahtar sunucudan çıkmaz). Elle denemek için:
+
+```bash
+cd /opt/mirmotors/app/deploy && docker compose exec -T app node -e 'fetch("http://127.0.0.1:3000/api/cron/gunluk-ozet",{method:"POST",headers:{authorization:"Bearer "+process.env.CRON_SECRET}}).then(r=>{console.log(r.status);process.exit(r.ok?0:1)})'
+```
+
 ## Yedek ve geri yükleme
 
 - Her gece 03:30'da `deploy/backup.sh` (cron: `/etc/cron.d/mirmotors-yedek`). Yedekler aynı sunucudadır; sunucu kaybına karşı ayrıca dışarıya kopyalanmalıdır (yapılacak).
