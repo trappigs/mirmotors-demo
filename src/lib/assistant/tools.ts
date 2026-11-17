@@ -5,11 +5,11 @@ import { STATUS_LABELS, VEHICLE_STATUSES, type VehicleStatus } from "../constant
 import { formatKm, formatPrice } from "../format";
 
 /**
- * WhatsApp asistanının CRM araçları. Hepsi SALT OKUNUR: hiçbir kaydı değiştirmez.
+ * WhatsApp asistanının CRM sorgu araçları. Hepsi SALT OKUNUR: hiçbir kaydı değiştirmez (değişiklik: ./actions.ts, personel onayıyla).
  * Çıktı kısa düz metindir (AI'a gider); müşteri kişisel verisi (alıcı, ruhsat sahibi) içermez.
  */
 
-const vehicleLine = (v: {
+export const vehicleLine = (v: {
   id: string; status: string; brand: string | null; model: string | null; packageName: string | null; year: number | null;
   km: number | null; price: number | null; color: string | null; legalPlate: string | null; stockCode: string | null;
 }) =>
@@ -25,7 +25,7 @@ const vehicleLine = (v: {
     v.stockCode ? `stok ${v.stockCode}` : null,
   ].filter(Boolean).join(" · ");
 
-const LINE_SELECT = { id: true, status: true, brand: true, model: true, packageName: true, year: true, km: true, price: true, color: true, legalPlate: true, stockCode: true } as const;
+export const LINE_SELECT = { id: true, status: true, brand: true, model: true, packageName: true, year: true, km: true, price: true, color: true, legalPlate: true, stockCode: true } as const;
 
 export type SearchArgs = {
   text?: string | null; status?: string | null; color?: string | null; fuel?: string | null; transmission?: string | null;
@@ -64,11 +64,22 @@ export async function searchVehicles(a: SearchArgs): Promise<string> {
   return `${total} araç bulundu${total > rows.length ? ` (ilk ${rows.length} gösteriliyor)` : ""}:\n` + rows.map(vehicleLine).join("\n");
 }
 
-export async function getVehicle(ref: string): Promise<string> {
+/** Kısa numara (#abc123, en az 4 karakter), plaka ya da stok kodu ile arama koşulu. */
+export function refWhere(ref: string): Prisma.VehicleWhereInput {
   const r = ref.trim().replace(/^#/, "");
   const plate = r.replace(/\s/g, "").toUpperCase();
+  return {
+    OR: [
+      ...(r.length >= 4 ? [{ id: { endsWith: r } }] : []),
+      { legalPlate: { equals: plate, mode: "insensitive" } },
+      { stockCode: { equals: r, mode: "insensitive" } },
+    ],
+  };
+}
+
+export async function getVehicle(ref: string): Promise<string> {
   const v = await prisma.vehicle.findFirst({
-    where: { OR: [{ id: { endsWith: r } }, { legalPlate: { equals: plate, mode: "insensitive" } }, { stockCode: { equals: r, mode: "insensitive" } }] },
+    where: refWhere(ref),
     include: { optionedBy: { select: { name: true } }, createdBy: { select: { name: true } }, _count: { select: { photos: true } } },
   });
   if (!v) return "Bu numara/plaka/stok koduyla araç bulunamadı.";

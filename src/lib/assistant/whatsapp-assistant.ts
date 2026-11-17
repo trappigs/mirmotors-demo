@@ -6,10 +6,12 @@ import { prisma } from "../db";
 import { AI_MODEL } from "../ai/vehicle-draft";
 import { FUEL_TYPES, TRANSMISSIONS, VEHICLE_STATUSES } from "../constants";
 import { getVehicle, searchVehicles, stockSummary } from "./tools";
+import { proposeAction, type Staff } from "./actions";
+import { ASSISTANT_ACTIONS } from "./action-rules";
 
 /**
- * Mir Motors WhatsApp asistanı (personel için). Mesajı anlar, CRM'i SALT OKUNUR araçlarla sorgular, kısa Türkçe cevap üretir.
- * Kayıt değiştirmez; değişiklik istenirse CRM'e yönlendirir.
+ * Mir Motors WhatsApp asistanı (personel için). Mesajı anlar, CRM'i sorgular, kısa Türkçe cevap üretir.
+ * Kayıt değiştiren istekleri yalnız ÖNERİR (propose_action); işlem personel düğmeyle onaylayınca yapılır (./actions.ts).
  */
 
 const HISTORY = 10;
@@ -20,13 +22,16 @@ function systemPrompt(staffName: string) {
 
 Kurallar:
 - Stok, araç, fiyat, durum ve satış sorularını YALNIZCA araçlardan (tools) gelen verilerle cevapla. Veri yoksa "bulamadım" de; asla tahmin etme, uydurma.
-- Kayıt değiştiremezsin (fiyat, durum, opsiyon, satış, araç ekleme). Böyle bir istek gelirse bunun henüz WhatsApp'tan yapılamadığını, CRM'den yapılacağını kısaca söyle.
+- Şu işlemleri propose_action ile ÖNEREBİLİRSİN: opsiyonla (option), opsiyonu kaldır (releaseOption), satış başlat (startSale, anlaşılan fiyat varsa price), satışı iptal et (cancelSale), satışı tamamla/noter devri bitti (completeSale), fiyat değiştir (setPrice, price zorunlu).
+- propose_action işlemi YAPMAZ; personele ayrıca "Onayla / Vazgeç" düğmeleri gider. Öneriden sonra işlemi yapılmış gibi anlatma; yalnız "onayınızı bekliyorum" de.
+- Hangi araç olduğu ya da fiyat belirsizse önermeden önce sor; tahminle araç seçme. Fiyatı "1.250.000" ya da "1,25 milyon" gibi yazılsa da tam TL sayısına çevir.
+- Bunların dışındaki değişiklikler (araç ekleme, diğer bilgiler, fotoğraf, yayımlama) WhatsApp'tan yapılamaz; CRM'e yönlendir.
 - Cevaplar WhatsApp mesajıdır: kısa, düz Türkçe, gerekirse madde işaretli. Kalın için *yıldız* kullan; tablo ve başlık kullanma.
 - Araçları "#abc123" kısa numarasıyla an; personel bu numarayla detay sorabilir.
 - Galeriyle ilgisiz konularda kibarca yalnız galeri işlerine yardım edebildiğini söyle.`;
 }
 
-function tools() {
+function tools(ctx: { waId: string; staff: Staff }) {
   return [
     betaZodTool({
       name: "search_vehicles",
@@ -59,10 +64,21 @@ function tools() {
       inputSchema: z.object({ days: z.number().int().min(1).max(365) }),
       run: (a) => stockSummary(a.days),
     }),
+    betaZodTool({
+      name: "propose_action",
+      description:
+        "Kayıt değiştiren bir işlemi personelin onayına sunar (yapmaz). ref: aracın kısa numarası (#abc123), plakası ya da stok kodu. price: setPrice için yeni fiyat (zorunlu), startSale için anlaşılan fiyat (isteğe bağlı), tam TL.",
+      inputSchema: z.object({
+        ref: z.string().min(2),
+        action: z.enum(ASSISTANT_ACTIONS),
+        price: z.number().int().positive().nullable().optional(),
+      }),
+      run: (a) => proposeAction({ waId: ctx.waId, staff: ctx.staff, ref: a.ref, action: a.action, price: a.price }),
+    }),
   ];
 }
 
-export async function answerStaffMessage(input: { waId: string; staffName: string; text: string }): Promise<string> {
+export async function answerStaffMessage(input: { waId: string; staff: Staff; text: string }): Promise<string> {
   if (!process.env.ANTHROPIC_API_KEY?.trim()) {
     return "Asistan henüz etkin değil: sunucuda yapay zekâ anahtarı tanımlı değil.";
   }
@@ -87,9 +103,9 @@ export async function answerStaffMessage(input: { waId: string; staffName: strin
   const final = await client.beta.messages.toolRunner({
     model: AI_MODEL,
     max_tokens: 1500,
-    system: systemPrompt(input.staffName),
+    system: systemPrompt(input.staff.name),
     messages,
-    tools: tools(),
+    tools: tools({ waId: input.waId, staff: input.staff }),
     max_iterations: 6,
   });
   const text = final.content.filter((b) => b.type === "text").map((b) => (b as { text: string }).text).join("\n").trim();

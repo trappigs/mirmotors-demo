@@ -301,3 +301,22 @@ model WhatsAppMessage {
   @@index([waId, sentAt])
   @@index([sentAt])
 }
+
+/// WhatsApp asistanının önerdiği, personel onayı bekleyen işlem. İşlem yalnız personel "Onayla" deyince yapılır;
+/// yeni bir mesaj, "Vazgeç" ya da süre dolması bekleyen öneriyi geçersiz kılar. Geçmiş için kayıt silinmez.
+model AssistantAction {
+  id        String    @id @default(cuid())
+  waId      String // öneriyi alan personelin WhatsApp numarası
+  userId    String // işlemi yapacak personel (yetki kuralları bu kişiye göre işler)
+  vehicleId String
+  action    String // option | releaseOption | startSale | cancelSale | completeSale | setPrice
+  price     Int? // setPrice: yeni fiyat · startSale: anlaşılan fiyat (isteğe bağlı)
+  summary   String // personele gösterilen özet (onaylanan metin)
+  status    String    @default("PENDING") // PENDING | RUNNING | DONE | FAILED | CANCELLED
+  result    String?
+  createdAt DateTime  @default(now())
+  expiresAt DateTime
+  doneAt    DateTime?
+
+  @@index([waId, status])
+}

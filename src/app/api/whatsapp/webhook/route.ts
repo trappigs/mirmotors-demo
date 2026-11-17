@@ -2,14 +2,17 @@ import { NextResponse, after } from "next/server";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { notifyStaff } from "@/lib/push";
-import { sendWhatsAppText } from "@/lib/whatsapp-send";
+import { sendWhatsAppButtons, sendWhatsAppText } from "@/lib/whatsapp-send";
 import { answerStaffMessage } from "@/lib/assistant/whatsapp-assistant";
+import { cancelPending, executeAction, latestPending, rejectAction } from "@/lib/assistant/actions";
+import { isTypedCancel, isTypedConfirm, parseButtonId } from "@/lib/assistant/action-rules";
 import { extractMessages, summarizeEvent, verifyChallenge, verifySignature, type IncomingWithTarget } from "@/lib/whatsapp-webhook";
 
 /**
  * WhatsApp Cloud API webhook (Meta uygulaması: MirMotorsWP). Herkese açık adres; korunması imzayla yapılır.
  * WHATSAPP_VERIFY_TOKEN: Meta'daki "Verify token". WHATSAPP_APP_SECRET: uygulamanın App Secret'ı.
- * Mesajlar yalnız imza doğrulanınca kaydedilir. Kayıtlı personelden (User.phone) gelen mesajlara asistan cevap verir;
+ * Mesajlar yalnız imza doğrulanınca kaydedilir. Kayıtlı personelden (User.phone) gelen mesajlara asistan cevap verir
+ * (kayıt değiştiren işlem yalnız personel "Onayla" düğmesine basınca ya da "evet" yazınca yapılır);
  * diğer numaralara cevap verilmez, yalnız CRM > Mesajlar'da görünür. Günlüğe yalnız sayılar yazılır.
  */
 export const dynamic = "force-dynamic";
@@ -43,8 +46,8 @@ export async function POST(req: Request) {
   const fresh: IncomingWithTarget[] = [];
   try {
     for (const m of extractMessages(body)) {
-      const { phoneNumberId: _target, ...data } = m;
-      void _target;
+      const { phoneNumberId: _target, replyId: _reply, ...data } = m;
+      void _target; void _reply;
       try {
         await prisma.whatsAppMessage.create({ data });
         fresh.push(m);
@@ -67,8 +70,8 @@ export async function POST(req: Request) {
 }
 
 async function handleFresh(messages: IncomingWithTarget[]) {
-  const staff = await prisma.user.findMany({ where: { phone: { in: [...new Set(messages.map((m) => m.waId))] } }, select: { name: true, phone: true } });
-  const staffBy = new Map(staff.map((s) => [s.phone!, s.name]));
+  const staff = await prisma.user.findMany({ where: { phone: { in: [...new Set(messages.map((m) => m.waId))] } }, select: { id: true, name: true, role: true, phone: true } });
+  const staffBy = new Map(staff.map((s) => [s.phone!, s]));
 
   const outsiders = messages.filter((m) => !staffBy.has(m.waId));
   if (outsiders.length) {
@@ -85,26 +88,67 @@ async function handleFresh(messages: IncomingWithTarget[]) {
   for (const m of messages) if (staffBy.has(m.waId)) lastByStaff.set(m.waId, m);
   for (const m of lastByStaff.values()) {
     if (!m.phoneNumberId) continue;
-    let reply: string;
     try {
-      reply = m.text && m.type === "text"
-        ? await answerStaffMessage({ waId: m.waId, staffName: staffBy.get(m.waId)!, text: m.text })
-        : "Şimdilik yalnız yazılı mesajları anlayabiliyorum.";
+      await answerStaff(m, m.phoneNumberId, staffBy.get(m.waId)!);
     } catch (e) {
-      console.error("[whatsapp] asistan cevap üretemedi", (e as Error).message);
-      reply = "Şu an cevap veremiyorum, biraz sonra tekrar dener misiniz?";
+      console.error("[whatsapp] personel mesajı işlenemedi", (e as Error).message);
     }
-    const sent = await sendWhatsAppText(m.phoneNumberId, m.waId, reply);
-    if (!sent.ok) {
-      console.error("[whatsapp] cevap gönderilemedi", sent.error);
-      continue;
-    }
-    await prisma.whatsAppMessage.create({
-      data: {
-        waMessageId: sent.id ?? `out-${Date.now()}-${m.waId}`,
-        waId: m.waId, contactName: null, type: "text", text: reply, sentAt: new Date(), readAt: new Date(), direction: "OUT",
-      },
-    });
-    console.info("[whatsapp] asistan cevap gönderdi", JSON.stringify({ chars: reply.length }));
   }
+}
+
+async function answerStaff(m: IncomingWithTarget, phoneNumberId: string, staff: { id: string; name: string; role: string }) {
+  // 1) Düğmeyle onay/vazgeç: düğme kimliği belirli bir öneriye bağlıdır.
+  const button = parseButtonId(m.replyId);
+  if (button) {
+    return reply(phoneNumberId, m.waId, button.confirm ? await executeAction(m.waId, button.actionId) : await rejectAction(m.waId, button.actionId));
+  }
+  // 2) Yazılı kısa onay/vazgeç: yalnız geçerli bir bekleyen öneri varsa.
+  const pending = await latestPending(m.waId);
+  if (pending && m.type === "text" && isTypedConfirm(m.text)) return reply(phoneNumberId, m.waId, await executeAction(m.waId, pending.id));
+  if (pending && m.type === "text" && isTypedCancel(m.text)) return reply(phoneNumberId, m.waId, await rejectAction(m.waId, pending.id));
+  // 3) Başka her mesaj yeni bir konudur: bekleyen öneri geçersiz olur (eski bir "evet" yanlış işlemi onaylamasın).
+  if (pending) await cancelPending(m.waId, "Personel başka bir mesaj yazdı");
+
+  const turnStart = new Date();
+  let text: string;
+  try {
+    text = m.text && m.type === "text"
+      ? await answerStaffMessage({ waId: m.waId, staff, text: m.text })
+      : "Şimdilik yalnız yazılı mesajları anlayabiliyorum.";
+  } catch (e) {
+    console.error("[whatsapp] asistan cevap üretemedi", (e as Error).message);
+    text = "Şu an cevap veremiyorum, biraz sonra tekrar dener misiniz?";
+  }
+  // Asistan bu mesajda işlem önerdiyse: onaylanacak metin yapay zekânın serbest cevabı değil, sabit özettir.
+  const proposed = await latestPending(m.waId);
+  if (proposed && proposed.createdAt >= turnStart) {
+    const body = `${proposed.summary}
+
+Onaylıyor musunuz? (10 dk geçerli)`;
+    const sent = await sendWhatsAppButtons(phoneNumberId, m.waId, body, [
+      { id: `ok:${proposed.id}`, title: "Onayla" },
+      { id: `no:${proposed.id}`, title: "Vazgeç" },
+    ]);
+    if (sent.ok) return store(m.waId, sent.id, "interactive", body);
+    console.error("[whatsapp] onay düğmeleri gönderilemedi", sent.error);
+    await cancelPending(m.waId, "Onay düğmeleri gönderilemedi");
+    return reply(phoneNumberId, m.waId, "Onay düğmeleri gönderilemedi; işlem yapılmadı. CRM'den yapabilir ya da tekrar deneyebilirsiniz.");
+  }
+  return reply(phoneNumberId, m.waId, text);
+}
+
+async function reply(phoneNumberId: string, waId: string, text: string) {
+  const sent = await sendWhatsAppText(phoneNumberId, waId, text);
+  if (!sent.ok) {
+    console.error("[whatsapp] cevap gönderilemedi", sent.error);
+    return;
+  }
+  await store(waId, sent.id, "text", text);
+}
+
+async function store(waId: string, id: string | null, type: string, text: string) {
+  await prisma.whatsAppMessage.create({
+    data: { waMessageId: id ?? `out-${Date.now()}-${waId}`, waId, contactName: null, type, text, sentAt: new Date(), readAt: new Date(), direction: "OUT" },
+  });
+  console.info("[whatsapp] asistan cevap gönderdi", JSON.stringify({ type, chars: text.length }));
 }
