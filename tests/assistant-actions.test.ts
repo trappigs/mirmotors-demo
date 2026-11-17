@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { describeAction, isTypedCancel, isTypedConfirm, parseButtonId, precheck } from "../src/lib/assistant/action-rules";
+import { captionRef, describeAction, describeNewVehicle, isTypedCancel, isTypedConfirm, parseButtonId, precheck } from "../src/lib/assistant/action-rules";
 import { extractMessages } from "../src/lib/whatsapp-webhook";
 
 const sales = { id: "u-ahmet", role: "SALES" };
@@ -70,5 +70,33 @@ describe("onay özeti ve cevaplar", () => {
     const [m] = extractMessages(body);
     expect(m.replyId).toBe("ok:cmabc1234567890");
     expect(m.text).toBe("Onayla");
+  });
+});
+
+describe("WhatsApp'tan araç ekleme ve fotoğraf", () => {
+  it("yeni araç özeti verilenleri yazar, eksikleri belirtir", () => {
+    const s = describeNewVehicle({ brand: "VW", model: "Passat", packageName: "1.5 TSI Business", year: 2020, km: 85000, price: 1_250_000, fuel: "Benzin", transmission: "Otomatik" });
+    expect(s).toContain("VW Passat 1.5 TSI Business");
+    expect(s).toContain("2020 · 85.000 km · 1.250.000 TL · Benzin · Otomatik");
+    expect(s).toContain("Girilmedi: plaka");
+    expect(s).toMatch(/sitede görünmez/);
+    expect(describeNewVehicle({ brand: "Fiat", model: "Egea" })).toContain("Girilmedi: yıl, km, fiyat, yakıt, vites, plaka");
+  });
+
+  it("fotoğraf açıklamasındaki araç numarası", () => {
+    expect(captionRef("#25apl8 ön görünüm")).toBe("25apl8");
+    expect(captionRef("arka #ABC123")).toBe("ABC123");
+    expect(captionRef("#ab")).toBeNull();
+    expect(captionRef(null)).toBeNull();
+  });
+
+  it("fotoğraf mesajının medya kimliği ve açıklaması okunur", () => {
+    const body = { entry: [{ changes: [{ field: "messages", value: {
+      metadata: { phone_number_id: "PNID" },
+      messages: [{ id: "wamid.3", from: "905365619652", timestamp: "1763337600", type: "image", image: { id: "1234567890", caption: "#25apl8", mime_type: "image/jpeg" } }],
+    } }] }] };
+    const [m] = extractMessages(body);
+    expect(m.mediaId).toBe("1234567890");
+    expect(m.text).toBe("#25apl8");
   });
 });

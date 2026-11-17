@@ -89,3 +89,34 @@ export function isTypedConfirm(text: string | null | undefined): boolean {
 export function isTypedCancel(text: string | null | undefined): boolean {
   return !!text && /^(hayır|hayir|vazgeç|vazgec|iptal|yapma|dur)$/.test(norm(text));
 }
+
+/** WhatsApp'tan araç ekleme: yalnız temel ilan bilgileri; araç TASLAK açılır, kalan bilgiler CRM'de tamamlanır. */
+export type NewVehicle = {
+  brand: string; model: string; packageName?: string | null; year?: number | null; km?: number | null; price?: number | null;
+  fuel?: string | null; transmission?: string | null; bodyType?: string | null; color?: string | null; legalPlate?: string | null;
+};
+
+const fmtInt = (n: number) => new Intl.NumberFormat("tr-TR").format(n);
+
+/** Personelin onaylayacağı yeni araç özeti (yalnız verilen bilgiler; boşlar "girilmedi" diye listelenir). */
+export function describeNewVehicle(v: NewVehicle): string {
+  const missing = [
+    v.year == null && "yıl", v.km == null && "km", v.price == null && "fiyat", !v.fuel && "yakıt", !v.transmission && "vites", !v.legalPlate && "plaka",
+  ].filter(Boolean);
+  return [
+    `*Yeni araç (taslak)*: ${[v.brand, v.model, v.packageName].filter(Boolean).join(" ")}`,
+    [v.year, v.km != null ? `${fmtInt(v.km)} km` : null, v.price != null ? formatPrice(v.price) : null, v.fuel, v.transmission, v.bodyType, v.color, v.legalPlate ? `plaka ${v.legalPlate}` : null]
+      .filter(Boolean).join(" · "),
+    missing.length ? `Girilmedi: ${missing.join(", ")} (CRM'de tamamlanır)` : null,
+    `Araç sitede görünmez; yayın CRM'den yapılır.`,
+  ].filter(Boolean).join("\n");
+}
+
+/** Fotoğraf açıklamasındaki araç numarası: "#abc123" (ilk geçen). */
+export function captionRef(caption: string | null | undefined): string | null {
+  const m = /#([a-z0-9]{4,30})/i.exec(caption ?? "");
+  return m ? m[1] : null;
+}
+
+/** WhatsApp'tan açılan taslağa açıklamasız fotoğrafların eklenebileceği süre. */
+export const PHOTO_WINDOW_MS = 60 * 60_000;

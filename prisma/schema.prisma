@@ -308,8 +308,9 @@ model AssistantAction {
   id        String    @id @default(cuid())
   waId      String // öneriyi alan personelin WhatsApp numarası
   userId    String // işlemi yapacak personel (yetki kuralları bu kişiye göre işler)
-  vehicleId String
-  action    String // option | releaseOption | startSale | cancelSale | completeSale | setPrice
+  vehicleId String? // createVehicle: işlem yapılınca oluşan aracın kimliği
+  action    String // option | releaseOption | startSale | cancelSale | completeSale | setPrice | createVehicle
+  payload   String? // createVehicle: onaylanan araç bilgileri (JSON)
   price     Int? // setPrice: yeni fiyat · startSale: anlaşılan fiyat (isteğe bağlı)
   summary   String // personele gösterilen özet (onaylanan metin)
   status    String    @default("PENDING") // PENDING | RUNNING | DONE | FAILED | CANCELLED

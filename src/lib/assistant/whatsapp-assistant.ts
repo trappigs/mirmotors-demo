@@ -4,9 +4,9 @@ import { betaZodTool } from "@anthropic-ai/sdk/helpers/beta/zod";
 import { z } from "zod";
 import { prisma } from "../db";
 import { AI_MODEL } from "../ai/vehicle-draft";
-import { FUEL_TYPES, TRANSMISSIONS, VEHICLE_STATUSES } from "../constants";
+import { BODY_TYPES, FUEL_TYPES, TRANSMISSIONS, VEHICLE_STATUSES } from "../constants";
 import { getVehicle, searchVehicles, stockSummary } from "./tools";
-import { proposeAction, type Staff } from "./actions";
+import { proposeAction, proposeNewVehicle, type Staff } from "./actions";
 import { ASSISTANT_ACTIONS } from "./action-rules";
 
 /**
@@ -25,7 +25,9 @@ Kurallar:
 - Şu işlemleri propose_action ile ÖNEREBİLİRSİN: opsiyonla (option), opsiyonu kaldır (releaseOption), satış başlat (startSale, anlaşılan fiyat varsa price), satışı iptal et (cancelSale), satışı tamamla/noter devri bitti (completeSale), fiyat değiştir (setPrice, price zorunlu).
 - propose_action işlemi YAPMAZ; personele ayrıca "Onayla / Vazgeç" düğmeleri gider. Öneriden sonra işlemi yapılmış gibi anlatma; yalnız "onayınızı bekliyorum" de.
 - Hangi araç olduğu ya da fiyat belirsizse önermeden önce sor; tahminle araç seçme. Fiyatı "1.250.000" ya da "1,25 milyon" gibi yazılsa da tam TL sayısına çevir.
-- Bunların dışındaki değişiklikler (araç ekleme, diğer bilgiler, fotoğraf, yayımlama) WhatsApp'tan yapılamaz; CRM'e yönlendir.
+- Yeni araç eklemek için propose_new_vehicle kullan (marka ve model zorunlu; yıl, km, fiyat, yakıt, vites, kasa, renk, plaka verilmişse ekle, verilmemişse UYDURMA, boş bırak). Araç taslak açılır, sitede görünmez.
+- Fotoğraflar asistana değil sisteme gider: personel taslak açıldıktan sonra 1 saat içinde fotoğraf gönderirse o araca eklenir; başka bir araca eklemek için fotoğraf açıklamasına #numara yazılır.
+- Bunların dışındaki değişiklikler (diğer bilgiler, belgeler, yayımlama) WhatsApp'tan yapılamaz; CRM'e yönlendir.
 - Cevaplar WhatsApp mesajıdır: kısa, düz Türkçe, gerekirse madde işaretli. Kalın için *yıldız* kullan; tablo ve başlık kullanma.
 - Araçları "#abc123" kısa numarasıyla an; personel bu numarayla detay sorabilir.
 - Galeriyle ilgisiz konularda kibarca yalnız galeri işlerine yardım edebildiğini söyle.`;
@@ -74,6 +76,24 @@ function tools(ctx: { waId: string; staff: Staff }) {
         price: z.number().int().positive().nullable().optional(),
       }),
       run: (a) => proposeAction({ waId: ctx.waId, staff: ctx.staff, ref: a.ref, action: a.action, price: a.price }),
+    }),
+    betaZodTool({
+      name: "propose_new_vehicle",
+      description: "Yeni aracı TASLAK olarak açmayı personelin onayına sunar (açmaz). Yalnız personelin verdiği bilgileri gir; fiyat ve km tam sayı.",
+      inputSchema: z.object({
+        brand: z.string().min(1).max(60),
+        model: z.string().min(1).max(60),
+        packageName: z.string().max(120).nullable().optional(),
+        year: z.number().int().nullable().optional(),
+        km: z.number().int().min(0).nullable().optional(),
+        price: z.number().int().positive().nullable().optional(),
+        fuel: z.enum(FUEL_TYPES as [string, ...string[]]).nullable().optional(),
+        transmission: z.enum(TRANSMISSIONS as [string, ...string[]]).nullable().optional(),
+        bodyType: z.enum(BODY_TYPES as [string, ...string[]]).nullable().optional(),
+        color: z.string().max(60).nullable().optional(),
+        legalPlate: z.string().max(20).nullable().optional(),
+      }),
+      run: (a) => proposeNewVehicle({ waId: ctx.waId, staff: ctx.staff, vehicle: a }),
     }),
   ];
 }

@@ -4,8 +4,8 @@ import { prisma } from "@/lib/db";
 import { notifyStaff } from "@/lib/push";
 import { sendWhatsAppButtons, sendWhatsAppText } from "@/lib/whatsapp-send";
 import { answerStaffMessage } from "@/lib/assistant/whatsapp-assistant";
-import { cancelPending, executeAction, latestPending, rejectAction } from "@/lib/assistant/actions";
-import { isTypedCancel, isTypedConfirm, parseButtonId } from "@/lib/assistant/action-rules";
+import { attachPhotos, cancelPending, executeAction, latestPending, rejectAction } from "@/lib/assistant/actions";
+import { captionRef, isTypedCancel, isTypedConfirm, parseButtonId } from "@/lib/assistant/action-rules";
 import { extractMessages, summarizeEvent, verifyChallenge, verifySignature, type IncomingWithTarget } from "@/lib/whatsapp-webhook";
 
 /**
@@ -46,8 +46,8 @@ export async function POST(req: Request) {
   const fresh: IncomingWithTarget[] = [];
   try {
     for (const m of extractMessages(body)) {
-      const { phoneNumberId: _target, replyId: _reply, ...data } = m;
-      void _target; void _reply;
+      const { phoneNumberId: _target, replyId: _reply, mediaId: _media, ...data } = m;
+      void _target; void _reply; void _media;
       try {
         await prisma.whatsAppMessage.create({ data });
         fresh.push(m);
@@ -83,9 +83,32 @@ async function handleFresh(messages: IncomingWithTarget[]) {
     });
   }
 
-  // Personel: aynı anda birkaç mesaj geldiyse kişi başına tek cevap (son mesaja, geçmişle birlikte).
+  // Personel: fotoğrafların hepsi araca eklenir; diğer mesajlarda kişi başına tek cevap (son mesaja, geçmişle birlikte).
   const lastByStaff = new Map<string, IncomingWithTarget>();
-  for (const m of messages) if (staffBy.has(m.waId)) lastByStaff.set(m.waId, m);
+  const photosByStaff = new Map<string, IncomingWithTarget[]>();
+  for (const m of messages) {
+    if (!staffBy.has(m.waId)) continue;
+    if (m.mediaId) photosByStaff.set(m.waId, [...(photosByStaff.get(m.waId) ?? []), m]);
+    else lastByStaff.set(m.waId, m);
+  }
+  for (const [waId, photos] of photosByStaff) {
+    const target = photos[0].phoneNumberId;
+    if (!target) continue;
+    try {
+      // Açıklamada #numara olan fotoğraflar o araca; olmayanlar son açılan taslağa (açıklama ilk fotoğrafta yazılırsa hepsine uygulanır).
+      const shared = photos.map((p) => captionRef(p.text)).find(Boolean) ?? null;
+      const groups = new Map<string | null, string[]>();
+      for (const p of photos) {
+        const ref = captionRef(p.text) ?? shared;
+        groups.set(ref, [...(groups.get(ref) ?? []), p.mediaId!]);
+      }
+      const lines: string[] = [];
+      for (const [ref, mediaIds] of groups) lines.push(await attachPhotos({ waId, staff: staffBy.get(waId)!, mediaIds, ref }));
+      await reply(target, waId, lines.join("\n"));
+    } catch (e) {
+      console.error("[whatsapp] fotoğraf eklenemedi", (e as Error).message);
+    }
+  }
   for (const m of lastByStaff.values()) {
     if (!m.phoneNumberId) continue;
     try {
@@ -114,7 +137,7 @@ async function answerStaff(m: IncomingWithTarget, phoneNumberId: string, staff: 
   try {
     text = m.text && m.type === "text"
       ? await answerStaffMessage({ waId: m.waId, staff, text: m.text })
-      : "Şimdilik yalnız yazılı mesajları anlayabiliyorum.";
+      : "Yazılı mesajları ve araç fotoğraflarını anlayabiliyorum; ses, video ve belgeleri henüz işleyemiyorum.";
   } catch (e) {
     console.error("[whatsapp] asistan cevap üretemedi", (e as Error).message);
     text = "Şu an cevap veremiyorum, biraz sonra tekrar dener misiniz?";

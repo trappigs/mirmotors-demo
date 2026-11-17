@@ -44,8 +44,8 @@ export function summarizeEvent(body: unknown): { object: string; messages: numbe
 
 export type IncomingMessage = { waMessageId: string; waId: string; contactName: string | null; type: string; text: string | null; sentAt: Date };
 /** Gelen mesaj + mesajın geldiği işletme numarasının kimliği (cevap bu numaradan gönderilir). */
-/** phoneNumberId: mesajın geldiği işletme numarası (cevap buradan gider) · replyId: basılan düğmenin kimliği (yalnız düğmeli mesaja cevapta). */
-export type IncomingWithTarget = IncomingMessage & { phoneNumberId: string | null; replyId: string | null };
+/** phoneNumberId: mesajın geldiği işletme numarası (cevap buradan gider) · replyId: basılan düğmenin kimliği · mediaId: fotoğraf mesajının medya kimliği. */
+export type IncomingWithTarget = IncomingMessage & { phoneNumberId: string | null; replyId: string | null; mediaId: string | null };
 
 const TYPE_LABELS: Record<string, string> = {
   image: "Fotoğraf", audio: "Ses kaydı", video: "Video", document: "Belge", sticker: "Çıkartma",
@@ -95,6 +95,7 @@ export function extractMessages(body: unknown): IncomingWithTarget[] {
           sentAt: Number.isFinite(ts) && ts > 0 ? new Date(ts * 1000) : new Date(),
           phoneNumberId,
           replyId: typeof m.interactive?.button_reply?.id === "string" ? m.interactive.button_reply.id.slice(0, 256) : null,
+          mediaId: type === "image" && typeof m.image?.id === "string" ? m.image.id.slice(0, 64) : null,
         });
       }
     }
