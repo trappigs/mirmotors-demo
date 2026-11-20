@@ -2,21 +2,16 @@ import { NextResponse, type NextRequest } from "next/server";
 import { SESSION_COOKIE, readSession, sessionCookieOptions, sessionNeedsRenewal, signSession } from "@/lib/session";
 
 /**
- * Demo erişim kapısı (HTTP Basic). İnternete açık demo adresinde CRM, personel girişinden önce ayrı bir
- * erişim şifresiyle korunur; müşteri sitesi açık kalır. DEMO_ACCESS_SCOPE=all ise müşteri sitesi de korunur.
- * Vercel'de DEMO_ACCESS_PASSWORD tanımlı değilse korunan sayfalar açılmaz (yanlışlıkla korumasız yayın olmasın).
+ * İsteğe bağlı ek erişim kapısı (tarayıcının HTTP Basic penceresi). Varsayılan KAPALI: CRM yalnız kendi giriş
+ * sayfasıyla korunur (bcrypt + hesap başına deneme sınırı). Açmak için DEMO_ACCESS_SCOPE=crm (yalnız CRM) ya da
+ * all (müşteri sitesi de) verilir; o durumda DEMO_ACCESS_PASSWORD tanımlı değilse korunan sayfalar açılmaz.
  */
 function accessGate(req: NextRequest, isCrm: boolean): NextResponse | null {
-  const password = process.env.DEMO_ACCESS_PASSWORD;
-  const scope = process.env.DEMO_ACCESS_SCOPE === "all" ? "all" : "crm";
+  const scope = process.env.DEMO_ACCESS_SCOPE;
+  if (scope !== "crm" && scope !== "all") return null;
   if (scope === "crm" && !isCrm) return null;
-  if (!password) {
-    // İnternete açık kurulumlar (Vercel veya DEMO_REQUIRE_ACCESS=1 verilen sunucu): şifre yoksa CRM açılmaz.
-    if (process.env.VERCEL === "1" || process.env.DEMO_REQUIRE_ACCESS === "1") {
-      return new NextResponse("Demo erişim şifresi yapılandırılmadı (DEMO_ACCESS_PASSWORD).", { status: 503 });
-    }
-    return null; // yerel geliştirme
-  }
+  const password = process.env.DEMO_ACCESS_PASSWORD;
+  if (!password) return new NextResponse("Erişim şifresi yapılandırılmadı (DEMO_ACCESS_PASSWORD).", { status: 503 });
   const user = process.env.DEMO_ACCESS_USER || "mirmotors";
   const header = req.headers.get("authorization") ?? "";
   if (header.startsWith("Basic ")) {

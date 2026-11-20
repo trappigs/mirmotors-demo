@@ -112,7 +112,8 @@ Gerçek WhatsApp API, Instagram DM, otomatik müşteri cevaplama, EİDS entegras
 | Seed fotoğrafları statik `/demo-cars/...` | Blob kotası kullanmaz; silme yalnızca kaydı kaldırır. |
 | Vercel'de video 50 MB | Blob ücretsiz kotası; araç/satış akışı videoya bağlı değil. |
 | Giriş deneme sayacı veritabanında (`User.failedLogins`, tek atomik UPDATE) | Sunucusuz ortamda bellek içi sayaç örnekler arasında paylaşılmaz. |
-| CRM için HTTP Basic erişim kapısı (`DEMO_ACCESS_PASSWORD`), Vercel'de tanımsızsa CRM 503 | İnternete açık adreste sabit demo şifresiyle korumasız CRM bırakılmasın. Müşteri sitesi açık. |
+| ~~CRM için HTTP Basic erişim kapısı (`DEMO_ACCESS_PASSWORD`), Vercel'de tanımsızsa CRM 503~~ | İnternete açık adreste sabit demo şifresiyle korumasız CRM bırakılmasın. Müşteri sitesi açık. |
+| 2026-11-20: Basic kapı varsayılan kapalı; yalnız `DEMO_ACCESS_SCOPE=crm\|all` ile açılır | Canlı hesaplar rastgele güçlü şifreli; giriş sayfası bcrypt + hesap başına deneme sınırıyla korunuyor. Tarayıcı penceresi personeli zorluyordu. |
 | Bulut personel şifresi `DEMO_STAFF_PASSWORD` (≥12 karakter, yerel şifreden farklı) | Yerel sabit demo şifresi bulutta geçersiz. |
 | Sıfırlayan komutlar yalnızca localhost veritabanında; bulut seed'i yalnızca boş veritabanına | `npm run demo` bulut veritabanını yanlışlıkla silemesin (gerçek Neon adresiyle denendi: durdu). |
 | Vercel'de AI her zaman simülasyon | Canlı yol yerel dosyadan kare çıkarır; Vercel'de doğrulanmadı. |

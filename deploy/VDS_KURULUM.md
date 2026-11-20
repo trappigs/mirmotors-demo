@@ -28,7 +28,7 @@ EİDS entegrasyonu Bakanlığa bildirilen **sabit çıkış IP'si** istediği i�
 
 - **db** — PostgreSQL 17. Portu dışarı açık değildir.
 - **app** — Next.js uygulaması. Açılışta yalnızca `prisma migrate deploy` çalışır (veri silmez, seed çalıştırmaz).
-  Dosyalar sunucu diskinde (`storage/`); Vercel Blob kullanılmaz. Erişim şifresi yoksa CRM açılmaz (`DEMO_REQUIRE_ACCESS=1`).
+  Dosyalar sunucu diskinde (`storage/`); Vercel Blob kullanılmaz. CRM kendi giriş sayfasıyla korunur; tarayıcı şifre penceresi (HTTP Basic) yalnız `DEMO_ACCESS_SCOPE=crm|all` verilirse açılır.
 - **caddy** — 80/443, SSL'i kendisi alır ve yeniler. Sunucudaki diğer projelerle ortak (aşağıda "Ortak Caddyfile").
 
 ## Güncelleme (yeni sürümü yayına alma)
