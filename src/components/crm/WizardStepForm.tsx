@@ -35,10 +35,12 @@ async function send(url: string, method: string, body: unknown, keepalive: boole
  * Araç henüz yoksa (elle ekleme) ilk değişiklikte tek bir taslak oluşturulur; aynı giriş tekrar gönderilse de ikinci taslak açılmaz.
  * Stokta aynı plakalı araç varsa plaka, personel "Mevcut aracı aç" veya "Yine de yeni kayıt" seçene kadar bekletilir.
  */
-export function WizardStepForm({ vehicleId, initial, sections, next, submitLabel, ruhsatFields, onCreated, version, tradeName }: {
+export function WizardStepForm({ vehicleId, initial, sections, next, submitLabel, ruhsatFields, uncertainFields, onCreated, version, tradeName }: {
   /** Eşzamanlı düzenleme koruması: sayfa açıldığındaki kayıt sürümü. */
   version?: string; tradeName?: string | null;
   vehicleId?: string; initial?: Partial<VehicleFormValues>; sections: FormSection[]; next: string; submitLabel: string; ruhsatFields?: string[];
+  /** AI'nın okuduğu ama emin olmadığı form alanları (turuncu "kontrol edin"). */
+  uncertainFields?: string[];
   /** Elle eklemede taslak oluşunca (adım çubuğu bağlantıları açılsın). */
   onCreated?: (id: string) => void;
 }) {
@@ -208,6 +210,7 @@ export function WizardStepForm({ vehicleId, initial, sections, next, submitLabel
         sections={sections}
         submitLabel={submitLabel}
         ruhsatFields={ruhsatFields}
+        uncertainFields={uncertainFields}
         tradeName={tradeName}
         onFieldChange={onFieldChange}
         onSubmitOverride={() => goNext()}

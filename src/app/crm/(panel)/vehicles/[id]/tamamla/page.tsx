@@ -56,6 +56,8 @@ export default async function CompleteVehicleWizard({ params, searchParams }: { 
   const review = parseReview(v.docReview);
   // Ruhsattan okunan alanlar (belge alan adı → form alanı): formda tek tek kutu yerine özet kartında gösterilir.
   const ruhsatFields = review?.aiFields.filter((f) => f.document === "RUHSAT").map((f) => RUHSAT_FORM_KEYS[f.field] ?? f.field) ?? [];
+  // AI'nın okuduğu ama emin olmadığı alanlar: formda turuncu "kontrol edin" işaretiyle gösterilir.
+  const uncertainFields = review?.uncertain?.map((u) => RUHSAT_FORM_KEYS[u.field] ?? u.field) ?? [];
   const title = [v.brand, v.model, v.packageName].filter(Boolean).join(" ") || "Yeni araç";
   const next = (n: number) => `/crm/vehicles/:id/tamamla?adim=${n}`;
   const lastPart = v.parts[0];
@@ -92,14 +94,15 @@ export default async function CompleteVehicleWizard({ params, searchParams }: { 
 
       {step === 1 && (
         <>
-          {review && (openReview.length > 0 || unreadOpen.length > 0) && (
+          {review && (openReview.length > 0 || unreadOpen.length > 0 || uncertainFields.length > 0) && (
             <p className="rounded-lg border border-violet-200 bg-violet-50 p-3 text-sm text-violet-900" data-testid="review-later">
               Belgeden okunan bilgiler forma yerleştirildi.
               {unreadOpen.length > 0 && <> {unreadOpen.length} bilgi okunamadı (aşağıda boş).</>}
+              {uncertainFields.length > 0 && <> <strong>{uncertainFields.length} bilgide AI emin değil</strong> (turuncu işaretli): ruhsatla karşılaştırın.</>}
               {openReview.length > 0 && <> Çelişki ve onay gibi kontroller <Link href={`/crm/vehicles/${id}/tamamla?adim=4#belge-kontrolu`} className="font-semibold underline">son kontrol ekranında</Link> topluca yapılır.</>}
             </p>
           )}
-          <WizardStepForm vehicleId={id} version={v.updatedAt.toISOString()} tradeName={v.tradeName} initial={formInitial(v)} sections={["basic", "identity", "equipment"]} next={next(2)} submitLabel="Devam et → Kaporta" ruhsatFields={ruhsatFields} />
+          <WizardStepForm vehicleId={id} version={v.updatedAt.toISOString()} tradeName={v.tradeName} initial={formInitial(v)} sections={["basic", "identity", "equipment"]} next={next(2)} submitLabel="Devam et → Kaporta" ruhsatFields={ruhsatFields} uncertainFields={uncertainFields} />
         </>
       )}
 

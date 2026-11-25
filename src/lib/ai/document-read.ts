@@ -68,6 +68,7 @@ const rawSchema = z.object({
   }).nullable().optional(),
   sources: z.array(z.object({ field: z.string(), document: docKind, page: nInt, location: nStr, text: z.string() })),
   unreadable: z.array(z.object({ field: z.string(), document: docKind, reason: z.string() })),
+  uncertain: z.array(z.object({ field: z.string(), document: docKind, reason: z.string() })),
   quality: z.array(z.object({ document: docKind, page: z.number().int(), issues: z.array(z.enum(["BLURRY", "DARK", "CROPPED", "GLARE", "LOW_RES"])) })),
   warnings: z.array(z.string()),
 });
@@ -107,6 +108,7 @@ const JSON_SCHEMA = obj({
   }, true),
   sources: arr(obj({ field: STR, document: DOC, page: I, location: S, text: STR })),
   unreadable: arr(obj({ field: STR, document: DOC, reason: STR })),
+  uncertain: arr(obj({ field: STR, document: DOC, reason: STR })),
   quality: arr(obj({ document: DOC, page: { type: "integer" }, issues: arr({ type: "string", enum: ["BLURRY", "DARK", "CROPPED", "GLARE", "LOW_RES"] }) })),
   warnings: arr(STR),
 });
@@ -119,8 +121,13 @@ KİŞİSEL VERİ: Ad, soyad, T.C. kimlik no, vergi no, adres, telefon, e-posta, 
 ownerType: ruhsat sahibi bölümünde ticari unvan ibaresi (LTD., ŞTİ., A.Ş., OTOMOTİV, TİCARET, SANAYİ vb.) açıkça görülüyorsa COMPANY,
 ad-soyad biçimindeyse PERSON, kapatılmış/okunamıyor/emin değilsen UNKNOWN. Adı yazma.
 
-DOĞRULUK: Rakam ve harfleri karakter karakter oku. Okunamayan veya emin olmadığın alanı null yap ve unreadable listesine nedeniyle ekle
-(ör. "bulanık", "kapatılmış", "belgede yok", "kesilmiş"). Asla tahmin etme. Fiyat, donanım, kasa tipi yoktur. Ruhsatta vites ve km yoktur: null.
+DOĞRULUK: Rakam ve harfleri karakter karakter oku. Hiç okunamayan veya çoğunu tahmin etmen gereken alanı null yap ve unreadable listesine
+nedeniyle ekle (ör. "bulanık", "kapatılmış", "belgede yok", "kesilmiş"). Asla tahmin etme.
+UNCERTAIN: Alanı okudun ve değeri yazdın ama bir veya birkaç karakterden / kelimeden tam emin değilsen (ör. 0/O, 1/I, 5/S, 8/B karışıklığı,
+parlama veya katlanma izi, silik harf, iki satıra bölünmüş yazı) değeri yine yaz VE uncertain listesine {field, document, reason} ekle;
+reason'da hangi kısımdan emin olmadığını kısaca yaz (ör. "son iki hane silik", "O mu 0 mı belirsiz"). Emin olduğun alanı uncertain'e ekleme.
+field adı ilgili nesnedeki alan adıdır (ör. "plate", "vin", "color", "firstRegistrationDate", "engineCc").
+Fiyat, donanım, kasa tipi yoktur. Ruhsatta vites ve km yoktur: null.
 
 ŞASİ (çok önemli): vin yalnızca "(E) ŞASE NO" (ruhsat) veya ekspertizdeki "Şasi Numarası" alanından okunur. vinLabel'e değerin hemen yanındaki/üstündeki
 etiketi aynen yaz (ör. "(E) ŞASE NO"). Motor no (P.5), belge seri no, tescil sıra no, onay no ASLA şasi değildir. Tam numara okunamıyor ama son 6 karakteri
@@ -257,6 +264,7 @@ export function documentSimulation(kinds: ("RUHSAT" | "EKSPERTIZ" | "FORM")[], f
       ...(hasE ? [{ field: "km", document: "EKSPERTIZ" as const, page: 1, location: "üst tablo", text: "Kilometre: 84.500 (örnek)" }] : []),
     ],
     unreadable: hasR ? [{ field: "plate", document: "RUHSAT", reason: "simülasyon: örnek veride plaka yok" }] : [],
+    uncertain: hasR ? [{ field: "engineCc", document: "RUHSAT", reason: "simülasyon: örnek (silik rakam gösterimi)" }] : [],
     quality: [],
     warnings: ["SİMÜLASYON: Bu bilgiler yüklediğiniz belgelerden okunmadı."],
   };

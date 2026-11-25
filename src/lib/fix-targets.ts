@@ -36,6 +36,7 @@ const AI_FIELD_ANCHORS: Record<string, [1 | 2, string]> = {
   year: [1, "year"], km: [1, "km"], price: [1, "price"], color: [1, "color"], plate: [1, "legalPlate"], vinLast6: [1, "legalVin"],
   engineCc: [1, "engineCc"], enginePowerHp: [1, "enginePower"], stockCode: [2, "stockCode"], fuel: [1, "fuel"], transmission: [1, "transmission"],
   bodyType: [1, "bodyType"], drivetrain: [1, "drivetrain"], equipment: [1, "equipment"],
+  inspectionUntil: [1, "inspectionUntil"],
   damageRecord: [2, "damageRecord"], damageNote: [2, "damageNote"], tramerAmount: [2, "tramerAmount"], lien: [2, "legalLien"],
   warranty: [2, "warrantyStatus"], warrantyUntil: [2, "warrantyUntil"], warrantyKm: [2, "warrantyKm"], authority: [2, "legalRegisteredToCompany"],
 };
