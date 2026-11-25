@@ -256,7 +256,8 @@ const RAW_FIELD: Record<string, string> = {
   firstRegistrationDate: "firstRegistration", enginePowerKw: "enginePowerHp", fuelText: "fuel", transmissionText: "transmission",
   vin: "vinLast6", vinLast6Visible: "vinLast6", vinLabel: "vinLast6", tramerAmountTl: "tramerAmount",
 };
-const toVehicleField = (f: string) => RAW_FIELD[f] ?? f;
+// AI çıktısı güvenilmez: yalnızca kendi tablolarımızdaki anahtarlar kabul edilir ("constructor" gibi nesne anahtarları değil)
+const toVehicleField = (f: string) => (Object.hasOwn(RAW_FIELD, f) ? RAW_FIELD[f] : f);
 
 /**
  * Ham okumayı taslağa çevirir ve aynı araç kontrolünü yapar. Öncelik: güvenilir tam şasi → doğrulanmış kısmi şasi → plaka → marka.
@@ -386,9 +387,11 @@ export function mergeReadings(raw: RawRead): DocumentRead {
   const vrec = vehicle as Record<string, unknown>;
   const uncertain: NonNullable<DocumentRead["uncertain"]> = [];
   for (const u of raw.uncertain ?? []) {
-    const field = toVehicleField(u.field);
+    const field = toVehicleField(String(u.field));
+    // Yalnızca bilinen araç alanları (etiketi olan ve araç nesnesinde gerçekten bulunan)
+    if (!Object.hasOwn(FIELD_LABELS, field) || !Object.hasOwn(vrec, field)) continue;
     if (vrec[field] === null || vrec[field] === undefined || uncertain.some((x) => x.field === field)) continue;
-    uncertain.push({ field, label: FIELD_LABELS[field] ?? field, reason: clip(u.reason, 200) ?? "AI emin değil" });
+    uncertain.push({ field, label: FIELD_LABELS[field], reason: clip(String(u.reason ?? ""), 200) || "AI emin değil" });
   }
 
   const read: DocumentRead = {

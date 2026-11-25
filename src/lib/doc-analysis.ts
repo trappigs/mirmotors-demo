@@ -322,7 +322,7 @@ async function applyToExisting(tx: Tx, vehicleId: string, analysisId: string, re
     conflicts: [...(prev?.conflicts.filter((c) => c.resolved) ?? []), ...read.conflicts.map((c) => ({ ...c, resolved: null })), ...conflicts],
     aiFields: identity === "DIFFERENT" ? [] : add.aiFields,
     // Emin olunamayan değerlerden yalnızca araca gerçekten yazılanlar (mevcut değer korunduysa sorulmaz)
-    uncertain: identity === "DIFFERENT" ? [] : (add.uncertain ?? []).filter((u) => (UNCERTAIN_COLUMN[u.field] ?? u.field) in updates),
+    uncertain: identity === "DIFFERENT" ? [] : (add.uncertain ?? []).filter((u) => Object.hasOwn(updates, Object.hasOwn(UNCERTAIN_COLUMN, u.field) ? UNCERTAIN_COLUMN[u.field] : u.field)),
     ownerCheckRequired: prev?.ownerCheckRequired ?? false,
     ownerChecked: prev?.ownerChecked ?? false,
   };

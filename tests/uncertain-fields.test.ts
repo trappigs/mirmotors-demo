@@ -33,6 +33,16 @@ describe("emin olunamayan ve okunamayan alanlar", () => {
     expect(read.uncertain).toEqual([{ field: "plate", label: "Plaka", reason: "son hane silik" }]);
   });
 
+  it("AI'nın döndürdüğü bilinmeyen / nesne anahtarı alan adları yok sayılır", () => {
+    const base = documentSimulation(["RUHSAT"]);
+    void base;
+    const raw = {
+      ruhsat: null, ekspertiz: null, sources: [], unreadable: [], quality: [], warnings: [],
+      uncertain: [{ field: "constructor", document: "RUHSAT", reason: "x" }, { field: "__proto__", document: "RUHSAT", reason: "x" }, { field: "toString", document: "RUHSAT", reason: "x" }],
+    } as unknown as RawRead;
+    expect(mergeReadings(raw).uncertain).toEqual([]);
+  });
+
   it("eski okumalarda (uncertain alanı yok) hata vermez", () => {
     const raw = { ...documentSimulation(["RUHSAT"]) } as unknown;
     expect(raw).toBeTruthy();
