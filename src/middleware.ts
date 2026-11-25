@@ -52,7 +52,7 @@ export async function middleware(req: NextRequest) {
   const current = await readSession(req.cookies.get(SESSION_COOKIE)?.value);
   if (current) {
     const res = NextResponse.next();
-    // Kayan oturum: 1 günden eski çerez yeni 14 günlük çerezle değiştirilir (httpOnly/lax/secure ayarları aynı).
+    // Kayan oturum: 1 günden eski çerez yeni 180 günlük çerezle değiştirilir (httpOnly/lax/secure ayarları aynı).
     // Yenileme başarısız olursa istek yine geçer; mevcut çerez süresi dolana kadar geçerlidir.
     if (sessionNeedsRenewal(current.issuedAt)) {
       try {

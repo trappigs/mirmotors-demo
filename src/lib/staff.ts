@@ -28,21 +28,18 @@ export function generateTempPassword(): string {
 
 export const hashPassword = (pw: string) => bcrypt.hash(pw, 10);
 
-/**
- * Türkiye cep telefonu → 905XXXXXXXXX (yalnız rakam; WhatsApp'ın gönderen kimliği "wa_id" ile aynı biçim —
- * asistan personeli bu alanla eşleştirir). Boş → null. Geçersizse hata metni.
- */
+/** Türkiye cep telefonu → +905XXXXXXXXX. Boş → null. Geçersizse hata metni. */
 export function normalizePhone(input: string | null | undefined): { phone: string | null; error?: string } {
   const digits = String(input ?? "").replace(/\D/g, "");
   if (!digits) return { phone: null };
   const local = digits.startsWith("90") && digits.length === 12 ? digits.slice(2) : digits.startsWith("0") ? digits.slice(1) : digits;
   if (!/^5\d{9}$/.test(local)) return { phone: null, error: "Cep telefonu 05XX XXX XX XX biçiminde olmalı." };
-  return { phone: `90${local}` };
+  return { phone: `+90${local}` };
 }
 
-/** 905321234567 (veya eski +905321234567) → 0532 123 45 67 */
+/** +905321234567 → 0532 123 45 67 */
 export function formatPhone(phone: string | null): string {
-  const m = phone?.match(/^\+?90(\d{3})(\d{3})(\d{2})(\d{2})$/);
+  const m = phone?.match(/^\+90(\d{3})(\d{3})(\d{2})(\d{2})$/);
   return m ? `0${m[1]} ${m[2]} ${m[3]} ${m[4]}` : phone ?? "";
 }
 

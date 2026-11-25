@@ -21,8 +21,7 @@ model User {
   // Personel yönetimi: pasif hesap giriş yapamaz; kayıt silinmez (geçmiş korunur).
   active             Boolean   @default(true)
   deactivatedAt      DateTime?
-  /// Cep telefonu, yalnız rakam ülke koduyla (905321234567 = WhatsApp wa_id). WhatsApp asistanı bu numaradan
-  /// gelen mesajları bu personel adına cevaplar.
+  // Cep telefonu (+90XXXXXXXXXX): WhatsApp'tan yazan personelin tanınması için.
   phone              String?   @unique
   // Artırılınca o kullanıcının tüm açık oturumları geçersiz olur (pasif yapma, şifre sıfırlama).
   sessionVersion     Int       @default(0)

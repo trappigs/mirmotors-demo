@@ -6,7 +6,6 @@ import { CompanySettingsForm } from "@/components/crm/CompanySettingsForm";
 import { NotificationToggle } from "@/components/crm/NotificationToggle";
 import { StaffManager, type StaffRow } from "@/components/crm/StaffManager";
 import { STAFF_ACTION_LABELS, formatPhone } from "@/lib/staff";
-import { formatWaId } from "@/lib/whatsapp-webhook";
 import Link from "next/link";
 
 /** Her personelin gördüğü hesap kartı: şifre değiştirme bağlantısı. */
@@ -36,7 +35,6 @@ export default async function SettingsPage() {
   }
   const row = await prisma.companySettings.findUnique({ where: { id: "default" }, include: { updatedBy: { select: { name: true } } } });
   const env = envCompanyInfo();
-  const assistantNumber = process.env.WHATSAPP_ASSISTANT_NUMBER?.replace(/\D/g, "") || null;
   const users = await prisma.user.findMany({
     orderBy: [{ active: "desc" }, { role: "asc" }, { name: "asc" }],
     select: { id: true, name: true, email: true, role: true, phone: true, active: true, lastLoginAt: true, mustChangePassword: true },
@@ -64,9 +62,6 @@ export default async function SettingsPage() {
       />
       {row?.updatedAt && <p className="text-xs text-zinc-500">Son değişiklik: {row.updatedBy?.name ?? "—"} · {formatDateTime(row.updatedAt)}</p>}
       <StaffManager staff={staff} meId={user.id} />
-      <p className="-mt-3 text-xs text-zinc-500" data-testid="assistant-note">
-        WhatsApp asistanı: personelin cep telefonu kayıtlıysa{assistantNumber ? <> <strong>{formatWaId(assistantNumber)}</strong> numarasına</> : " asistan numarasına"} yazdığı mesajları o personel adına cevaplar.
-      </p>
       {events.length > 0 && (
         <section className="card p-6" data-testid="staff-events">
           <h2 className="font-display font-semibold">Personel işlemleri</h2>

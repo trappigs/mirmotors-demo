@@ -70,8 +70,9 @@ export async function POST(req: Request) {
 }
 
 async function handleFresh(messages: IncomingWithTarget[]) {
-  const staff = await prisma.user.findMany({ where: { active: true, phone: { in: [...new Set(messages.map((m) => m.waId))] } }, select: { id: true, name: true, role: true, phone: true } });
-  const staffBy = new Map(staff.map((s) => [s.phone!, s]));
+  const staff = await prisma.user.findMany({ where: { active: true, phone: { in: [...new Set(messages.map((m) => `+${m.waId}`))] } }, select: { id: true, name: true, role: true, phone: true } });
+  // Personel telefonu +905XXXXXXXXX, WhatsApp kimliği (wa_id) 905XXXXXXXXX biçimindedir
+  const staffBy = new Map(staff.map((s) => [s.phone!.replace(/^\+/, ""), s]));
 
   const outsiders = messages.filter((m) => !staffBy.has(m.waId));
   if (outsiders.length) {

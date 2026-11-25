@@ -23,7 +23,7 @@ export async function POST(req: Request) {
   ]);
   const h = (a: string) => history.find((x) => x.action === a)?._count._all ?? 0;
   const s = (st: string) => byStatus.find((x) => x.status === st)?._count._all ?? 0;
-  const staffPhones = new Set(staff.map((u) => u.phone));
+  const staffPhones = new Set(staff.map((u) => u.phone?.replace(/^\+/, ""))); // +905… → wa_id 905…
   const summary = buildDailySummary({
     created: h("create"), published: h("publish"), optioned: h("option"), saleStarted: h("startSale"), sold: h("completeSale"), cancelled: h("cancelSale"),
     waiting: { review: s("REVIEW"), draft: s("DRAFT"), salePending: s("SALE_PENDING"), optioned: s("OPTIONED") },
