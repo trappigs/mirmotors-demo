@@ -40,7 +40,7 @@ diye); aradaki fark aynı kuralla sınırlıdır.
 
 **Kaynak sınırları:** `nice 15` + `ionice idle`, restic tek çekirdek (`GOMAXPROCS=1`), yükleme 4 MB/sn sınırı,
 test veritabanı 512 MB bellek ve 1 çekirdek. Disk: yerel yedek öncesi (son yedek×3 + 1 GB), uzak yedek öncesi 1 GB,
-geri yükleme testi öncesi (boyut×2 + 512 MB) boş alan şartı. Tek kilit (`/run/lock/mirmotors-yedek.lock`): üç işlem
+geri yükleme testi öncesi (boyut×2 + 512 MB) boş alan şartı. Tek kilit (`/run/mirmotors-yedek.lock`, yalnız root): üç işlem
 aynı anda çalışmaz.
 
 ## 3. Dosyalar

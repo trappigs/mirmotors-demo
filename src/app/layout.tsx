@@ -6,8 +6,8 @@ const inter = Inter({ variable: "--font-inter", subsets: ["latin", "latin-ext"] 
 const sora = Sora({ variable: "--font-sora", subsets: ["latin", "latin-ext"] });
 
 export const metadata: Metadata = {
-  title: { default: "Mir Motors — DEMO", template: "%s · Mir Motors DEMO" },
-  description: "Mir Motors premium ikinci el araç galerisi — demo sürümü. İlanlar temsilidir.",
+  title: { default: "Mir Motors", template: "%s · Mir Motors" },
+  description: "Mir Motors ikinci el araç galerisi.",
   robots: { index: false, follow: false, nocache: true, googleBot: { index: false, follow: false } },
 };
 

@@ -45,7 +45,8 @@ export async function notifyStaff(payload: PushPayload, opts: { exceptUserId?: s
   try {
     if (!ensureConfigured()) return;
     const subs = await prisma.pushSubscription.findMany({
-      where: opts.exceptUserId ? { userId: { not: opts.exceptUserId } } : {},
+      // Pasif personele (işten ayrılan) bildirim gitmez.
+      where: { user: { active: true }, ...(opts.exceptUserId ? { userId: { not: opts.exceptUserId } } : {}) },
       select: { id: true, endpoint: true, p256dh: true, auth: true },
     });
     if (!subs.length) return;

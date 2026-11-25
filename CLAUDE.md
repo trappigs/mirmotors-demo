@@ -19,7 +19,7 @@ Mir Motors ikinci el araç galerisi: müşteri sitesi (`/`) + personel CRM'i (`/
 - Dosyalar `src/lib/storage.ts` üzerinden (yerel `storage/` veya Blob). Ekspertiz PDF'i asla herkese açık rotadan servis edilmez.
 - Müşteri sitesinde yalnızca `AVAILABLE` ve `OPTIONED` araçlar görünür; `SALE_PENDING`/`SOLD` detayları 404.
 - Şema değişikliği: `prisma migrate dev` (yalnızca yerel) → migration'ı commit et. Neon'da reset/push/truncate yok.
-- Uydurma veri yok: plaka, şasi, yetki belgesi no, müşteri yorumu, kampanya uydurulmaz. DEMO bandı ve `noindex` kalır.
+- Uydurma veri yok: plaka, şasi, yetki belgesi no, müşteri yorumu, kampanya uydurulmaz. `noindex` gerçek yayına kadar kalır. DEMO etiketleri 23.11.2026'da Burak'ın isteğiyle kaldırıldı; örnek araç görsellerindeki "temsili görsel" ibaresi kalır.
 - AI canlı yolu doğrulanmadı; simülasyonu "canlı AI" gibi sunma.
 - Gizli değerleri (`.env*`, şifreler, tokenlar) commit etme veya belgelere yazma.
 - Kod yorumları ve arayüz metinleri Türkçe.

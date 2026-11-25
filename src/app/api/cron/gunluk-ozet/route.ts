@@ -18,7 +18,7 @@ export async function POST(req: Request) {
   const [history, byStatus, staff, contacts] = await Promise.all([
     prisma.statusHistory.groupBy({ by: ["action"], where: { createdAt: { gte: since }, action: { in: actions } }, _count: { _all: true } }),
     prisma.vehicle.groupBy({ by: ["status"], _count: { _all: true } }),
-    prisma.user.findMany({ where: { phone: { not: null } }, select: { phone: true } }),
+    prisma.user.findMany({ where: { active: true, phone: { not: null } }, select: { phone: true } }),
     prisma.whatsAppMessage.findMany({ where: { direction: "IN", sentAt: { gte: since } }, select: { waId: true }, distinct: ["waId"] }),
   ]);
   const h = (a: string) => history.find((x) => x.action === a)?._count._all ?? 0;

@@ -20,7 +20,7 @@ const FORM_KEYS = Object.keys(emptyVehicleForm) as (keyof VehicleFormValues)[];
 const FIELD_LABELS: Record<string, string> = {
   brand: "Marka", model: "Model", packageName: "Seri / paket", year: "Model yılı", km: "Kilometre", price: "Fiyat",
   fuel: "Yakıt", transmission: "Vites", bodyType: "Kasa tipi", color: "Renk", enginePower: "Motor gücü", engineCc: "Motor hacmi",
-  drivetrain: "Çekiş", equipment: "Donanım", damageNote: "Hasar açıklaması", tramerAmount: "Tramer", expertiseSummary: "Ekspertiz özeti",
+  drivetrain: "Çekiş", equipment: "Donanım", damageNote: "Hasar açıklaması", tramerAmount: "Tramer",
   description: "Açıklama", paintedParts: "Boyalı parça (söylenen)", changedParts: "Değişen parça (söylenen)",
 };
 /** Yayın ve ilan için gerekli, AI'nın bulamadığı veya hiç doldurmadığı alanlar (personel tamamlar). */

@@ -92,7 +92,7 @@ export async function executeAction(waId: string, actionId: string): Promise<str
   if (claimed.count !== 1) return "Bu öneri zaten işleniyor.";
 
   // Yetki, onay anındaki kullanıcı kaydına göre: bu arada rolü değişen ya da numarası silinen personel işlem yapamaz.
-  const user = await prisma.user.findFirst({ where: { id: a.userId, phone: waId }, select: { id: true, name: true, role: true } });
+  const user = await prisma.user.findFirst({ where: { id: a.userId, phone: waId, active: true }, select: { id: true, name: true, role: true } });
   let ok = false;
   let message: string;
   try {

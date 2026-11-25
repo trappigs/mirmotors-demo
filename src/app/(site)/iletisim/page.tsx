@@ -1,10 +1,14 @@
 import type { Metadata } from "next";
 import { PageHero } from "@/components/site/PageHero";
-import { IconClock, IconPin, IconWhatsApp } from "@/components/site/Icons";
+import { IconPin, IconWhatsApp } from "@/components/site/Icons";
+import { getCompanyInfo } from "@/lib/company";
 
 export const metadata: Metadata = { title: "İletişim" };
 
-export default function ContactPage() {
+export const dynamic = "force-dynamic";
+
+export default async function ContactPage() {
+  const company = await getCompanyInfo();
   const wa = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER?.replace(/\D/g, "");
   return (
     <>
@@ -13,10 +17,12 @@ export default function ContactPage() {
         <div className="card p-8">
           <span className="grid h-11 w-11 place-items-center rounded-xl bg-paper text-accent-dark"><IconPin className="h-5 w-5" /></span>
           <h2 className="mt-5 font-display text-xl font-semibold">Showroom</h2>
-          <p className="mt-2 text-zinc-600">Adres bilgisi gerçek yayından önce eklenecektir. (Demo)</p>
-          <p className="mt-6 flex items-center gap-2 text-sm text-zinc-500">
-            <IconClock className="h-4 w-4" /> Çalışma saatleri yayın öncesi eklenecek (demo)
-          </p>
+          <p className="mt-2 text-zinc-600">{company.address ?? "Adres bilgisi yakında eklenecek."}</p>
+          {company.address && (
+            <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(company.address)}`} target="_blank" rel="noopener noreferrer" className="btn-outline mt-6 px-5 py-2.5 text-sm">
+              Yol tarifi al
+            </a>
+          )}
         </div>
         <div className="card-dark relative overflow-hidden p-8">
           <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-[#25D366]/20 blur-3xl" />
@@ -29,7 +35,6 @@ export default function ContactPage() {
                 <IconWhatsApp /> WhatsApp ile yazın
               </a>
             )}
-            <p className="mt-4 text-xs text-zinc-500">Demo numarasıdır; gerçek numara yayın öncesi tanımlanacaktır.</p>
           </div>
         </div>
       </div>

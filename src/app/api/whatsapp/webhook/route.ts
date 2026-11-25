@@ -70,7 +70,7 @@ export async function POST(req: Request) {
 }
 
 async function handleFresh(messages: IncomingWithTarget[]) {
-  const staff = await prisma.user.findMany({ where: { phone: { in: [...new Set(messages.map((m) => m.waId))] } }, select: { id: true, name: true, role: true, phone: true } });
+  const staff = await prisma.user.findMany({ where: { active: true, phone: { in: [...new Set(messages.map((m) => m.waId))] } }, select: { id: true, name: true, role: true, phone: true } });
   const staffBy = new Map(staff.map((s) => [s.phone!, s]));
 
   const outsiders = messages.filter((m) => !staffBy.has(m.waId));

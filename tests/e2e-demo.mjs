@@ -111,7 +111,7 @@ if (ACCESS) {
   check("Yanlış şifre reddedilir", bad.status === 401);
   const home = await publicHtml("/");
   check("Site noindex başlığı taşır", (home.headers.get("x-robots-tag") || "").includes("noindex"));
-  check("Sitede DEMO ibaresi var", home.html.includes("DEMO"));
+  check("Sitede DEMO etiketi yok (23.11.2026 kararı)", !home.html.includes(">DEMO<") && !home.html.includes("Demo sürüm"));
 }
 
 // 1. Giriş

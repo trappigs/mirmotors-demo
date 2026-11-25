@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { PageHero } from "@/components/site/PageHero";
+import { getCompanyInfo } from "@/lib/company";
 
 export const metadata: Metadata = { title: "KVKK Aydınlatma Metni" };
+export const dynamic = "force-dynamic";
 
 // Taslak metin: hukuki inceleme bekliyor. Aynı içerik ve hukukçuya notlar: docs/KVKK_AYDINLATMA_TASLAK.md
 // Şirket bilgileri gerçek değerler gelene kadar "yayın öncesi eklenecek" olarak kalır; uydurma bilgi yazılmaz.
@@ -16,6 +18,7 @@ const SECTIONS: Section[] = [
     title: "1. Veri sorumlusu",
     body: [
       "6698 sayılı Kişisel Verilerin Korunması Kanunu (\"KVKK\") uyarınca kişisel verileriniz, veri sorumlusu sıfatıyla Mir Motors tarafından aşağıda açıklanan kapsamda işlenmektedir.",
+      // Unvan/adres/MERSİS CRM > Ayarlar'dan doldurulur (sayfa açılırken); KEP ve e-posta henüz girilmiyor.
       [
         `Ticari unvan: ${PENDING}`,
         `Adres: ${PENDING}`,
@@ -129,7 +132,14 @@ const SECTIONS: Section[] = [
   },
 ];
 
-export default function KvkkPage() {
+export default async function KvkkPage() {
+  const c = await getCompanyInfo();
+  const fill: Record<string, string | null | undefined> = { "Ticari unvan": c.title, Adres: c.address, "MERSİS numarası": c.mersis };
+  const sections: Section[] = SECTIONS.map((s) =>
+    s.id !== "veri-sorumlusu"
+      ? s
+      : { ...s, body: s.body.map((b) => (Array.isArray(b) ? b.map((li) => { const k = li.split(":")[0]; return fill[k] ? `${k}: ${fill[k]}` : li; }) : b)) },
+  );
   return (
     <>
       <PageHero eyebrow="Yasal" title="KVKK Aydınlatma Metni ve Çerez Bilgilendirmesi" />
@@ -138,12 +148,12 @@ export default function KvkkPage() {
           Bu metin taslaktır ve hukuki inceleme sonrasında güncellenecektir. Şirket bilgileri gerçek yayından önce eklenecektir.
         </p>
         <nav className="mt-8 flex flex-wrap gap-2 text-sm" aria-label="Bölümler">
-          {SECTIONS.map((s) => (
+          {sections.map((s) => (
             <a key={s.id} href={`#${s.id}`} className="chip hover:border-brand hover:text-brand">{s.title.replace(/^\d+\.\s*/, "")}</a>
           ))}
         </nav>
         <div className="mt-10 space-y-10 text-[15px] leading-relaxed text-zinc-700">
-          {SECTIONS.map((s) => (
+          {sections.map((s) => (
             <section key={s.id} id={s.id} className="scroll-mt-28">
               <h2 className="section-mark font-display text-xl font-bold text-ink">{s.title}</h2>
               <div className="mt-4 space-y-3">

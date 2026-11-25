@@ -11,7 +11,9 @@ izleme_yukle
 AYAR="$AYAR_DIZIN/restic.env"
 SNAP_ISTEK=${1:-latest}
 ID="$(date +%Y%m%d%H%M%S)-$$"
-GECICI="/var/tmp/mirmotors-geri-test-$ID"
+# Geçici klasör yalnız root'un erişebildiği durum dizininde, mktemp ile atomik oluşturulur (700).
+GECICI_UST="$DURUM_DIZIN/geri-test"
+GECICI=""
 KAP="mirmotors-geri-test-$ID"
 TAMAM=0
 SORUN=0
@@ -19,7 +21,7 @@ SORUN=0
 bitir() {
   kod=$?
   docker rm -f "$KAP" > /dev/null 2>&1 || true
-  case "$GECICI" in /var/tmp/mirmotors-geri-test-*) rm -rf "$GECICI" ;; esac
+  case "$GECICI" in "$GECICI_UST"/tmp.*) rm -rf "$GECICI" ;; esac
   if [ "$TAMAM" != 1 ]; then
     [ "$kod" = 0 ] && kod=1
     hata "geri yükleme testi BAŞARISIZ (çıkış kodu $kod)"
@@ -42,10 +44,11 @@ kilit_al 7200
 
 # Disk: geri yüklenecek boyutun 2 katı + 512 MB
 boyut_b=$(restic stats --mode restore-size --host mirmotors-vds --tag mirmotors "$SNAP_ISTEK" --json | grep -o '"total_size":[0-9]*' | cut -d: -f2)
-disk_kontrol /var/tmp $(( ${boyut_b:-0} / 1048576 * 2 + 512 ))
+install -d -m 700 "$GECICI_UST"
+disk_kontrol "$GECICI_UST" $(( ${boyut_b:-0} / 1048576 * 2 + 512 ))
 
 log "anlık görüntü indiriliyor: $SNAP_ISTEK"
-mkdir -p "$GECICI"
+GECICI=$(mktemp -d "$GECICI_UST/tmp.XXXXXXXX")
 t0=$(date +%s)
 dusuk_oncelik restic restore "$SNAP_ISTEK" --host mirmotors-vds --tag mirmotors --target "$GECICI/geri" > /dev/null
 HZ=$(find "$GECICI/geri" -type f -name bilgi.txt -path '*/hazirlik/db/*' | head -1)

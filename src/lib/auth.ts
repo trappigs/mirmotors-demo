@@ -4,16 +4,19 @@ import { redirect } from "next/navigation";
 import { prisma } from "./db";
 import { SESSION_COOKIE, verifySession } from "./session";
 
-export type CurrentUser = { id: string; name: string; email: string; role: "ADMIN" | "SALES" };
+export type CurrentUser = { id: string; name: string; email: string; role: "ADMIN" | "SALES"; mustChangePassword: boolean };
 
-/** Oturumu doğrular ve kullanıcının veritabanında hâlâ var olduğunu kontrol eder. */
+/**
+ * Oturumu doğrular; kullanıcının hâlâ var ve aktif olduğunu, oturumun iptal edilmediğini
+ * (pasif yapma / şifre sıfırlama sessionVersion'ı artırır) veritabanından kontrol eder.
+ */
 export async function getCurrentUser(): Promise<CurrentUser | null> {
   const store = await cookies();
   const session = await verifySession(store.get(SESSION_COOKIE)?.value);
   if (!session) return null;
   const user = await prisma.user.findUnique({ where: { id: session.uid } });
-  if (!user) return null;
-  return { id: user.id, name: user.name, email: user.email, role: user.role as CurrentUser["role"] };
+  if (!user || !user.active || (session.sv ?? 0) !== user.sessionVersion) return null;
+  return { id: user.id, name: user.name, email: user.email, role: user.role as CurrentUser["role"], mustChangePassword: user.mustChangePassword };
 }
 
 /** Sayfalar için: oturum yoksa giriş ekranına yönlendirir. */

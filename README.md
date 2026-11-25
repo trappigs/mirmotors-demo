@@ -20,7 +20,6 @@ araç ekleme → fotoğraf yükleme → yayımlama → opsiyon → noter onaylı
 | [DECISIONS.md](DECISIONS.md) | Teknik kararlar ve gerekçeleri |
 | [STATUS.md](STATUS.md) | Durum raporu ve kabul testleri |
 | [VERCEL_DEPLOY.md](VERCEL_DEPLOY.md) | Vercel dağıtımı, ortam değişkenleri, ücretsiz servisler |
-| [deploy/VDS_KURULUM.md](deploy/VDS_KURULUM.md) | Kendi sunucumuzda (VDS) Docker ile çalıştırma, güncelleme, yedek, alan adı/HTTPS |
 | [DEMO_SCRIPT.md](DEMO_SCRIPT.md) | Sunum akışı |
 | [CLAUDE.md](CLAUDE.md) | Claude Code ile geliştirme kuralları |
 

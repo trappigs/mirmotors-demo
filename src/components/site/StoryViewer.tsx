@@ -133,7 +133,7 @@ export function StoryViewer({ stories, startIndex, onClose, onSeen }: {
               {slide.hrefLabel ?? "Aracı İncele"} →
             </Link>
           )}
-          <p className="mt-3 text-center text-[10px] uppercase tracking-[0.14em] text-white/50">Demo · temsili görseller</p>
+          <p className="mt-3 text-center text-[10px] uppercase tracking-[0.14em] text-white/50">Temsili görseller</p>
         </div>
       </div>
 

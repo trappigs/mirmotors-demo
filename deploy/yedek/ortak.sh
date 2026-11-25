@@ -7,7 +7,8 @@ export LC_ALL=C
 DURUM_DIZIN=${YEDEK_DURUM_DIZIN:-/var/lib/mirmotors-yedek}
 AYAR_DIZIN=${YEDEK_AYAR_DIZIN:-/etc/mirmotors-yedek}
 YEREL_DIZIN=${YEDEK_DIZIN:-/var/backups/mirmotors}
-KILIT=${YEDEK_KILIT:-/run/lock/mirmotors-yedek.lock}
+# Kilit yalnız root'un yazabildiği /run altında (herkesin yazabildiği /run/lock değil: sembolik bağ saldırısı olmasın).
+KILIT=${YEDEK_KILIT:-/run/mirmotors-yedek.lock}
 COMPOSE_PROJE=mirmotors
 STORAGE_HACIM=${YEDEK_STORAGE_HACIM:-mirmotors_storage}
 
@@ -16,7 +17,8 @@ hata() { log "HATA: $*"; }
 
 # Aynı anda tek yedek işlemi: yerel, uzak ve geri yükleme testi aynı kilidi paylaşır.
 kilit_al() {
-  exec 9>"$KILIT"
+  [ -L "$KILIT" ] && { hata "kilit dosyası sembolik bağ: $KILIT"; exit 75; }
+  exec 9>>"$KILIT"
   if ! flock -w "${YEDEK_KILIT_SN:-${1:-3600}}" 9; then
     hata "başka bir yedek işlemi sürüyor (kilit: $KILIT); vazgeçildi"
     exit 75
