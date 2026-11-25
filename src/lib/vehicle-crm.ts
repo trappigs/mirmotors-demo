@@ -21,6 +21,7 @@ export function formInitial(v: Vehicle): VehicleFormValues {
     legalPlate: s(v.legalPlate), legalVin: s(v.legalVin), legalLien: s(knownState(LIEN_STATES, v.legalLien)), legalWarranty: s(v.legalWarranty),
     legalRegisteredToCompany: s(v.legalRegisteredToCompany), legalOwnerConsent: v.legalOwnerConsent,
     vehicleClass: s(v.vehicleClass), vehicleType: s(v.vehicleType), stockCode: s(v.stockCode), warrantyStatus: s(knownState(WARRANTY_STATES, v.warrantyStatus)), warrantyUntil: s(v.warrantyUntil), warrantyKm: s(v.warrantyKm), inspectionUntil: s(v.inspectionUntil),
+    firstRegistration: s(v.firstRegistration), seats: s(v.seats),
   };
 }
 

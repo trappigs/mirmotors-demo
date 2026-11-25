@@ -53,6 +53,10 @@ export const vehicleInputSchema = z.object({
   vehicleClass: optText(60),
   vehicleType: optText(120),
   inspectionUntil: z.preprocess((v) => (blank(v) ? null : v), z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Muayene tarihini seçin").nullable().optional()),
+  // Ruhsattaki ilk tescil tarihi (B), ruhsattaki biçimiyle (GG/AA/YYYY) metin olarak saklanır. Biçim zorlanmaz:
+  // daha önce AI'nın farklı yazdığı kayıtlar düzenlenirken kayıt engellenmesin.
+  firstRegistration: optText(20),
+  seats: optInt(1, 99, "Geçersiz koltuk sayısı"),
   stockCode: optText(40),
   warrantyStatus: optEnum(WARRANTY_STATES, "Garanti durumunu seçin"),
   warrantyUntil: z.preprocess((v) => (blank(v) ? null : v), z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Garanti bitiş tarihini seçin").nullable().optional()),

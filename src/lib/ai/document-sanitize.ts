@@ -98,6 +98,8 @@ export type RawRead = {
   form?: FormRaw | null;
   sources: { field: string; document: DocKind; page: number | null; location: string | null; text: string }[];
   unreadable: { field: string; document: DocKind; reason: string }[];
+  /** Okunan ama AI'nın emin olmadığı alanlar (değer yazılır, personel belgeyle karşılaştırır). Eski okumalarda yok. */
+  uncertain?: { field: string; document: DocKind; reason: string }[];
   quality: { document: DocKind; page: number; issues: QualityIssue[] }[];
   warnings: string[];
 };
@@ -122,6 +124,8 @@ export type DocumentRead = {
   sources: RawRead["sources"];
   conflicts: { field: ConflictField; label: string; ruhsat: string; ekspertiz: string; labels?: [string, string] }[];
   missing: { field: string; label: string; reason: string }[];
+  /** Değeri okunan ama AI'nın emin olmadığı alanlar (araç alan adıyla). Eski okumalarda yok. */
+  uncertain?: { field: string; label: string; reason: string }[];
   quality: RawRead["quality"];
   warnings: string[];
   /** Kontrol formu okuması (personel beyanı): kaporta, hasar/yasal, donanım, satış yetkisi. Ekspertizin `parts`ından ayrı tutulur. */
@@ -243,8 +247,16 @@ export function mapTransmission(t: string | null | undefined): string | null {
 const FIELD_LABELS: Record<string, string> = {
   brand: "Marka", model: "Model", year: "Model yılı", km: "Kilometre", fuel: "Yakıt", transmission: "Vites", plate: "Plaka",
   vinLast6: "Şasi no (son 6)", color: "Renk", engineCc: "Motor hacmi", enginePowerHp: "Motor gücü", price: "Fiyat", bodyType: "Kasa tipi",
-  tramerAmount: "Tramer tutarı",
+  tramerAmount: "Tramer tutarı", packageName: "Tip / paket", vehicleClass: "Araç cinsi", vehicleType: "Araç tipi (D.2)",
+  firstRegistration: "İlk tescil tarihi", seats: "Koltuk sayısı", inspectionUntil: "Muayene geçerlilik",
 };
+
+/** AI'nın ham alan adları → araç alan adı (okunamayan / emin olunamayan listeleri araç alanlarıyla eşlensin). */
+const RAW_FIELD: Record<string, string> = {
+  firstRegistrationDate: "firstRegistration", enginePowerKw: "enginePowerHp", fuelText: "fuel", transmissionText: "transmission",
+  vin: "vinLast6", vinLast6Visible: "vinLast6", vinLabel: "vinLast6", tramerAmountTl: "tramerAmount",
+};
+const toVehicleField = (f: string) => RAW_FIELD[f] ?? f;
 
 /**
  * Ham okumayı taslağa çevirir ve aynı araç kontrolünü yapar. Öncelik: güvenilir tam şasi → doğrulanmış kısmi şasi → plaka → marka.
@@ -341,7 +353,7 @@ export function mergeReadings(raw: RawRead): DocumentRead {
   if (fromDiagram) warnings.push(...fromDiagram.notes);
 
   // Eksik alanlar ve nedenleri (AI'nın bildirdiği neden varsa o, yoksa belge türüne göre açıklama)
-  const reasonOf = (field: string) => clip(raw.unreadable.find((u) => u.field === field)?.reason, 200) ?? undefined;
+  const reasonOf = (field: string) => clip(raw.unreadable.find((u) => toVehicleField(u.field) === field)?.reason, 200) ?? undefined;
   const missing: DocumentRead["missing"] = [];
   const need: [string, unknown, string][] = [
     ["brand", vehicle.brand, "Belgelerde okunamadı"],
@@ -358,6 +370,25 @@ export function mergeReadings(raw: RawRead): DocumentRead {
   ];
   for (const [field, val, fallback] of need) {
     if (val === null || val === undefined) missing.push({ field, label: FIELD_LABELS[field], reason: reasonOf(field) ?? fallback });
+  }
+  // Ruhsatta bulunan diğer alanlar: ruhsat okunduysa ve boş kaldıysa nedeniyle listelenir (yayını engellemez; personel tamamlar)
+  if (r) {
+    const optional: [string, unknown][] = [
+      ["packageName", vehicle.packageName], ["vehicleClass", vehicle.vehicleClass], ["vehicleType", vehicle.vehicleType], ["color", vehicle.color],
+      ["engineCc", vehicle.engineCc], ["enginePowerHp", vehicle.enginePowerHp], ["firstRegistration", vehicle.firstRegistration], ["seats", vehicle.seats],
+    ];
+    for (const [field, val] of optional) {
+      if (val === null || val === undefined) missing.push({ field, label: FIELD_LABELS[field], reason: reasonOf(field) ?? "Ruhsatta okunamadı" });
+    }
+  }
+
+  // Okunan ama AI'nın emin olmadığı alanlar: yalnızca değeri dolu olanlar (boş alan zaten "eksik" listesinde)
+  const vrec = vehicle as Record<string, unknown>;
+  const uncertain: NonNullable<DocumentRead["uncertain"]> = [];
+  for (const u of raw.uncertain ?? []) {
+    const field = toVehicleField(u.field);
+    if (vrec[field] === null || vrec[field] === undefined || uncertain.some((x) => x.field === field)) continue;
+    uncertain.push({ field, label: FIELD_LABELS[field] ?? field, reason: clip(u.reason, 200) ?? "AI emin değil" });
   }
 
   const read: DocumentRead = {
@@ -380,6 +411,7 @@ export function mergeReadings(raw: RawRead): DocumentRead {
     sources: raw.sources.slice(0, 60).map((s) => ({ ...s, text: scrub(s.text).slice(0, 200), location: s.location ? s.location.slice(0, 80) : null })),
     conflicts,
     missing,
+    uncertain,
     quality: raw.quality,
     warnings,
   };

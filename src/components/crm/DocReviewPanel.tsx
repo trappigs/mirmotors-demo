@@ -21,6 +21,9 @@ export function DocReviewPanel({ vehicleId, review, status, readOnly, filled = [
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const blockers = reviewBlockers(review);
+  // AI'nın okuyup emin olamadığı alanlar: A listesinde turuncu etiket, B'de ayrı başlık
+  const uncertain = review.uncertain ?? [];
+  const unsureOf = (field: string) => uncertain.find((u) => u.field === field);
 
   async function act(body: Record<string, unknown>) {
     setBusy(true);
@@ -76,18 +79,41 @@ export function DocReviewPanel({ vehicleId, review, status, readOnly, filled = [
           <h3 className="text-sm font-semibold">A · Belgede tespit edilen bilgiler</h3>
           <ul className="mt-2 divide-y divide-zinc-100 text-sm">
             {review.aiFields.length === 0 && <li className="py-1.5 text-zinc-500">Bilgi okunamadı.</li>}
-            {review.aiFields.map((f) => (
-              <li key={f.field} className="py-1.5">
-                <div className="flex justify-between gap-3">
-                  <span className="text-zinc-500">{f.label}</span>
-                  <span className="text-right font-medium">{f.value} <span className="ml-1 rounded bg-sky-100 px-1 text-[10px] font-bold text-sky-700">{review.aiConfirmed ? "AI · kontrol edildi" : "AI · onaylanmadı"}</span></span>
-                </div>
-                <p className="text-[11px] text-zinc-400">{DOC[f.document]}{f.page ? ` · sayfa ${f.page}` : ""}{f.location ? ` · ${f.location}` : ""}{f.evidence ? ` · “${f.evidence}”` : ""}</p>
-              </li>
-            ))}
+            {review.aiFields.map((f) => {
+              const u = unsureOf(f.field);
+              return (
+                <li key={f.field} className={`py-1.5 ${u ? "-mx-1 rounded bg-amber-50 px-1" : ""}`} data-unsure={u ? "1" : undefined}>
+                  <div className="flex justify-between gap-3">
+                    <span className="text-zinc-500">{f.label}</span>
+                    <span className="text-right font-medium">
+                      {f.value}{" "}
+                      {u && !review.aiConfirmed
+                        ? <span className="ml-1 rounded bg-amber-200 px-1 text-[10px] font-bold text-amber-900">AI · emin değil</span>
+                        : <span className="ml-1 rounded bg-sky-100 px-1 text-[10px] font-bold text-sky-700">{review.aiConfirmed ? "AI · kontrol edildi" : "AI · onaylanmadı"}</span>}
+                    </span>
+                  </div>
+                  {u && <p className="text-[11px] font-medium text-amber-800">AI: {u.reason}</p>}
+                  <p className="text-[11px] text-zinc-400">{DOC[f.document]}{f.page ? ` · sayfa ${f.page}` : ""}{f.location ? ` · ${f.location}` : ""}{f.evidence ? ` · “${f.evidence}”` : ""}</p>
+                </li>
+              );
+            })}
           </ul>
         </div>
         <div className="space-y-4">
+          {uncertain.length > 0 && (
+            <div className="rounded-lg border border-amber-300 bg-amber-50 p-3" data-testid="doc-group-unsure">
+              <h3 className="text-sm font-semibold text-amber-950">AI&apos;nın emin olmadığı bilgiler ({uncertain.length})</h3>
+              <p className="text-xs text-amber-900">Bu değerler okundu ama net değil. Belgenin aslıyla karakter karakter karşılaştırın; yanlışsa düzeltin.</p>
+              <ul className="mt-2 space-y-1 text-sm">
+                {uncertain.map((u) => (
+                  <li key={u.field} className="flex flex-wrap items-baseline justify-between gap-2" data-uncertain={u.field}>
+                    <span><strong>{u.label}:</strong> <span className="text-amber-900">{u.reason}</span></span>
+                    {fixLinks && !readOnly && <Link href={fixHref(vehicleId, aiFieldTarget(u.field))} className="btn-outline bg-white px-3 py-1 text-xs">Kontrol et</Link>}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
           <div data-testid="doc-group-b">
             <h3 className="text-sm font-semibold">B · Eksik veya belirsiz bilgiler</h3>
             <ul className="mt-2 space-y-1 text-sm">
@@ -169,7 +195,7 @@ export function DocReviewPanel({ vehicleId, review, status, readOnly, filled = [
         <div className="space-y-3 border-t border-zinc-100 pt-4">
           <label className="flex items-start gap-2 text-sm font-medium">
             <input type="checkbox" className="mt-0.5" checked={review.aiConfirmed} disabled={busy} onChange={(e) => act({ action: "confirmAi", value: e.target.checked })} data-testid="confirm-ai" />
-            AI&apos;nın doldurduğu bilgileri belgelerle karşılaştırdım; yanlış olanları araç formunda düzelttim.
+            AI&apos;nın doldurduğu bilgileri belgelerle karşılaştırdım{uncertain.length > 0 ? <> (özellikle turuncu işaretli {uncertain.length} bilgiyi)</> : null}; yanlış olanları araç formunda düzelttim.
           </label>
           {blockers.length > 0 && (
             <ul className="list-inside list-disc text-sm text-amber-800" data-testid="review-blockers">{blockers.map((b) => <li key={b}>{b}</li>)}</ul>

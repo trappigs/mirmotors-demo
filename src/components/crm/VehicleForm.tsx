@@ -14,7 +14,7 @@ export type VehicleFormValues = {
   legalListingNo: string; legalAuthorizationNo: string; legalPlate: string; legalVin: string;
   legalLien: string; legalWarranty: string; legalRegisteredToCompany: string; legalOwnerConsent: boolean;
   vehicleClass: string; vehicleType: string; stockCode: string; warrantyStatus: string; warrantyUntil: string; warrantyKm: string;
-  inspectionUntil: string;
+  inspectionUntil: string; firstRegistration: string; seats: string;
 };
 
 export const emptyVehicleForm: VehicleFormValues = {
@@ -25,7 +25,7 @@ export const emptyVehicleForm: VehicleFormValues = {
   // Mir Motors'un araçları galeri adına tescillidir (işletme kararı); başka durumda personel "İşletme adına değil" seçer.
   legalLien: "", legalWarranty: "", legalRegisteredToCompany: "true", legalOwnerConsent: false,
   vehicleClass: "", vehicleType: "", stockCode: "", warrantyStatus: "", warrantyUntil: "", warrantyKm: "",
-  inspectionUntil: "",
+  inspectionUntil: "", firstRegistration: "", seats: "",
 };
 
 /** Formun bölümleri: araç sayfası hepsini, sihirbaz adımları bir kısmını gösterir. */
@@ -72,6 +72,8 @@ type Props = {
   onSaved?: (id: string) => void;
   /** Ruhsattan okunan form alanları (belgeden ekleme): bunlar tek tek kutu yerine özet kartında gösterilir. */
   ruhsatFields?: string[];
+  /** AI'nın okuduğu ama emin olmadığı form alanları: turuncu çerçeve ve "kontrol edin" etiketiyle gösterilir. */
+  uncertainFields?: string[];
   /** Otomatik taslak (sihirbaz): her alan değişikliği bildirilir. */
   onFieldChange?: (k: keyof VehicleFormValues, value: unknown) => void;
   /** Verilirse "kaydet" düğmesi API yerine bunu çağırır (sihirbaz: bekleyenleri kaydedip sonraki adıma geçer). */
@@ -94,7 +96,7 @@ const REQUIRED_FOR_PUBLISH = new Set(["legalPlate", "price", "brand", "model", "
 /** Yönetmelik m.20/2, 21/1-a ilan bilgileri (yayımlamada zorunlu). */
 const LEGAL = new Set(["vehicleClass", "vehicleType", "legalPlate", "legalVin", "equipment", "damageRecord", "legalLien", "warrantyStatus", "warrantyUntil", "warrantyKm"]);
 
-export function VehicleForm({ mode, vehicleId, initial, readOnly, published, ai, sections = ALL_SECTIONS, submitLabel, onSaved, ruhsatFields, onFieldChange, onSubmitOverride, plateNotice, tradeName, version }: Props) {
+export function VehicleForm({ mode, vehicleId, initial, readOnly, published, ai, sections = ALL_SECTIONS, submitLabel, onSaved, ruhsatFields, uncertainFields = [], onFieldChange, onSubmitOverride, plateNotice, tradeName, version }: Props) {
   const show = (x: FormSection) => sections.includes(x);
   const router = useRouter();
   const [v, setV] = useState<VehicleFormValues>(() => {
@@ -173,12 +175,15 @@ export function VehicleForm({ mode, vehicleId, initial, readOnly, published, ai,
     if (eq && !v.equipment.some((x) => x.toLocaleLowerCase("tr") === eq.toLocaleLowerCase("tr"))) set("equipment", [...v.equipment, eq]);
     setOtherEq("");
   };
-  const aiMark =(k: string) => (ai?.fields.includes(k) ? "border-sky-400 bg-sky-50" : "");
+  // Emin olunamayan alan turuncu (öncelikli), AI'nın doldurduğu alan mavi çerçeve
+  const aiMark = (k: string) => (uncertainFields.includes(k) ? "border-amber-500 bg-amber-50" : ai?.fields.includes(k) ? "border-sky-400 bg-sky-50" : "");
+  const unsure = (k: string) => uncertainFields.includes(k);
   const marks = (k: string) => (
     <>
       {REQUIRED_FOR_PUBLISH.has(k) && <span className="ml-0.5 text-accent" title="Yayın için zorunlu">•</span>}
       {LEGAL.has(k) && <span className="ml-0.5 text-[10px] font-bold text-violet-700" title="Mevzuat gereği ilanda zorunlu (Yönetmelik m.20–21)">§</span>}
       {ai?.fields.includes(k) && <span className="ml-1 text-[10px] font-bold text-sky-600">AI</span>}
+      {unsure(k) && <span className="ml-1 rounded bg-amber-100 px-1 text-[10px] font-bold text-amber-800" title="AI bu bilgiyi okudu ama emin değil">kontrol edin</span>}
     </>
   );
 
@@ -399,7 +404,10 @@ export function VehicleForm({ mode, vehicleId, initial, readOnly, published, ai,
                 {summaryKeys.filter((k) => !TITLE_KEYS.includes(k)).map((k) => (
                   <div key={k}>
                     <dt className="text-xs text-zinc-500">{SUMMARY_LABELS[k]}</dt>
-                    <dd className="font-semibold">{v[k] || <span className="font-normal text-zinc-400">boş</span>}</dd>
+                    <dd className={`font-semibold ${unsure(k) ? "rounded bg-amber-100 px-1 text-amber-900" : ""}`} data-unsure={unsure(k) ? "1" : undefined}>
+                      {v[k] || <span className="font-normal text-zinc-400">boş</span>}
+                      {unsure(k) && <span className="ml-1 text-[10px] font-bold uppercase text-amber-800" title="AI bu bilgiyi okudu ama emin değil">emin değil</span>}
+                    </dd>
                   </div>
                 ))}
                 {tradeName && tradeName !== v.vehicleType && (
@@ -416,6 +424,9 @@ export function VehicleForm({ mode, vehicleId, initial, readOnly, published, ai,
                 )}
               </dl>
               <p className="mt-3 text-xs text-emerald-900">Ruhsatla karşılaştırın; yanlış bir bilgi varsa &quot;Düzelt&quot;e basın.</p>
+              {summaryKeys.some(unsure) && (
+                <p className="mt-1 text-xs font-semibold text-amber-800" data-testid="ruhsat-unsure">Turuncu işaretli bilgileri AI net okuyamadı; ruhsatın aslıyla karakter karakter karşılaştırın.</p>
+              )}
             </div>
           )}
           {ruhsatMode && editRuhsat && (
@@ -459,6 +470,8 @@ export function VehicleForm({ mode, vehicleId, initial, readOnly, published, ai,
               </div>
               {select("drivetrain", "Çekiş", DRIVETRAINS)}
               {!ruhsatMode && identityInput("vehicleType")}
+              {text("firstRegistration", "İlk tescil tarihi (ruhsat B)", { placeholder: "GG/AA/YYYY" })}
+              {text("seats", "Koltuk sayısı", { numeric: true })}
             </div>
             <div className="mt-4">{area("description", "İlan açıklaması", 3)}</div>
           </div>

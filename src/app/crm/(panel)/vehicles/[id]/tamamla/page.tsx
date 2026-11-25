@@ -56,6 +56,8 @@ export default async function CompleteVehicleWizard({ params, searchParams }: { 
   const review = parseReview(v.docReview);
   // Ruhsattan okunan alanlar (belge alan adı → form alanı): formda tek tek kutu yerine özet kartında gösterilir.
   const ruhsatFields = review?.aiFields.filter((f) => f.document === "RUHSAT").map((f) => RUHSAT_FORM_KEYS[f.field] ?? f.field) ?? [];
+  // AI'nın okuduğu ama emin olmadığı alanlar: formda turuncu "kontrol edin" işaretiyle gösterilir.
+  const uncertainFields = review?.uncertain?.map((u) => RUHSAT_FORM_KEYS[u.field] ?? u.field) ?? [];
   const title = [v.brand, v.model, v.packageName].filter(Boolean).join(" ") || "Yeni araç";
   const next = (n: number) => `/crm/vehicles/:id/tamamla?adim=${n}`;
   const lastPart = v.parts[0];
@@ -71,7 +73,7 @@ export default async function CompleteVehicleWizard({ params, searchParams }: { 
     ["Model yılı", v.year ? String(v.year) : null], ["Kilometre", v.km != null ? formatKm(v.km) : null], ["Fiyat", v.price ? formatPrice(v.price) : null],
     ["Yakıt", v.fuel], ["Vites", v.transmission], ["Kasa tipi", v.bodyType], ["Renk", v.color], ["Plaka", v.legalPlate],
     ["Şasi (son 6)", v.legalVin], ["Motor", [v.engineCc && `${v.engineCc} cc`, v.enginePower && `${v.enginePower} hp`].filter(Boolean).join(" · ") || null],
-    ["Çekiş", v.drivetrain], ["Muayene geçerlilik", v.inspectionUntil], ["Takas", v.tradeIn == null ? null : v.tradeIn ? "Takasa uygun" : "Takas yapılmıyor"],
+    ["Çekiş", v.drivetrain], ["Muayene geçerlilik", v.inspectionUntil], ["İlk tescil tarihi", v.firstRegistration], ["Koltuk sayısı", v.seats ? String(v.seats) : null], ["Takas", v.tradeIn == null ? null : v.tradeIn ? "Takasa uygun" : "Takas yapılmıyor"],
     ["Donanım", equipment.length ? `${equipment.length} donanım` : null],
     ["Kaporta", groups.UNKNOWN.length === 13 ? null : [groups.CHANGED.length && `${groups.CHANGED.length} değişen`, groups.PAINTED.length && `${groups.PAINTED.length} boyalı`, groups.LOCAL_PAINT.length && `${groups.LOCAL_PAINT.length} lokal boyalı`, groups.UNKNOWN.length && `${groups.UNKNOWN.length} bilinmiyor`].filter(Boolean).join(" · ") || "Tüm parçalar orijinal"],
     ["Hasar kaydı", v.damageRecord ? DAMAGE_RECORD_LABELS[v.damageRecord] ?? null : null], ["Tramer", v.tramerAmount != null ? formatPrice(v.tramerAmount) : null],
@@ -92,14 +94,15 @@ export default async function CompleteVehicleWizard({ params, searchParams }: { 
 
       {step === 1 && (
         <>
-          {review && (openReview.length > 0 || unreadOpen.length > 0) && (
+          {review && (openReview.length > 0 || unreadOpen.length > 0 || uncertainFields.length > 0) && (
             <p className="rounded-lg border border-violet-200 bg-violet-50 p-3 text-sm text-violet-900" data-testid="review-later">
               Belgeden okunan bilgiler forma yerleştirildi.
               {unreadOpen.length > 0 && <> {unreadOpen.length} bilgi okunamadı (aşağıda boş).</>}
+              {uncertainFields.length > 0 && <> <strong>{uncertainFields.length} bilgide AI emin değil</strong> (turuncu işaretli): ruhsatla karşılaştırın.</>}
               {openReview.length > 0 && <> Çelişki ve onay gibi kontroller <Link href={`/crm/vehicles/${id}/tamamla?adim=4#belge-kontrolu`} className="font-semibold underline">son kontrol ekranında</Link> topluca yapılır.</>}
             </p>
           )}
-          <WizardStepForm vehicleId={id} version={v.updatedAt.toISOString()} tradeName={v.tradeName} initial={formInitial(v)} sections={["basic", "identity", "equipment"]} next={next(2)} submitLabel="Devam et → Kaporta" ruhsatFields={ruhsatFields} />
+          <WizardStepForm vehicleId={id} version={v.updatedAt.toISOString()} tradeName={v.tradeName} initial={formInitial(v)} sections={["basic", "identity", "equipment"]} next={next(2)} submitLabel="Devam et → Kaporta" ruhsatFields={ruhsatFields} uncertainFields={uncertainFields} />
         </>
       )}
 

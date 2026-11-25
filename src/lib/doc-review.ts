@@ -19,6 +19,8 @@ export type DocReview = {
   conflicts: { field: ConflictField; label: string; ruhsat: string; ekspertiz: string; resolved: null | DocKind | "MANUAL"; labels?: [string, string] }[];
   aiFields: { field: string; label: string; value: string; document: DocKind; page: number | null; evidence: string; location: string | null }[];
   missing: { field: string; label: string; reason: string }[];
+  /** AI'nın okuyup emin olamadığı alanlar (belge alan adıyla). Eski kayıtlarda yok. */
+  uncertain?: { field: string; label: string; reason: string }[];
   stockDuplicates: { id: string; title: string; status: string; match: string }[];
   duplicatesAcknowledged: boolean;
   ownerCheckRequired: boolean;

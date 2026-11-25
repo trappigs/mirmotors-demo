@@ -143,6 +143,9 @@ export async function runAnalysis(id: string) {
   }
 }
 
+/** Belge alan adı → araç sütunu (farklı olanlar). */
+const UNCERTAIN_COLUMN: Record<string, string> = { plate: "legalPlate", vinLast6: "legalVin", enginePowerHp: "enginePower" };
+
 const AI_FIELD_LABELS: Record<string, string> = {
   brand: "Marka", model: "Model", packageName: "Tip / paket", year: "Model yılı", km: "Kilometre", fuel: "Yakıt", transmission: "Vites",
   color: "Renk", engineCc: "Motor hacmi (cc)", enginePowerHp: "Motor gücü (hp)", plate: "Plaka", vinLast6: "Şasi no (son 6)",
@@ -218,6 +221,7 @@ function newReview(analysisId: string, read: DocumentRead, dups: DocReview["stoc
     conflicts: read.conflicts.map((c) => ({ ...c, resolved: null })),
     aiFields: aiFields(read, ruhsatRead),
     missing: read.missing,
+    uncertain: read.uncertain ?? [],
     stockDuplicates: dups,
     duplicatesAcknowledged: dups.length === 0,
     ownerCheckRequired: ruhsatRead && read.vehicle.ownerIsCompany === false,
@@ -317,6 +321,8 @@ async function applyToExisting(tx: Tx, vehicleId: string, analysisId: string, re
     identityResolved: identity === "SAME",
     conflicts: [...(prev?.conflicts.filter((c) => c.resolved) ?? []), ...read.conflicts.map((c) => ({ ...c, resolved: null })), ...conflicts],
     aiFields: identity === "DIFFERENT" ? [] : add.aiFields,
+    // Emin olunamayan değerlerden yalnızca araca gerçekten yazılanlar (mevcut değer korunduysa sorulmaz)
+    uncertain: identity === "DIFFERENT" ? [] : (add.uncertain ?? []).filter((u) => (UNCERTAIN_COLUMN[u.field] ?? u.field) in updates),
     ownerCheckRequired: prev?.ownerCheckRequired ?? false,
     ownerChecked: prev?.ownerChecked ?? false,
   };
