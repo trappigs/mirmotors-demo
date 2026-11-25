@@ -12,15 +12,25 @@ datasource db {
 }
 
 model User {
-  id              String    @id @default(cuid())
-  name            String
-  email           String    @unique
-  passwordHash    String
-  role            String // ADMIN | SALES
-  createdAt       DateTime  @default(now())
+  id                 String    @id @default(cuid())
+  name               String
+  email              String    @unique
+  passwordHash       String
+  role               String // ADMIN | SALES
+  createdAt          DateTime  @default(now())
+  // Personel yönetimi: pasif hesap giriş yapamaz; kayıt silinmez (geçmiş korunur).
+  active             Boolean   @default(true)
+  deactivatedAt      DateTime?
+  // Cep telefonu (+90XXXXXXXXXX): WhatsApp'tan yazan personelin tanınması için.
+  phone              String?   @unique
+  // Artırılınca o kullanıcının tüm açık oturumları geçersiz olur (pasif yapma, şifre sıfırlama).
+  sessionVersion     Int       @default(0)
+  // Yöneticinin verdiği geçici şifreyle ilk girişte yeni şifre zorunlu.
+  mustChangePassword Boolean   @default(false)
+  lastLoginAt        DateTime?
   // Hesap bazlı giriş deneme sınırı (sunucusuz ortamda örnekler arası paylaşılır)
-  failedLogins    Int       @default(0)
-  failWindowStart DateTime?
+  failedLogins       Int       @default(0)
+  failWindowStart    DateTime?
 
   createdVehicles   Vehicle[]          @relation("VehicleCreatedBy")
   optionedVehicles  Vehicle[]          @relation("VehicleOptionedBy")
@@ -33,6 +43,24 @@ model User {
   documentAudits    DocumentAudit[]
   settingsUpdates   CompanySettings[]
   pushSubscriptions PushSubscription[]
+  staffEvents       StaffEvent[]       @relation("StaffEventTarget")
+  staffActions      StaffEvent[]       @relation("StaffEventActor")
+}
+
+/**
+ * Personel işlemleri geçmişi: kim, kimi ekledi / pasif yaptı / şifresini sıfırladı.
+ */
+model StaffEvent {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation("StaffEventTarget", fields: [userId], references: [id])
+  actorId   String
+  actor     User     @relation("StaffEventActor", fields: [actorId], references: [id])
+  action    String // CREATE | UPDATE | DEACTIVATE | ACTIVATE | RESET_PASSWORD | CHANGE_PASSWORD
+  note      String?
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
 }
 
 /// İşletme bilgileri (tek satır, id "default"): her ilana otomatik eklenir. Yönetici CRM > Ayarlar'dan girer; uydurulmaz.

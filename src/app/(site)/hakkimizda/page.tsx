@@ -6,7 +6,7 @@ import { IconCamera, IconDoc, IconShield } from "@/components/site/Icons";
 export const metadata: Metadata = { title: "Hakkımızda" };
 
 const VALUES = [
-  { icon: IconDoc, title: "Açık bilgi", text: "Boya, değişen, hasar ve ekspertiz özeti her ilanda paylaşılır." },
+  { icon: IconDoc, title: "Açık bilgi", text: "Boya, değişen ve hasar bilgileri her ilanda paylaşılır." },
   { icon: IconCamera, title: "Gerçek görüntü", text: "Araçlar galeri ekibimiz tarafından fotoğraflanır." },
   { icon: IconShield, title: "Güvenli satış", text: "Satış galeride, yüz yüze ve noter devriyle tamamlanır." },
 ];
@@ -24,10 +24,6 @@ export default function AboutPage() {
           <p>
             Her araç galeri ekibimiz tarafından fotoğraflanır; boya, değişen ve hasar bilgileri ilanda açıkça paylaşılır.
             Satış süreci galeride, yüz yüze ve noter devriyle tamamlanır.
-          </p>
-          <p className="rounded-2xl border border-dashed border-zinc-300 bg-white p-5 text-sm text-zinc-500">
-            Not: Bu sayfa demo içeriğidir. Kurumsal metin, yetki belgesi ve iletişim bilgileri gerçek yayından önce Mir Motors
-            tarafından sağlanacaktır.
           </p>
           <Link href="/araclar" className="btn-primary mt-2 px-6 py-3">Stoğu inceleyin</Link>
         </div>

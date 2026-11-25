@@ -86,15 +86,16 @@ export function publishChecklist(input: {
   let equipment: unknown[] = [];
   try { equipment = JSON.parse(v.equipment ?? "[]"); } catch { /* bozuk kayıt = boş */ }
   const damage = damageReason(v), lien = lienReason(v), warranty = warrantyReason(v);
-  const classTypeMissing = [empty(v.vehicleClass) && "cinsi", empty(v.vehicleType) && "tipi"].filter(Boolean);
+  // Tip: ruhsattaki tip ya da ilandaki model (ör. "320i M Sport"; sahibinden'deki "Model" alanı gibi) yeterli.
+  const classTypeMissing = [empty(v.vehicleClass) && "cinsi", empty(v.vehicleType) && empty(v.packageName) && "tipi"].filter(Boolean);
   const L = (key: string, label: string, ok: boolean, step: 1 | 2 | 3, reason: string, detail?: string): CheckItem => ({ key, label, ok, group: "LEGAL", step, reason, detail });
   const R = (key: string, label: string, ok: boolean, step: 1 | 2 | 3, reason: string, detail?: string): CheckItem => ({ key, label, ok, group: "RULE", step, reason, detail });
   return [
     // Mevzuat (m.21/1-a: işletme bilgileri; m.20/2 a–h: araç bilgileri)
     L("companyTitle", "İşletmenin resmî adı / ticaret unvanı", !empty(company.title), 1, "İşletmenin resmî unvanı girilmedi (CRM > Ayarlar).", "CRM > Ayarlar (yönetici bir kez girer)"),
     L("companyAuth", "İkinci el taşıt yetki belgesi no", !empty(company.authorizationNo), 1, "Yetki belgesi numarası girilmedi (CRM > Ayarlar).", "CRM > Ayarlar (yönetici bir kez girer)"),
-    L("brandModel", "Marka ve ticari ad", !empty(v.brand) && !empty(v.model), 1, "Marka veya ticari ad (model) eksik."),
-    L("classType", "Araç cinsi ve tipi", classTypeMissing.length === 0, 1, `Aracın ${classTypeMissing.join(" ve ")} eksik.`, "Ruhsattaki cinsi (D.5, ör. Otomobil) ve tipi (D.2)"),
+    L("brandModel", "Marka ve ticari ad", !empty(v.brand) && !empty(v.model), 1, "Marka veya seri eksik."),
+    L("classType", "Araç cinsi ve tipi", classTypeMissing.length === 0, 1, `Aracın ${classTypeMissing.join(" ve ")} eksik.`, "Cinsi (ör. Otomobil) ve modeli (ör. 320i M Sport)"),
     L("year", "Model yılı", !empty(v.year), 1, "Model yılı eksik."),
     L("equipment", "Donanım ve aksesuar bilgileri", equipment.length > 0, 1, "Donanım ve aksesuar bilgisi girilmedi."),
     L("vin", "Şasi numarasının son 6 hanesi", !empty(v.legalVin), 1, "Şasi numarasının son 6 hanesi eksik."),

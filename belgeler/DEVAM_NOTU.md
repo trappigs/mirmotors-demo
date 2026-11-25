@@ -69,3 +69,12 @@ Bu dosyanın sonuna tarihli bir satır ekle: ne istendi, ne yapıldı, ne kaldı
 - Yerel migration: 20261105100000_faz2_5. Testler: 121 birim + 191 E2E geçti.
 - Açık karar: rehin "Doğrulanmadı" / garanti "Bilinmiyor" geri gelsin mi (şu an sade hâl).
 - Gizlilik: tests/document-sanitize.test.ts içinde gerçek bir ruhsatın plaka+şasisi var (eskiden) → sentetiğe çevrilmeli.
+
+## 23 Kasım 2026 — Personel yönetimi, KVKK, form sadeleştirme (yerelde, commit yok)
+- Ayarlar > Personel: ekle (geçici şifre, ilk girişte /crm/sifre zorunlu), düzenle, pasif/aktif yap, şifre sıfırla, telefon alanı (WhatsApp tanıma için). Pasif yapma / şifre sıfırlama `sessionVersion` ile oturumları anında kapatır. Son aktif yönetici korunur. `src/lib/staff.ts`, `/api/crm/staff`, `/api/crm/account/password`, `StaffManager.tsx`.
+- PWA oturumu 180 gün (kayan). Yerel migration: `20261123090000_personel` (User alanları + StaffEvent).
+- Müşteri sitesi: /kvkk (aydınlatma + çerez bilgisi, şirket bilgisi Ayarlar'dan), altbilgide bağlantı. İlan sayfasından "Ekspertiz özeti" kalktı (CRM formundan da). Etiketler: Seri / Model.
+- Elle giriş formu sahibinden düzeninde: Marka · Seri · Model; Araç cinsi düğme (kasadan otomatik); ruhsattaki tip isteğe bağlı. Yayın kontrolü: tip = ruhsattaki tip VEYA model.
+- Testlerdeki gerçek ruhsat değerleri sentetiğe çevrildi.
+- Yetki belgeleri (IETTS sorgusu): 3416628 = MİR MOTORS OTO KİRALAMA VE TİCARET LTD. ŞTİ. (Yeni Çamlıca Mah. Yavuz Sk. No:17A Ataşehir, 09.04.2026); 3408026 = şahıs işletmesi "MİR MOTORS" (Kayışdağı Mah. Şair Veysel Sk. No:6 Ataşehir, 25.09.2024; sahibinden mağazası bu numarayla). Yerel Ayarlar: unvan Ltd., yetki 3416628, adres Google'daki (Ferhatpaşa 9. Sk. No:37) — adres yetki belgelerindekiyle aynı değil, Burak'a soruldu.
+- Testler: 121 birim + 189 E2E + 21 personel kontrolü geçti.

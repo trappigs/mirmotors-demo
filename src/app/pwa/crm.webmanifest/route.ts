@@ -12,7 +12,7 @@ const manifest: MetadataRoute.Manifest = {
   id: "/crm",
   name: "Mir Motors CRM",
   short_name: "Mir Motors",
-  description: "Mir Motors galeri personel paneli (demo)",
+  description: "Mir Motors galeri personel paneli",
   lang: "tr",
   dir: "ltr",
   start_url: "/crm",

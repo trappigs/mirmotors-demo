@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { ROLE_LABELS } from "@/lib/constants";
 import { LogoutButton } from "@/components/crm/LogoutButton";
@@ -8,6 +9,8 @@ export const dynamic = "force-dynamic";
 
 export default async function PanelLayout({ children }: { children: React.ReactNode }) {
   const user = await requireUser();
+  // Geçici şifreyle giren personel önce kendi şifresini belirler.
+  if (user.mustChangePassword) redirect("/crm/sifre");
   return (
     // crm-app: telefonda form alanı/düğme boyutu kuralları yalnızca CRM'e uygulanır (globals.css).
     <div className="crm-app min-h-dvh bg-[#f3f3f1]">
@@ -37,7 +40,6 @@ export default async function PanelLayout({ children }: { children: React.ReactN
           </div>
         </div>
       </header>
-      <div className="bg-brand px-4 py-1 text-center text-xs font-semibold text-white">DEMO ORTAMI — örnek veriler</div>
       {/* Telefonda alt sekme çubuğu içeriği örtmesin diye altta ek boşluk */}
       <main className="mx-auto max-w-7xl pb-[calc(6rem+env(safe-area-inset-bottom))] pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] pt-6 sm:pb-8 sm:pl-[max(1.5rem,env(safe-area-inset-left))] sm:pr-[max(1.5rem,env(safe-area-inset-right))] sm:pt-8">{children}</main>
       <MobileNav isAdmin={user.role === "ADMIN"} userName={user.name} roleLabel={ROLE_LABELS[user.role]} />

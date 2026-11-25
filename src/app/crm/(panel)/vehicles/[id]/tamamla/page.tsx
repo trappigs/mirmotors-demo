@@ -17,6 +17,7 @@ import { WizardStepForm } from "@/components/crm/WizardStepForm";
 import { BodyPartsEditor } from "@/components/crm/BodyPartsEditor";
 import { MediaManager } from "@/components/crm/MediaManager";
 import { DocReviewPanel } from "@/components/crm/DocReviewPanel";
+import { QuickIdentityEdit } from "@/components/crm/QuickIdentityEdit";
 import { PublishChecklist } from "@/components/crm/PublishChecklist";
 import { StatusActions } from "@/components/crm/StatusActions";
 import { StatusBadge } from "@/components/crm/StatusBadge";
@@ -65,7 +66,7 @@ export default async function CompleteVehicleWizard({ params, searchParams }: { 
   const groups = groupByState(staffParts);
   const equipment = parseEquipment(v.equipment);
   const allInfo: [string, string | null][] = [
-    ["Marka", v.brand], ["Model / ticari ad", v.model], ["Paket", v.packageName], ["Araç cinsi", v.vehicleClass],
+    ["Marka", v.brand], ["Seri", v.model], ["Model", v.packageName], ["Araç cinsi", v.vehicleClass],
     ["Araç tipi (ruhsat)", v.vehicleType], ["Ticari adı (ruhsat)", v.tradeName && v.tradeName !== v.vehicleType ? v.tradeName : null],
     ["Model yılı", v.year ? String(v.year) : null], ["Kilometre", v.km != null ? formatKm(v.km) : null], ["Fiyat", v.price ? formatPrice(v.price) : null],
     ["Yakıt", v.fuel], ["Vites", v.transmission], ["Kasa tipi", v.bodyType], ["Renk", v.color], ["Plaka", v.legalPlate],
@@ -154,6 +155,8 @@ export default async function CompleteVehicleWizard({ params, searchParams }: { 
                 <p className="font-display text-lg font-semibold">{title}{v.year ? ` · ${v.year}` : ""}</p>
                 <StatusBadge status={v.status} />
               </div>
+              {/* Marka / seri / model burada doğrudan düzeltilebilir (1. adıma dönmeden) */}
+              <QuickIdentityEdit vehicleId={id} version={v.updatedAt.toISOString()} initial={{ brand: v.brand ?? "", model: v.model ?? "", packageName: v.packageName ?? "" }} />
               <dl className="mt-1 grid grid-cols-2 gap-x-4 gap-y-1 text-sm sm:grid-cols-4">
                 <div><dt className="text-xs text-zinc-500">Fiyat</dt><dd className="font-semibold">{v.price ? formatPrice(v.price) : <span className="text-red-700">girilmedi</span>}</dd></div>
                 <div><dt className="text-xs text-zinc-500">Kilometre</dt><dd className="font-semibold">{v.km != null ? formatKm(v.km) : <span className="text-red-700">girilmedi</span>}</dd></div>

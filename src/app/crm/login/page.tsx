@@ -27,7 +27,7 @@ export default function LoginPage() {
       <form onSubmit={submit} className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl sm:p-8">
         <p className="font-display text-xl font-bold tracking-[0.2em]">MIR <span className="font-light text-accent-dark">MOTORS</span></p>
         <h1 className="mt-6 text-lg font-semibold">Personel girişi</h1>
-        <p className="text-sm text-zinc-500">Galeri CRM · Demo</p>
+        <p className="text-sm text-zinc-500">Galeri CRM</p>
         <div className="mt-6 space-y-4">
           <div>
             <label className="label" htmlFor="email">E-posta</label>
@@ -40,10 +40,6 @@ export default function LoginPage() {
           {error && <p className="rounded-md bg-red-50 p-3 text-sm text-red-700">{error}</p>}
           <button disabled={busy} className="btn-primary w-full py-3">{busy ? "Giriş yapılıyor…" : "Giriş yap"}</button>
         </div>
-        <p className="mt-6 text-xs text-zinc-400">
-          Panelde yapılan işlemler kaydedilir. Kişisel verilerin işlenmesi hakkında:{" "}
-          <a href="/kvkk#veriler" className="underline hover:text-zinc-600">KVKK Aydınlatma Metni</a>
-        </p>
       </form>
     </div>
   );

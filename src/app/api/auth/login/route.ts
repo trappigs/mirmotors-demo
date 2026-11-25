@@ -38,10 +38,12 @@ export async function POST(req: Request) {
 
   const ok = await bcrypt.compare(password, user?.passwordHash ?? DUMMY_HASH);
   if (!user || !ok) return NextResponse.json({ error: "E-posta veya şifre hatalı" }, { status: 401 });
-  await prisma.user.update({ where: { id: user.id }, data: { failedLogins: 0, failWindowStart: null } });
+  // Pasif hesap: şifre doğru olsa da giriş yok (işten ayrılan personel).
+  if (!user.active) return NextResponse.json({ error: "Bu hesap kapatılmış. Yöneticinize başvurun." }, { status: 403 });
+  await prisma.user.update({ where: { id: user.id }, data: { failedLogins: 0, failWindowStart: null, lastLoginAt: new Date() } });
 
-  const token = await signSession({ uid: user.id, name: user.name, role: user.role as "ADMIN" | "SALES" });
-  const res = NextResponse.json({ ok: true });
+  const token = await signSession({ uid: user.id, name: user.name, role: user.role as "ADMIN" | "SALES", sv: user.sessionVersion });
+  const res = NextResponse.json({ ok: true, mustChangePassword: user.mustChangePassword });
   res.cookies.set(SESSION_COOKIE, token, sessionCookieOptions);
   return res;
 }

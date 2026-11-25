@@ -46,7 +46,7 @@ export default async function CrmVehicleDetail({ params, searchParams }: { param
   const lastPart = v.parts[0];
   const review = parseReview(v.docReview);
   // "Satıldı" formundaki satan personel seçimi için (yalnızca satılabilir durumdaki araçta).
-  const staff = v.status === "AVAILABLE" || v.status === "OPTIONED" ? await prisma.user.findMany({ select: { id: true, name: true }, orderBy: { name: "asc" } }) : [];
+  const staff = v.status === "AVAILABLE" || v.status === "OPTIONED" ? await prisma.user.findMany({ where: { active: true }, select: { id: true, name: true }, orderBy: { name: "asc" } }) : [];
   const archiveRow = v.status === "ARCHIVED" ? v.history.find((h) => h.action === "archive") : undefined;
   const archivedInfo = v.status === "ARCHIVED"
     ? `${archiveRow?.user.name ?? "—"} · ${v.archivedAt ? formatDateTime(v.archivedAt) : "—"}${v.archivedFromStatus ? ` · önceki durum: ${STATUS_LABELS[v.archivedFromStatus as VehicleStatus] ?? v.archivedFromStatus}` : ""}`

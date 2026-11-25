@@ -1,11 +1,10 @@
 import Link from "next/link";
-import { DemoBanner, SiteFooter, SiteHeader } from "@/components/site/SiteChrome";
+import { SiteFooter, SiteHeader } from "@/components/site/SiteChrome";
 
-/** Bilinmeyen adresler için site düzeninde Türkçe 404 sayfası (DEMO bandı dahil). */
+/** Bilinmeyen adresler için site düzeninde Türkçe 404 sayfası. */
 export default function NotFound() {
   return (
     <>
-      <DemoBanner />
       <SiteHeader />
       <main className="mx-auto max-w-3xl px-4 py-24 text-center sm:px-6">
         <p className="eyebrow">404</p>

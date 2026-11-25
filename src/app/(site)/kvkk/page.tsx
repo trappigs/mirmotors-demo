@@ -1,167 +1,94 @@
 import type { Metadata } from "next";
 import { PageHero } from "@/components/site/PageHero";
+import { getCompanyInfo } from "@/lib/company";
 
-export const metadata: Metadata = { title: "KVKK Aydınlatma Metni" };
+export const metadata: Metadata = { title: "KVKK aydınlatma metni ve çerezler" };
+export const dynamic = "force-dynamic";
 
-// Taslak metin: hukuki inceleme bekliyor. Aynı içerik ve hukukçuya notlar: docs/KVKK_AYDINLATMA_TASLAK.md
-// Şirket bilgileri gerçek değerler gelene kadar "yayın öncesi eklenecek" olarak kalır; uydurma bilgi yazılmaz.
 const PENDING = "yayın öncesi eklenecek";
-const UPDATED = "4 Kasım 2026";
 
-type Section = { id: string; title: string; body: (string | string[])[] };
-
-const SECTIONS: Section[] = [
-  {
-    id: "veri-sorumlusu",
-    title: "1. Veri sorumlusu",
-    body: [
-      "6698 sayılı Kişisel Verilerin Korunması Kanunu (\"KVKK\") uyarınca kişisel verileriniz, veri sorumlusu sıfatıyla Mir Motors tarafından aşağıda açıklanan kapsamda işlenmektedir.",
-      [
-        `Ticari unvan: ${PENDING}`,
-        `Adres: ${PENDING}`,
-        `MERSİS numarası: ${PENDING}`,
-        `KEP adresi: ${PENDING}`,
-        `E-posta: ${PENDING}`,
-      ],
-    ],
-  },
-  {
-    id: "veriler",
-    title: "2. İşlenen kişisel veriler",
-    body: [
-      "İlişkimizin türüne göre aşağıdaki kişisel veriler işlenebilir:",
-      [
-        "Site ziyaretçileri: IP adresi, tarayıcı ve cihaz bilgisi, ziyaret edilen sayfa, tarih ve saat (sunucu kayıtları). Müşteri sitesinde reklam veya analiz amaçlı çerez kullanılmaz.",
-        "Bizimle iletişime geçen müşteri adayları (WhatsApp, telefon, e-posta, showroom): ad-soyad, telefon numarası, e-posta adresi, mesaj içeriği, ilgilendiğiniz araç ve görüşme notları.",
-        "Araç satın alan müşteriler: kimlik bilgileri, iletişim bilgileri, satış ve noter devrine ilişkin bilgiler, satılan araca ilişkin bilgiler.",
-        "Aracını satışa sunan veya ilan yetkisi veren araç sahipleri: ad-soyad, T.C. kimlik numarası, telefon numarası, tüzel kişilerde unvan, vergi numarası ve yetki belgesi numarası, araç plakası ve araca ilişkin bilgiler, Elektronik İlan Doğrulama Sistemi (EİDS) doğrulama sonucu.",
-        "Çalışanlarımız (yönetim paneli kullanıcıları): ad-soyad, kurumsal e-posta adresi, görev/rol, şifrenin geri döndürülemez özeti, panelde yapılan işlemlerin kaydı (hangi araçta hangi işlemin ne zaman yapıldığı), oturum çerezi, başarısız giriş denemesi sayısı ve bildirimleri açtıysanız cihaz bildirim aboneliği.",
-      ],
-    ],
-  },
-  {
-    id: "amaclar",
-    title: "3. İşleme amaçları",
-    body: [
-      [
-        "Sitenin işletilmesi, güvenliğinin sağlanması ve kötüye kullanımın önlenmesi,",
-        "Araçlarla ilgili bilgi taleplerinizin yanıtlanması ve showroom ziyaretlerinin planlanması,",
-        "Araç satış sürecinin yürütülmesi, satış ve noter devri işlemlerinin tamamlanması,",
-        "Motorlu Kara Taşıtlarının Ticareti Hakkında Yönetmelik kapsamında ilanların yayımlanmadan önce Ticaret Bakanlığı'nın elektronik sistemleri (EİDS) üzerinden doğrulanması ve ilan bilgilerinin mevzuata uygun gösterilmesi,",
-        "Yönetim panelinde yetkilendirme yapılması ve işlem geçmişinin tutulması,",
-        "Yasal yükümlülüklerin yerine getirilmesi, yetkili kurum ve kuruluşların taleplerinin karşılanması,",
-        "Olası uyuşmazlıklarda hakların tesisi, kullanılması ve korunması.",
-      ],
-    ],
-  },
-  {
-    id: "hukuki-sebep",
-    title: "4. Toplama yöntemi ve hukuki sebepler",
-    body: [
-      "Kişisel verileriniz; site ve sunucu kayıtları aracılığıyla otomatik yollarla, WhatsApp, telefon, e-posta ve showroom görüşmeleri aracılığıyla, çalışanlarımızın yönetim paneline girdiği kayıtlarla ve EİDS doğrulaması sırasında e-Devlet üzerinden Ticaret Bakanlığı sistemleri aracılığıyla toplanır.",
-      "Bu veriler KVKK'nın 5. maddesinin 2. fıkrasında yer alan şu hukuki sebeplere dayanılarak işlenir:",
-      [
-        "Bir sözleşmenin kurulması veya ifasıyla doğrudan ilgili olması (araç satışı, bilgi talebi),",
-        "Veri sorumlusunun hukuki yükümlülüğünü yerine getirebilmesi için zorunlu olması (ilan doğrulama, ticari kayıtların saklanması),",
-        "Bir hakkın tesisi, kullanılması veya korunması için zorunlu olması,",
-        "İlgili kişinin temel hak ve özgürlüklerine zarar vermemek kaydıyla veri sorumlusunun meşru menfaatleri için zorunlu olması (site ve panel güvenliği, işlem kaydı).",
-      ],
-      "Bu hukuki sebeplerin dışında kalan bir işleme (örneğin pazarlama iletişimi) yapılması gerekirse ayrıca açık rızanız alınır. Şu an pazarlama amaçlı ileti gönderilmemektedir.",
-    ],
-  },
-  {
-    id: "aktarim",
-    title: "5. Kişisel verilerin aktarılması",
-    body: [
-      "Kişisel verileriniz yukarıdaki amaçlarla sınırlı olarak ve gerektiği ölçüde şu alıcılara aktarılabilir:",
-      [
-        "Ticaret Bakanlığı (EİDS ilan doğrulaması),",
-        "Noterlikler (araç devri),",
-        "Kanunen yetkili kamu kurum ve kuruluşları (talep halinde),",
-        "Hizmet aldığımız sunucu sağlayıcısı (veriler İstanbul'daki veri merkezinde saklanır),",
-        "Hukuki ve mali danışmanlarımız.",
-      ],
-      "Bizimle WhatsApp üzerinden iletişime geçmeyi seçmeniz halinde mesajlarınız WhatsApp (Meta) altyapısında, WhatsApp'ın kendi koşulları çerçevesinde işlenir; bu altyapının sunucuları yurt dışında bulunabilir. İletişim için telefon, e-posta veya showroom kanallarını da kullanabilirsiniz.",
-      "Yönetim panelindeki otomatik belge okuma özelliği kullanıldığında, araç ruhsatı ve ekspertiz raporu görüntüleri ilan bilgilerinin çıkarılması amacıyla yurt dışında bulunan bir yapay zekâ hizmet sağlayıcısına (OpenAI) iletilir. Bu özellik yalnızca çalışanlarımız tarafından ve gerektiğinde kullanılır.",
-    ],
-  },
-  {
-    id: "saklama",
-    title: "6. Saklama süresi",
-    body: [
-      "Kişisel verileriniz, işlenme amacının gerektirdiği süre ve ilgili mevzuatta öngörülen saklama süreleri boyunca saklanır; sürenin sona ermesiyle silinir, yok edilir veya anonim hale getirilir. Satış ve ticari kayıtlar ilgili mevzuatın öngördüğü süre boyunca muhafaza edilir.",
-    ],
-  },
-  {
-    id: "haklar",
-    title: "7. KVKK'nın 11. maddesi kapsamındaki haklarınız",
-    body: [
-      [
-        "Kişisel verilerinizin işlenip işlenmediğini öğrenme,",
-        "İşlenmişse buna ilişkin bilgi talep etme,",
-        "İşlenme amacını ve bunların amacına uygun kullanılıp kullanılmadığını öğrenme,",
-        "Yurt içinde veya yurt dışında aktarıldığı üçüncü kişileri bilme,",
-        "Eksik veya yanlış işlenmişse düzeltilmesini isteme,",
-        "KVKK'nın 7. maddesindeki şartlar çerçevesinde silinmesini veya yok edilmesini isteme,",
-        "Düzeltme, silme veya yok etme işlemlerinin verilerin aktarıldığı üçüncü kişilere bildirilmesini isteme,",
-        "Münhasıran otomatik sistemlerle analiz edilmesi sonucu aleyhinize bir sonucun ortaya çıkmasına itiraz etme,",
-        "Kanuna aykırı işleme sebebiyle zarara uğramanız halinde zararın giderilmesini talep etme.",
-      ],
-    ],
-  },
-  {
-    id: "basvuru",
-    title: "8. Başvuru yolu",
-    body: [
-      "Haklarınıza ilişkin taleplerinizi, Veri Sorumlusuna Başvuru Usul ve Esasları Hakkında Tebliğ'e uygun olarak; yukarıdaki adrese yazılı olarak, KEP adresimize, güvenli elektronik imza veya mobil imza ile ya da daha önce bize bildirdiğiniz ve sistemlerimizde kayıtlı e-posta adresinizden iletebilirsiniz.",
-      "Başvurunuz, talebin niteliğine göre en kısa sürede ve en geç 30 gün içinde ücretsiz olarak sonuçlandırılır. İşlemin ayrıca bir maliyet gerektirmesi halinde Kişisel Verileri Koruma Kurulu'nca belirlenen tarifedeki ücret alınabilir. Başvurunuzun reddedilmesi, verilen cevabın yetersiz bulunması veya süresinde cevap verilmemesi halinde Kişisel Verileri Koruma Kurulu'na şikâyette bulunabilirsiniz.",
-    ],
-  },
-  {
-    id: "cerez",
-    title: "9. Çerez bilgilendirmesi",
-    body: [
-      "Müşteri sitesinde çerez veya benzeri tarayıcı depolaması kullanılmaz; reklam, analiz veya kişiselleştirme amaçlı çerez bulunmamaktadır.",
-      "Yalnızca çalışanlarımızın kullandığı yönetim panelinde, oturumun açık tutulması için zorunlu bir oturum çerezi kullanılır (adı: mm_session, süresi: 14 gün, panel kullanıldıkça yenilenir, tarayıcı betikleriyle okunamaz). Bu çerez hizmetin sunulması için zorunlu olduğundan ayrıca onay alınmaz.",
-      "Panelde bağlantı koptuğunda kaydedilemeyen form değişiklikleri, yeniden gönderilinceye kadar yalnızca çalışanın cihazında (tarayıcı yerel depolaması) tutulur. Bildirimleri açan çalışanın cihazı için tarayıcının bildirim aboneliği bilgisi sunucumuzda saklanır; bildirimler kapatıldığında silinir.",
-      "İleride analiz veya pazarlama amaçlı çerez kullanılması halinde, bu çerezler yalnızca onayınızla etkinleştirilecek ve bu metin güncellenecektir.",
-    ],
-  },
-];
-
-export default function KvkkPage() {
+/**
+ * 6698 sayılı KVKK m.10 aydınlatma metni + çerez bilgilendirmesi.
+ * Veri sorumlusu bilgileri CRM > Ayarlar'dan gelir; girilmemiş bilgi uydurulmaz.
+ * Müşteri sitesinde form, analiz veya reklam çerezi yoktur; metin bu duruma göre yazılmıştır.
+ * Yayından önce bir hukukçu tarafından gözden geçirilmelidir.
+ */
+export default async function KvkkPage() {
+  const c = await getCompanyInfo();
+  const h2 = "mt-10 font-display text-xl font-bold tracking-tight text-ink";
   return (
     <>
-      <PageHero eyebrow="Yasal" title="KVKK Aydınlatma Metni ve Çerez Bilgilendirmesi" />
-      <div className="mx-auto max-w-4xl px-4 py-14 sm:px-6">
-        <p className="rounded-2xl border border-dashed border-brand/40 bg-brand-soft p-5 text-sm text-ink" data-testid="kvkk-draft-note">
-          Bu metin taslaktır ve hukuki inceleme sonrasında güncellenecektir. Şirket bilgileri gerçek yayından önce eklenecektir.
+      <PageHero eyebrow="Kişisel verilerin korunması" title="KVKK aydınlatma metni ve çerezler" />
+      <article className="mx-auto max-w-3xl px-4 py-14 leading-relaxed text-zinc-700 sm:px-6" data-testid="kvkk">
+        <h2 className={h2}>1. Veri sorumlusu</h2>
+        <dl className="mt-3 space-y-1 text-sm">
+          <div><dt className="inline font-semibold">Unvan: </dt><dd className="inline">{c.title ?? PENDING}</dd></div>
+          <div><dt className="inline font-semibold">Adres: </dt><dd className="inline">{c.address ?? PENDING}</dd></div>
+          {c.mersis && <div><dt className="inline font-semibold">MERSİS no: </dt><dd className="inline">{c.mersis}</dd></div>}
+          <div><dt className="inline font-semibold">Yetki belgesi no: </dt><dd className="inline">{c.authorizationNo ?? PENDING}</dd></div>
+        </dl>
+        <p className="mt-3">
+          6698 sayılı Kişisel Verilerin Korunması Kanunu (&quot;KVKK&quot;) uyarınca kişisel verileriniz, veri sorumlusu sıfatıyla
+          yukarıda bilgileri yer alan işletme tarafından aşağıda açıklanan kapsamda işlenmektedir.
         </p>
-        <nav className="mt-8 flex flex-wrap gap-2 text-sm" aria-label="Bölümler">
-          {SECTIONS.map((s) => (
-            <a key={s.id} href={`#${s.id}`} className="chip hover:border-brand hover:text-brand">{s.title.replace(/^\d+\.\s*/, "")}</a>
-          ))}
-        </nav>
-        <div className="mt-10 space-y-10 text-[15px] leading-relaxed text-zinc-700">
-          {SECTIONS.map((s) => (
-            <section key={s.id} id={s.id} className="scroll-mt-28">
-              <h2 className="section-mark font-display text-xl font-bold text-ink">{s.title}</h2>
-              <div className="mt-4 space-y-3">
-                {s.body.map((b, i) =>
-                  Array.isArray(b) ? (
-                    <ul key={i} className="list-disc space-y-1.5 pl-5 marker:text-brand">
-                      {b.map((li) => <li key={li}>{li}</li>)}
-                    </ul>
-                  ) : (
-                    <p key={i}>{b}</p>
-                  ),
-                )}
-              </div>
-            </section>
-          ))}
-        </div>
-        <p className="mt-12 text-xs text-muted">Son güncelleme: {UPDATED}</p>
-      </div>
+
+        <h2 className={h2}>2. Bu sitede hangi verileriniz işlenir?</h2>
+        <ul className="mt-3 list-disc space-y-2 pl-5">
+          <li>Bu sitede <strong>form bulunmaz</strong>; üyelik, ödeme veya kapora işlemi yapılmaz.</li>
+          <li>
+            Bizimle <strong>WhatsApp veya telefon</strong> üzerinden iletişime geçerseniz: adınız, telefon numaranız ve mesajınızın
+            içeriği (ilgilendiğiniz araç, sorularınız).
+          </li>
+          <li>
+            Siteyi ziyaret ettiğinizde, barındırma hizmetinin güvenlik amacıyla tuttuğu teknik kayıtlar (IP adresi, tarih-saat,
+            tarayıcı bilgisi).
+          </li>
+        </ul>
+
+        <h2 className={h2}>3. İşleme amaçları ve hukuki sebepler</h2>
+        <ul className="mt-3 list-disc space-y-2 pl-5">
+          <li>Araçlarla ilgili sorularınızı yanıtlamak, randevu ve showroom ziyaretini planlamak (KVKK m.5/2-c: bir sözleşmenin kurulmasıyla doğrudan ilgili olması).</li>
+          <li>Sitenin güvenliğini sağlamak ve kötüye kullanımı önlemek (KVKK m.5/2-f: meşru menfaat).</li>
+          <li>Mevzuattan doğan yükümlülükleri yerine getirmek ve yetkili kurumların taleplerini karşılamak (KVKK m.5/2-ç: hukuki yükümlülük).</li>
+        </ul>
+        <p className="mt-3">Verileriniz pazarlama veya reklam amacıyla kullanılmaz ve satılmaz.</p>
+
+        <h2 className={h2}>4. Verilerin aktarılması</h2>
+        <p className="mt-3">
+          Verileriniz yalnızca yukarıdaki amaçlar için ve gerektiği ölçüde; yasal zorunluluk hâlinde yetkili kamu kurumlarıyla,
+          hizmet aldığımız barındırma ve iletişim sağlayıcılarıyla paylaşılabilir. WhatsApp ile iletişime geçmeyi seçerseniz,
+          mesajlarınız WhatsApp hizmetinin kendi koşullarına göre işlenir; bu hizmetin sunucuları yurt dışında bulunabilir.
+        </p>
+
+        <h2 className={h2}>5. Saklama süresi</h2>
+        <p className="mt-3">
+          İletişim kayıtları, talebiniz sonuçlandıktan sonra ilgili mevzuatta öngörülen veya işleme amacının gerektirdiği süre boyunca
+          saklanır; süre sonunda silinir, yok edilir veya anonim hâle getirilir.
+        </p>
+
+        <h2 className={h2}>6. Haklarınız (KVKK m.11)</h2>
+        <p className="mt-3">Veri sorumlusuna başvurarak;</p>
+        <ul className="mt-2 list-disc space-y-1 pl-5">
+          <li>kişisel verilerinizin işlenip işlenmediğini öğrenme ve işlenmişse buna ilişkin bilgi talep etme,</li>
+          <li>işlenme amacını ve amacına uygun kullanılıp kullanılmadığını öğrenme,</li>
+          <li>yurt içinde veya yurt dışında aktarıldığı üçüncü kişileri bilme,</li>
+          <li>eksik veya yanlış işlenmişse düzeltilmesini, şartları oluşmuşsa silinmesini veya yok edilmesini isteme ve bu işlemlerin aktarılan kişilere bildirilmesini isteme,</li>
+          <li>münhasıran otomatik sistemlerle analiz edilmesi sonucu aleyhinize bir sonuç çıkmasına itiraz etme,</li>
+          <li>kanuna aykırı işleme nedeniyle zarara uğramanız hâlinde zararın giderilmesini talep etme</li>
+        </ul>
+        <p className="mt-3">
+          haklarına sahipsiniz. Başvurularınızı yukarıdaki adrese yazılı olarak iletebilirsiniz. Başvurular en geç 30 gün içinde
+          ücretsiz olarak sonuçlandırılır.
+        </p>
+
+        <h2 className={h2} id="cerezler">7. Çerezler</h2>
+        <p className="mt-3">
+          Bu sitenin müşteri bölümünde <strong>reklam, analiz veya takip çerezi kullanılmaz</strong>. Galeri personelinin giriş yaptığı
+          yönetim panelinde yalnızca oturumun açık kalması için zorunlu bir oturum çerezi kullanılır; bu çerez müşterilerin
+          tarayıcısına yerleştirilmez. Zorunlu çerezler için onay gerekmez. İleride analiz veya reklam çerezi kullanılırsa, bu çerezler
+          yalnızca onayınız alınarak etkinleştirilecek ve bu metin güncellenecektir.
+        </p>
+      </article>
     </>
   );
 }

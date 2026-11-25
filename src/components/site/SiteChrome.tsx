@@ -3,7 +3,7 @@ import Link from "next/link";
 import { getCompanyInfo } from "@/lib/company";
 import { MobileNav } from "./MobileNav";
 import { NavLinks } from "./NavLinks";
-import { IconClock, IconPin, IconWhatsApp } from "./Icons";
+import { IconPin, IconWhatsApp } from "./Icons";
 
 export const NAV = [
   { href: "/", label: "Ana Sayfa" },
@@ -11,15 +11,6 @@ export const NAV = [
   { href: "/hakkimizda", label: "Hakkımızda" },
   { href: "/iletisim", label: "İletişim" },
 ];
-
-export function DemoBanner() {
-  return (
-    <div className="bg-ink px-4 py-1.5 text-center text-[11px] font-medium tracking-wide text-white/85 sm:text-xs">
-      <span className="mr-2 rounded bg-gold px-1.5 py-0.5 text-[10px] font-bold text-ink">DEMO</span>
-      DEMO · Örnek Araçlar — Bu sitedeki ilanlar ve görseller temsilidir, gerçek satış teklifi değildir.
-    </div>
-  );
-}
 
 /**
  * Mir Motors'un gerçek logosu (işletmenin gönderdiği görsel; yalnızca kırpıldı, yeniden çizilmedi).
@@ -89,9 +80,6 @@ export async function SiteFooter() {
           <p className="mt-5 max-w-xs text-sm leading-relaxed">
             Seçkin ikinci el otomobiller, şeffaf ekspertiz bilgisi ve kişisel danışmanlık.
           </p>
-          <span className="mt-5 inline-flex rounded-md bg-gold px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.1em] text-ink">
-            Demo sürüm
-          </span>
         </div>
 
         <div className="text-sm">
@@ -109,31 +97,26 @@ export async function SiteFooter() {
           <p className="mb-4 border-l-2 border-gold pl-2.5 text-sm font-bold text-white">İletişim</p>
           <ul className="space-y-3">
             <li className="flex gap-2.5"><IconPin className="mt-0.5 h-4 w-4 shrink-0 text-gold" />{company.address ?? "Showroom adresi yayın öncesi eklenecek"}</li>
-            <li className="flex gap-2.5"><IconClock className="mt-0.5 h-4 w-4 shrink-0 text-gold" />Çalışma saatleri yayın öncesi eklenecek</li>
-            <li className="flex gap-2.5"><IconWhatsApp className="mt-0.5 h-4 w-4 shrink-0 text-gold" />WhatsApp danışman hattı (demo)</li>
+            <li className="flex gap-2.5"><IconWhatsApp className="mt-0.5 h-4 w-4 shrink-0 text-gold" />WhatsApp danışman hattı</li>
           </ul>
         </div>
 
         <div className="text-sm">
           <p className="mb-4 border-l-2 border-gold pl-2.5 text-sm font-bold text-white">Yasal Bilgilendirme</p>
           <p className="leading-relaxed">
-            Bu site bir demo sürümüdür. İlanlar, fiyatlar ve görseller temsilidir. Site üzerinden ödeme, kapora veya
-            sözleşme işlemi yapılmaz.
+            Site üzerinden ödeme, kapora veya sözleşme işlemi yapılmaz. Satış ve noter devri galeride tamamlanır.
           </p>
           <dl className="mt-3 space-y-1 text-xs">
             <div><dt className="inline text-zinc-500">Ticari unvan: </dt><dd className="inline">{company.title ?? "yayın öncesi eklenecek"}</dd></div>
             <div><dt className="inline text-zinc-500">Yetki belgesi no: </dt><dd className="inline">{company.authorizationNo ?? "yayın öncesi eklenecek"}</dd></div>
             {company.mersis && <div><dt className="inline text-zinc-500">MERSİS: </dt><dd className="inline">{company.mersis}</dd></div>}
           </dl>
-          <ul className="mt-3 space-y-1.5">
-            <li><Link href="/kvkk" className="transition hover:text-gold">KVKK Aydınlatma Metni</Link></li>
-            <li><Link href="/kvkk#cerez" className="transition hover:text-gold">Çerez Bilgilendirmesi</Link></li>
-          </ul>
+          <Link href="/kvkk" className="mt-3 inline-block text-xs underline-offset-2 transition hover:text-gold hover:underline">KVKK aydınlatma metni ve çerezler</Link>
         </div>
       </div>
       <div className="border-t border-white/10">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-2 px-4 py-6 text-xs sm:flex-row sm:px-6">
-          <span>© {year} Mir Motors · Tüm hakları saklıdır · Demo</span>
+          <span>© {year} Mir Motors · Tüm hakları saklıdır</span>
           <span className="text-zinc-500">Ödeme ve sözleşme işlemleri yalnızca galeride yapılır.</span>
         </div>
       </div>

@@ -1,9 +1,10 @@
 "use client";
 import { useRouter } from "next/navigation";
-import { Fragment, useEffect, useState, type ReactNode } from "react";
-import { BODY_TYPES, BRAND_MODELS, COLORS, DRIVETRAINS, EQUIPMENT_GROUPS, EQUIPMENT_OPTIONS, FUEL_TYPES, TRANSMISSIONS, normalizeColor } from "@/lib/constants";
+import { Fragment, useEffect, useRef, useState, type ReactNode } from "react";
+import { BODY_TYPES, COLORS, DRIVETRAINS, EQUIPMENT_GROUPS, EQUIPMENT_OPTIONS, FUEL_TYPES, TRANSMISSIONS, normalizeColor } from "@/lib/constants";
 import { apiCall } from "@/lib/client-api";
 import { SuggestInput } from "./SuggestInput";
+import { useVehicleCatalog } from "@/lib/client-catalog";
 
 export type VehicleFormValues = {
   brand: string; model: string; packageName: string; year: string; km: string; price: string; tradeIn: string;
@@ -30,15 +31,20 @@ export const emptyVehicleForm: VehicleFormValues = {
 /** Formun bölümleri: araç sayfası hepsini, sihirbaz adımları bir kısmını gösterir. */
 export type FormSection = "basic" | "identity" | "equipment" | "damage" | "legal";
 const ALL_SECTIONS: FormSection[] = ["basic", "identity", "equipment", "damage", "legal"];
-const VEHICLE_CLASSES = ["Otomobil", "Arazi taşıtı", "Kamyonet", "Minibüs", "Otobüs", "Motosiklet", "Özel amaçlı"];
+/** Araç cinsi: ruhsattaki karmaşık yazı yerine sade seçenekler (sahibinden'deki kategori gibi). */
+const VEHICLE_CLASSES = ["Otomobil", "Arazi taşıtı", "Kamyonet", "Minibüs"];
+/** Kasa tipinden cins tahmini: yalnızca cins boşken doldurulur, personel değiştirebilir. */
+const classFromBody = (body: string) => (["Panelvan", "Kamyonet", "Pick-up"].includes(body) ? "Kamyonet" : body === "Minibüs" ? "Minibüs" : body ? "Otomobil" : "");
 /**
  * Kimlik bilgileri: ruhsattan okunabilenler. Ruhsattan gelenler özet kartında, gelmeyenler kutu olarak gösterilir.
  * Plaka burada değil: fiyatla birlikte formun en üstünde, her zaman açık kutu olarak durur.
  */
 const IDENTITY_KEYS = ["brand", "model", "packageName", "vehicleClass", "vehicleType", "year", "fuel", "color", "legalVin"] as const;
 type IdentityKey = (typeof IDENTITY_KEYS)[number];
+/** Elle girişte sahibinden düzeni: Marka · Seri · Model. Cins kasa tipinin yanında düğme; ruhsattaki ham tip isteğe bağlı bölümde. */
+const MANUAL_KEYS: readonly IdentityKey[] = ["brand", "model", "packageName", "year", "fuel", "color", "legalVin"];
 const SUMMARY_LABELS: Record<IdentityKey, string> = {
-  brand: "Marka", model: "Model", packageName: "Paket", vehicleClass: "Cins", vehicleType: "Tip", year: "Model yılı", fuel: "Yakıt", color: "Renk",
+  brand: "Marka", model: "Seri", packageName: "Model", vehicleClass: "Cins", vehicleType: "Tip (ruhsat)", year: "Model yılı", fuel: "Yakıt", color: "Renk",
   legalVin: "Şasi (son 6)",
 };
 const TITLE_KEYS: IdentityKey[] = ["brand", "model", "packageName"];
@@ -106,22 +112,51 @@ export function VehicleForm({ mode, vehicleId, initial, readOnly, published, ai,
   const [otherEq, setOtherEq] = useState("");
   const [modelCleared, setModelCleared] = useState("");
   const [baseVersion, setBaseVersion] = useState(version);
+  // Marka / seri / motor önerileri (CRM içi katalog; listede olmayan değer de yazılabilir)
+  const cat = useVehicleCatalog();
+  // Son seçilen (tanınan) marka: marka değişince seri/model sıfırlamak için
+  const lastBrand = useRef(initial?.brand ?? "");
 
   const set = <K extends keyof VehicleFormValues>(k: K, val: VehicleFormValues[K]) => {
     setV((s) => ({ ...s, [k]: val }));
     setSaved(false);
     onFieldChange?.(k, val);
-    if (k === "brand") {
-      // Yalnızca bilinen bir markadan başka bilinen bir markaya geçişte (harf harf yazarken değil)
-      const list = BRAND_MODELS[String(val)];
-      const model = v.model.trim();
-      if (model && list && BRAND_MODELS[v.brand] && v.brand !== val && !list.some((m) => m.toLocaleLowerCase("tr") === model.toLocaleLowerCase("tr"))) {
-        setV((s) => ({ ...s, model: "" }));
-        onFieldChange?.("model", "");
-        setModelCleared(model);
+    if (k === "bodyType" && !v.vehicleClass.trim()) {
+      const cls = classFromBody(String(val));
+      if (cls) {
+        setV((s) => ({ ...s, vehicleClass: cls }));
+        onFieldChange?.("vehicleClass", cls);
       }
     }
-    if (k === "model") setModelCleared("");
+    const same = (a: string, b: string) => a.trim().toLocaleLowerCase("tr") === b.trim().toLocaleLowerCase("tr");
+    const setField = (f: keyof VehicleFormValues, value: string) => {
+      setV((s) => ({ ...s, [f]: value }));
+      onFieldChange?.(f, value as never);
+    };
+    if (k === "brand") {
+      // Seçili marka başka bir markayla değişince seri ve model sıfırlanır (yeni markanın serileri gelir).
+      // Harf harf yazarken ya da aynı markanın yazımı düzeltilirken silinmez: yalnızca tanınan bir markadan farklı tanınan bir markaya geçişte.
+      const next = String(val);
+      if (cat.knownBrand(next)) {
+        const prev = lastBrand.current;
+        if (prev && !same(prev, next) && (v.model.trim() || v.packageName.trim())) {
+          setModelCleared(v.model.trim());
+          setField("model", "");
+          setField("packageName", "");
+        }
+        lastBrand.current = next;
+      }
+    }
+    if (k === "model") {
+      setModelCleared("");
+      const seri = String(val);
+      // Marka boşken seri yazıldıysa ve bu seri tek bir markaya aitse marka kendiliğinden dolar (ör. "Clio" → Renault).
+      const owners = !v.brand.trim() ? cat.brandsForSeries(seri) : [];
+      if (owners.length === 1) {
+        setField("brand", owners[0]);
+        lastBrand.current = owners[0];
+      }
+    }
   };
   // "Düzelt" bağlantısı ruhsat özet kartındaki bir alanı hedefliyorsa kart düzenleme moduna açılır (alan görünür olsun).
   useEffect(() => {
@@ -186,10 +221,10 @@ export function VehicleForm({ mode, vehicleId, initial, readOnly, published, ai,
     </div>
   );
   /** Yazdıkça öneri gösteren kutu (marka, model, cins): listede olmayan değer de yazılabilir. */
-  const suggest = (k: "brand" | "model" | "vehicleClass", label: string, options: string[], note = "") => (
+  const suggest = (k: "brand" | "model" | "packageName", label: string, options: string[], note = "", placeholder?: string) => (
     <div>
       <label className="label" htmlFor={k}>{label}{marks(k)}</label>
-      <SuggestInput id={k} value={v[k]} onChange={(val) => set(k, val)} options={options} disabled={readOnly} className={`input ${aiMark(k)}`} placeholder={k === "model" && !options.length ? "Yazın" : "Yazın veya seçin"} />
+      <SuggestInput id={k} value={v[k]} onChange={(val) => set(k, val)} options={options} disabled={readOnly} className={`input ${aiMark(k)}`} placeholder={placeholder ?? (k === "model" && !options.length ? "Yazın" : "Yazın veya seçin")} />
       {note && <p className="mt-1 text-xs text-amber-800" role="status">{note}</p>}
     </div>
   );
@@ -250,11 +285,15 @@ export function VehicleForm({ mode, vehicleId, initial, readOnly, published, ai,
   };
   const identityInput = (k: IdentityKey) => {
     switch (k) {
-      case "brand": return suggest("brand", "Marka", Object.keys(BRAND_MODELS));
-      case "model": return suggest("model", "Model / ticari ad", BRAND_MODELS[v.brand] ?? [], modelCleared ? `Marka değiştiği için önceki model (${modelCleared}) temizlendi.` : "");
-      case "packageName": return text("packageName", "Seri / donanım paketi", { placeholder: "örn. 520i M Sport" });
-      case "vehicleClass": return suggest("vehicleClass", "Araç cinsi (ruhsatta yazan)", VEHICLE_CLASSES);
-      case "vehicleType": return text("vehicleType", "Araç tipi (ruhsatta yazdığı gibi)", { upper: true, placeholder: "örn. CLIO SYMBL ALIZE" });
+      case "brand": return suggest("brand", "Marka", cat.brands());
+      case "model": return suggest("model", "Seri", cat.series(v.brand), modelCleared ? `Marka değiştiği için önceki model (${modelCleared}) temizlendi.` : "");
+      case "packageName": {
+        // Seriye göre motor seçenekleri önerilir (ör. Clio → 1.0 TCe, 1.5 dCi); paket adı elle eklenebilir.
+        const motors = cat.motors(v.brand, v.model);
+        return suggest("packageName", "Model", motors, "", motors.length ? "Motor ve paket seçin (ör. 1.0 TCe Joy)" : "örn. 320i M Sport, 1.0 TCe Evolution");
+      }
+      case "vehicleClass": return chips("vehicleClass", "Araç cinsi", VEHICLE_CLASSES);
+      case "vehicleType": return text("vehicleType", "Ruhsattaki tip (isteğe bağlı)", { upper: true, placeholder: "örn. CLIO SYMBL ALIZE" });
       case "year": return text("year", "Model yılı", { numeric: true });
       case "fuel": return select("fuel", "Yakıt", FUEL_TYPES);
       case "color": return select("color", "Renk", v.color && !COLORS.includes(v.color) ? [...COLORS, v.color] : COLORS);
@@ -345,7 +384,7 @@ export function VehicleForm({ mode, vehicleId, initial, readOnly, published, ai,
             </div>
             {amount("price", "Satış fiyatı", "TL", "TL", missingMark("price"), "Zorunlu: fiyat girilmeden ilan yayımlanamaz.")}
           </div>
-          {!ruhsatMode && identityGrid(IDENTITY_KEYS)}
+          {!ruhsatMode && identityGrid(MANUAL_KEYS)}
 
           {ruhsatMode && !editRuhsat && (
             <div className="rounded-xl border border-emerald-200 bg-emerald-50/60 p-4" data-testid="ruhsat-summary">
@@ -404,12 +443,13 @@ export function VehicleForm({ mode, vehicleId, initial, readOnly, published, ai,
             <div className="mt-3 space-y-4">
               {chips("transmission", "Vites", TRANSMISSIONS)}
               {chips("bodyType", "Kasa tipi", BODY_TYPES)}
+              {!ruhsatMode && chips("vehicleClass", "Araç cinsi", VEHICLE_CLASSES)}
               {chips("tradeIn", "Takasa uygun", [["true", "Evet"], ["false", "Hayır"]], true)}
             </div>
           </div>
 
-          <details className="mt-5 rounded-lg border border-zinc-200 px-4 py-3" open={mode === "edit" && !ruhsatMode && Boolean(v.enginePower || v.engineCc || v.drivetrain || v.description)}>
-            <summary className="cursor-pointer text-sm font-semibold text-zinc-700">Diğer özellikler (isteğe bağlı): motor, çekiş, muayene, açıklama</summary>
+          <div className="mt-6 border-t border-zinc-100 pt-5" data-testid="other-details">
+            <h3 className="font-display font-semibold">Diğer özellikler <span className="text-sm font-normal text-zinc-500">(isteğe bağlı)</span></h3>
             <div className="mt-4 grid gap-x-5 gap-y-4 sm:grid-cols-2 lg:grid-cols-3">
               {text("enginePower", "Motor gücü (hp)", { numeric: true })}
               {text("engineCc", "Motor hacmi (cc)", { numeric: true })}
@@ -418,9 +458,10 @@ export function VehicleForm({ mode, vehicleId, initial, readOnly, published, ai,
                 <input id="inspectionUntil" type="date" value={v.inspectionUntil} onChange={(e) => set("inspectionUntil", e.target.value)} disabled={readOnly} className={`input ${aiMark("inspectionUntil")}`} />
               </div>
               {select("drivetrain", "Çekiş", DRIVETRAINS)}
+              {!ruhsatMode && identityInput("vehicleType")}
             </div>
             <div className="mt-4">{area("description", "İlan açıklaması", 3)}</div>
-          </details>
+          </div>
         </section>
       )}
 
@@ -479,14 +520,13 @@ export function VehicleForm({ mode, vehicleId, initial, readOnly, published, ai,
 
       {show("damage") && (
         <section className="card p-6">
-          <h2 className="mb-1 font-display font-semibold">Hasar kaydı (tramer) ve ekspertiz</h2>
+          <h2 className="mb-1 font-display font-semibold">Hasar kaydı (tramer)</h2>
           <p className="mb-5 border-b border-zinc-100 pb-3 text-xs text-zinc-500">Doğrulamadığınız bilgiyi &quot;Yok&quot; işaretlemeyin; boş bırakın.</p>
           <div className="grid gap-4 sm:grid-cols-2">
             {select("damageRecord", "Hasar kaydı", [["NONE", "Yok"], ["MINOR", "Var"], ["HEAVY", "Var: ağır hasar kayıtlı"]], "Bilgi girilmedi")}
             {(v.damageRecord === "MINOR" || v.damageRecord === "HEAVY" || v.tramerAmount !== "") &&
               text("tramerAmount", "Tramer tutarı (TL, biliniyorsa)", { numeric: true, placeholder: "Boş = bilgi girilmedi" })}
             {v.damageRecord !== "NONE" && area("damageNote", v.damageRecord === "MINOR" || v.damageRecord === "HEAVY" ? "Hasarın niteliği (ilanda zorunlu)" : "Hasarın niteliği / açıklaması")}
-            {area("expertiseSummary", "Ekspertiz özeti (sitede gösterilir)")}
           </div>
         </section>
       )}

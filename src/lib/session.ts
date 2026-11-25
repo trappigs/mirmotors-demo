@@ -2,13 +2,14 @@
 import { SignJWT, jwtVerify } from "jose";
 
 export const SESSION_COOKIE = "mm_session";
-// Personel her gün yeniden giriş yapmasın: 14 gün geçerli, kullanıldıkça yenilenir (kayan süre).
-// Middleware, 1 günden eski bir oturumu CRM isteğinde yeni 14 günlük çerezle değiştirir;
-// 14 gün hiç açılmayan cihazda oturum kendiliğinden düşer.
-export const SESSION_TTL_SECONDS = 60 * 60 * 24 * 14;
+// PWA: personel bir kez giriş yapınca hesap açık kalır. 180 gün geçerli, kullanıldıkça yenilenir (kayan süre):
+// middleware 1 günden eski oturumu yeni 180 günlük çerezle değiştirir; 180 gün hiç açılmayan cihazda oturum düşer.
+// Kaybolan telefon / ayrılan personel: yönetici pasif yapınca ya da şifre sıfırlayınca oturum anında kapanır (sessionVersion).
+export const SESSION_TTL_SECONDS = 60 * 60 * 24 * 180;
 export const SESSION_RENEW_AFTER_SECONDS = 60 * 60 * 24;
 
-export type SessionPayload = { uid: string; name: string; role: "ADMIN" | "SALES" };
+// sv: kullanıcının oturum sürümü; veritabanındaki sessionVersion artınca eski oturumlar geçersiz olur.
+export type SessionPayload = { uid: string; name: string; role: "ADMIN" | "SALES"; sv?: number };
 
 function secretKey() {
   const secret = process.env.SESSION_SECRET;
@@ -35,7 +36,7 @@ export async function readSession(token: string | undefined): Promise<{ session:
     const { payload } = await jwtVerify(token, secretKey());
     if (typeof payload.uid !== "string" || (payload.role !== "ADMIN" && payload.role !== "SALES")) return null;
     return {
-      session: { uid: payload.uid, name: String(payload.name ?? ""), role: payload.role },
+      session: { uid: payload.uid, name: String(payload.name ?? ""), role: payload.role, sv: typeof payload.sv === "number" ? payload.sv : 0 },
       issuedAt: typeof payload.iat === "number" ? payload.iat : 0,
     };
   } catch {

@@ -8,7 +8,7 @@ import { DAMAGE_RECORD_LABELS, LIEN_LABELS, autoListingNo, warrantyText } from "
 import { getCompanyInfo } from "@/lib/company";
 import { OptionedBadge } from "@/components/site/VehicleCard";
 import {
-  IconBolt, IconCalendar, IconCar, IconCheck, IconDoc, IconFuel, IconGauge, IconGear, IconPalette, IconShield, IconWhatsApp,
+  IconBolt, IconCalendar, IconCar, IconCheck, IconFuel, IconGauge, IconGear, IconPalette, IconWhatsApp,
 } from "@/components/site/Icons";
 import { findPublicVehicle } from "@/lib/public-vehicles";
 import { formatKm, formatPrice, mediaUrl, parseEquipment } from "@/lib/format";
@@ -52,8 +52,8 @@ export default async function VehicleDetailPage({ params }: Props) {
 
   const specs: [string, string | number | null][] = [
     ["Marka", v.brand],
-    ["Model / ticari ad", v.model],
-    ["Paket", v.packageName],
+    ["Seri", v.model],
+    ["Model", v.packageName],
     ["Model yılı", v.year],
     ["Kilometre", formatKm(v.km)],
     ["Yakıt", v.fuel],
@@ -194,21 +194,6 @@ export default async function VehicleDetailPage({ params }: Props) {
             </div>
           </section>
 
-          <section className="mt-12">
-            <h2 className="section-mark font-display text-2xl font-extrabold tracking-tight">Ekspertiz özeti</h2>
-            <div className="card mt-5 flex gap-4 p-6">
-              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-emerald-500/10 text-emerald-700">
-                <IconShield className="h-5 w-5" />
-              </span>
-              <div>
-                <p className="leading-relaxed text-ink">{v.expertiseSummary || "Ekspertiz özeti girilmedi; bilgi için danışmanınızla iletişime geçin."}</p>
-                <p className="mt-3 flex items-center gap-1.5 text-xs text-muted">
-                  <IconDoc className="h-4 w-4" /> Ekspertiz raporunun tamamı showroomda incelenebilir.
-                </p>
-              </div>
-            </div>
-          </section>
-
           <section className="mt-12" data-testid="legal-info">
             <h2 className="section-mark font-display text-2xl font-extrabold tracking-tight">İlan ve yasal bilgiler</h2>
             <dl className="card mt-5 grid overflow-hidden sm:grid-cols-2">
@@ -264,7 +249,7 @@ export default async function VehicleDetailPage({ params }: Props) {
               <Link href="/iletisim" className="btn-outline mt-2.5 w-full rounded-xl py-3">Showroom ziyareti planla</Link>
 
               <p className="mt-5 border-t border-line pt-4 text-xs leading-relaxed text-muted">
-                Demo ilan. Site üzerinden ödeme, kapora veya sözleşme işlemi yapılmaz. Satış ve noter devri showroomda tamamlanır.
+                Site üzerinden ödeme, kapora veya sözleşme işlemi yapılmaz. Satış ve noter devri showroomda tamamlanır.
               </p>
             </div>
           </div>
