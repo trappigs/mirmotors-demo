@@ -21,7 +21,9 @@ EİDS entegrasyonu Bakanlığa bildirilen **sabit çıkış IP'si** istediği i�
 |---|---|
 | `/opt/mirmotors/app` | Uygulama kaynak kodu (bu depo) |
 | `/opt/mirmotors/app/deploy/.env` | Gizli değerler (yalnızca root okur) — şablon: `deploy/env.example` |
-| `/var/backups/mirmotors` | Gece yedekleri (veritabanı + yüklenen dosyalar, 7 gün) |
+| `/var/backups/mirmotors` | Gece yedekleri (veritabanı + yüklenen dosyalar, 7 gün, yalnız root) |
+| `/opt/mirmotors/yedek` | Yedekleme script'leri (uygulama güncellemesinden etkilenmez) |
+| `/etc/mirmotors-yedek` | Uzak yedek ayarı ve şifreleme parolası (yalnız root) |
 | Docker birimleri | `mirmotors_pgdata` (veritabanı), `mirmotors_storage` (yüklenen dosyalar), `mirmotors_caddy_data` (SSL sertifikaları) |
 
 ## Servisler (`deploy/docker-compose.yml`)
@@ -79,8 +81,10 @@ cd /opt/mirmotors/app/deploy && docker compose exec -T app node -e 'fetch("http:
 
 ## Yedek ve geri yükleme
 
-- Her gece 03:30'da `deploy/backup.sh` (cron: `/etc/cron.d/mirmotors-yedek`). Yedekler aynı sunucudadır; sunucu kaybına karşı ayrıca dışarıya kopyalanmalıdır (yapılacak).
-- Veritabanını geri yükleme:
+- Her gece 03:30'da yerel yedek, 03:40'tan sonra şifreli uzak yedek (restic), haftalık otomatik geri yükleme testi.
+  Script'ler `/opt/mirmotors/yedek` (kaynak: `deploy/yedek/`). Mimari, uzak depo bağlama ve tam felaket kurtarma
+  adımları: **`deploy/FELAKET_KURTARMA.md`**.
+- Veritabanını yerel yedekten geri yükleme:
 
 ```bash
 docker compose exec -T db pg_restore -U mirmotors -d mirmotors --clean --if-exists < /var/backups/mirmotors/db-<tarih>.dump
