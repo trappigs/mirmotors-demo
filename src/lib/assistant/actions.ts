@@ -25,7 +25,7 @@ const NOTE = "WhatsApp asistanı üzerinden";
 export type Staff = { id: string; name: string; role: string };
 
 export async function proposeAction(input: { waId: string; staff: Staff; ref: string; action: AssistantActionName; price?: number | null }): Promise<string> {
-  const matches = await prisma.vehicle.findMany({ where: refWhere(input.ref), select: { ...LINE_SELECT, optionedById: true }, take: 2 });
+  const matches = await prisma.vehicle.findMany({ where: await refWhere(input.ref), select: { ...LINE_SELECT, optionedById: true }, take: 2 });
   if (!matches.length) return "Bu numara/plaka/stok koduyla araç bulunamadı. İşlem önerilmedi.";
   if (matches.length > 1) return "Bu bilgiyle birden çok araç eşleşti; aracın #kısa numarasını sor. İşlem önerilmedi.";
   const v = matches[0];
@@ -148,7 +148,7 @@ async function createVehicle(actionId: string, payload: string, user: Staff): Pr
 export async function attachPhotos(input: { waId: string; staff: Staff; mediaIds: string[]; ref: string | null }): Promise<string> {
   let vehicleId: string | null = null;
   if (input.ref) {
-    const matches = await prisma.vehicle.findMany({ where: refWhere(input.ref), select: { id: true }, take: 2 });
+    const matches = await prisma.vehicle.findMany({ where: await refWhere(input.ref), select: { id: true }, take: 2 });
     if (matches.length !== 1) return matches.length ? `"#${input.ref}" birden çok araçla eşleşti; fotoğraflar eklenmedi.` : `"#${input.ref}" numaralı araç bulunamadı; fotoğraflar eklenmedi.`;
     vehicleId = matches[0].id;
   } else {

@@ -3,6 +3,7 @@ import type { Prisma } from "@prisma/client";
 import { prisma } from "../db";
 import { STATUS_LABELS, VEHICLE_STATUSES, type VehicleStatus } from "../constants";
 import { formatKm, formatPrice } from "../format";
+import { normalizePlate } from "../plates";
 
 /**
  * WhatsApp asistanının CRM sorgu araçları. Hepsi SALT OKUNUR: hiçbir kaydı değiştirmez (değişiklik: ./actions.ts, personel onayıyla).
@@ -34,16 +35,22 @@ export type SearchArgs = {
 
 export async function searchVehicles(a: SearchArgs): Promise<string> {
   const and: Prisma.VehicleWhereInput[] = [];
-  const words = (a.text ?? "").trim().split(/\s+/).filter((w) => w.length > 1).slice(0, 5);
-  for (const w of words) {
-    const plate = w.replace(/\s/g, "").toUpperCase();
-    and.push({
-      OR: [
-        { brand: { contains: w, mode: "insensitive" } }, { model: { contains: w, mode: "insensitive" } },
-        { packageName: { contains: w, mode: "insensitive" } }, { color: { contains: w, mode: "insensitive" } },
-        { legalPlate: { contains: plate, mode: "insensitive" } }, { stockCode: { contains: w, mode: "insensitive" } },
-      ],
-    });
+  const text = (a.text ?? "").trim();
+  // Metin bir plakaysa (boşluklu "34 ABC 123" ya da bitişik) plakayla eşleşen araçlar; değilse kelime kelime arama.
+  const looksLikePlate = /\d/.test(text) && /[A-Za-z]/.test(text) && text.split(/\s+/).length <= 3;
+  const plateIds = looksLikePlate ? await vehicleIdsByPlate(text, false) : [];
+  if (plateIds.length) and.push({ id: { in: plateIds } });
+  else {
+    const words = text.split(/\s+/).filter((w) => w.length > 1).slice(0, 5);
+    for (const w of words) {
+      and.push({
+        OR: [
+          { brand: { contains: w, mode: "insensitive" } }, { model: { contains: w, mode: "insensitive" } },
+          { packageName: { contains: w, mode: "insensitive" } }, { color: { contains: w, mode: "insensitive" } },
+          { legalPlate: { contains: w, mode: "insensitive" } }, { stockCode: { contains: w, mode: "insensitive" } },
+        ],
+      });
+    }
   }
   if (a.status && (VEHICLE_STATUSES as readonly string[]).includes(a.status)) and.push({ status: a.status });
   else if (!a.includeSold) and.push({ status: { notIn: ["SOLD", "ARCHIVED"] } });
@@ -64,14 +71,29 @@ export async function searchVehicles(a: SearchArgs): Promise<string> {
   return `${total} araç bulundu${total > rows.length ? ` (ilk ${rows.length} gösteriliyor)` : ""}:\n` + rows.map(vehicleLine).join("\n");
 }
 
-/** Kısa numara (#abc123, en az 4 karakter), plaka ya da stok kodu ile arama koşulu. */
-export function refWhere(ref: string): Prisma.VehicleWhereInput {
+/**
+ * Plakası verilen metinle eşleşen araç kimlikleri. Kayıtlı plaka "34 ABC 123", "34-abc-123" veya "34ABC123" olabilir;
+ * karşılaştırma iki tarafta da boşluk/tire/harf büyüklüğü atılarak yapılır. exact=false: plakanın bir kısmı (arama).
+ */
+export async function vehicleIdsByPlate(text: string, exact: boolean): Promise<string[]> {
+  const n = normalizePlate(text);
+  if (n.length < (exact ? 2 : 3)) return [];
+  const pattern = exact ? n : `%${n}%`;
+  const rows = await prisma.$queryRaw<{ id: string }[]>`
+    SELECT id FROM "Vehicle"
+    WHERE regexp_replace(upper(coalesce("legalPlate", '')), '[^0-9A-Z]', '', 'g') LIKE ${pattern}
+    LIMIT 50`;
+  return rows.map((r) => r.id);
+}
+
+/** Kısa numara (#abc123, en az 4 karakter), plaka (boşluklu/boşluksuz) ya da stok kodu ile arama koşulu. */
+export async function refWhere(ref: string): Promise<Prisma.VehicleWhereInput> {
   const r = ref.trim().replace(/^#/, "");
-  const plate = r.replace(/\s/g, "").toUpperCase();
+  const plateIds = await vehicleIdsByPlate(r, true);
   return {
     OR: [
       ...(r.length >= 4 ? [{ id: { endsWith: r } }] : []),
-      { legalPlate: { equals: plate, mode: "insensitive" } },
+      ...(plateIds.length ? [{ id: { in: plateIds } }] : []),
       { stockCode: { equals: r, mode: "insensitive" } },
     ],
   };
@@ -79,7 +101,7 @@ export function refWhere(ref: string): Prisma.VehicleWhereInput {
 
 export async function getVehicle(ref: string): Promise<string> {
   const v = await prisma.vehicle.findFirst({
-    where: refWhere(ref),
+    where: await refWhere(ref),
     include: { optionedBy: { select: { name: true } }, createdBy: { select: { name: true } }, _count: { select: { photos: true } } },
   });
   if (!v) return "Bu numara/plaka/stok koduyla araç bulunamadı.";
